@@ -1,0 +1,112 @@
+# Containerfile.build-test - LNXDrive full build + test container
+#
+# Fedora 41 container with systemd as PID 1 that compiles both
+# lnxdrive (Rust daemon) and lnxdrive-gnome (Nautilus/Shell/Preferences),
+# then runs unit tests and D-Bus integration tests.
+#
+# Usage:
+#   podman build -f containers/Containerfile.build-test -t lnxdrive-build-test .
+#   podman run -d --name lnxdrive-bt --systemd=always \
+#     -v ../lnxdrive:/src/lnxdrive:ro,z \
+#     -v ../lnxdrive-gnome:/src/lnxdrive-gnome:ro,z \
+#     -v ./logs/build-latest:/logs:z \
+#     localhost/lnxdrive-build-test
+
+FROM fedora:41
+
+# --- System: systemd, D-Bus, core utils --------------------------------------
+
+RUN dnf install -y \
+        systemd \
+        systemd-libs \
+        dbus-daemon \
+        procps-ng \
+        util-linux \
+        findutils \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+
+# Mask unnecessary systemd units
+RUN systemctl mask \
+        systemd-remount-fs.service \
+        systemd-firstboot.service \
+        systemd-machine-id-commit.service \
+        getty@.service \
+        serial-getty@.service
+
+# --- Rust toolchain -----------------------------------------------------------
+
+RUN dnf install -y \
+        gcc \
+        gcc-c++ \
+        make \
+        pkg-config \
+        openssl-devel \
+        sqlite-devel \
+        fuse3-devel \
+        libsecret-devel \
+        dbus-devel \
+        glib2-devel \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
+    sh -s -- -y --default-toolchain stable --profile minimal
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# --- GNOME/GTK build dependencies --------------------------------------------
+
+RUN dnf install -y \
+        meson \
+        ninja-build \
+        gtk4-devel \
+        libadwaita-devel \
+        nautilus-devel \
+        glib2-devel \
+        gobject-introspection-devel \
+        gettext-devel \
+        desktop-file-utils \
+        appstream \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+
+# --- Python + D-Bus testing tools ---------------------------------------------
+
+RUN dnf install -y \
+        python3 \
+        python3-pip \
+        python3-gobject \
+        gjs \
+    && pip3 install --no-cache-dir dbus-next \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+
+# --- Create test user with lingering -----------------------------------------
+
+RUN useradd -m -s /bin/bash testuser \
+    && mkdir -p /var/lib/systemd/linger \
+    && touch /var/lib/systemd/linger/testuser
+
+# --- Create LNXDrive directories for testuser ---------------------------------
+
+RUN mkdir -p \
+        /home/testuser/.config/lnxdrive \
+        /home/testuser/.local/share/lnxdrive \
+        /home/testuser/.config/systemd/user \
+        /home/testuser/.local/share/gnome-shell/extensions \
+        /home/testuser/OneDrive \
+    && chown -R testuser:testuser /home/testuser
+
+# --- Directories for source mounts and logs -----------------------------------
+
+RUN mkdir -p /src/lnxdrive /src/lnxdrive-gnome /build /logs \
+    && chown -R testuser:testuser /build /logs
+
+# --- Install the entrypoint test runner script --------------------------------
+
+COPY scripts/container-test-runner.sh /usr/local/bin/container-test-runner.sh
+RUN chmod +x /usr/local/bin/container-test-runner.sh
+
+# --- systemd as PID 1 --------------------------------------------------------
+
+CMD ["/sbin/init"]

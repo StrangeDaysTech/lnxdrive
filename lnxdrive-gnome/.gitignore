@@ -1,0 +1,3 @@
+# Note: preferences/target/ covered by root .gitignore (**/target/)
+# Meson subprojects local to this component
+subprojects/

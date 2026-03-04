@@ -1,0 +1,110 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/lnxdrive-core",
+    "crates/lnxdrive-daemon",
+    "crates/lnxdrive-cli",
+    "crates/lnxdrive-ipc",
+    "crates/lnxdrive-fuse",
+    "crates/lnxdrive-sync",
+    "crates/lnxdrive-graph",
+    "crates/lnxdrive-cache",
+    "crates/lnxdrive-conflict",
+    "crates/lnxdrive-audit",
+    "crates/lnxdrive-telemetry",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Enigmora <contact@enigmora.com>"]
+license = "GPL-3.0-or-later"
+repository = "https://github.com/enigmora/lnxdrive"
+rust-version = "1.75"
+
+[workspace.dependencies]
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+
+# Common utilities
+uuid = { version = "1.6", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+async-trait = "0.1"
+
+# Concurrent data structures
+dashmap = "6.0"
+
+# Cryptography (for cache path hashing)
+sha2 = "0.10"
+
+# System calls
+libc = "0.2"
+
+# Secure credential storage
+keyring = { version = "3.6", features = ["sync-secret-service"] }
+
+# File watching
+notify = { version = "6.1", default-features = false, features = ["macos_kqueue"] }
+
+# Browser launching (for OAuth)
+webbrowser = "0.8"
+
+# HTTP server (for OAuth callback)
+hyper = { version = "1.1", features = ["server", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+http-body-util = "0.1"
+
+# Signal handling
+tokio-util = { version = "0.7", features = ["rt"] }
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite"] }
+
+# D-Bus
+zbus = "4.0"
+
+# HTTP client
+reqwest = { version = "0.12", features = ["json", "rustls-tls", "stream"] }
+
+# OAuth2
+oauth2 = { version = "5.0", features = ["reqwest"] }
+
+# FUSE
+fuser = "0.16"
+
+# Rate limiting
+governor = "0.6"
+
+# Observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+prometheus = "0.13"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# CLI
+clap = { version = "4.4", features = ["derive"] }
+
+# Testing
+wiremock = "0.6"
+tempfile = "3.10"
+
+# Workspace crates
+lnxdrive-core = { path = "crates/lnxdrive-core" }
+lnxdrive-daemon = { path = "crates/lnxdrive-daemon" }
+lnxdrive-cli = { path = "crates/lnxdrive-cli" }
+lnxdrive-ipc = { path = "crates/lnxdrive-ipc" }
+lnxdrive-fuse = { path = "crates/lnxdrive-fuse" }
+lnxdrive-sync = { path = "crates/lnxdrive-sync" }
+lnxdrive-graph = { path = "crates/lnxdrive-graph" }
+lnxdrive-cache = { path = "crates/lnxdrive-cache" }
+lnxdrive-conflict = { path = "crates/lnxdrive-conflict" }
+lnxdrive-audit = { path = "crates/lnxdrive-audit" }
+lnxdrive-telemetry = { path = "crates/lnxdrive-telemetry" }

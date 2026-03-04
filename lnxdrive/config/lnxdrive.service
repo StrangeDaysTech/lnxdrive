@@ -1,0 +1,23 @@
+[Unit]
+Description=LNXDrive - Cloud Storage Daemon
+Documentation=https://github.com/enigmora/lnxdrive
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=dbus
+BusName=com.enigmora.LNXDrive
+ExecStart=/usr/bin/lnxdrive-daemon
+Restart=on-failure
+RestartSec=5
+Environment=RUST_LOG=info
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/OneDrive %h/.config/lnxdrive %h/.local/share/lnxdrive
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target

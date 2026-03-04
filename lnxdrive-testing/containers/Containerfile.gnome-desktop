@@ -1,0 +1,196 @@
+# Containerfile.gnome-desktop - GNOME desktop with VNC for visual testing
+#
+# Full GNOME desktop environment inside a container, accessible via VNC.
+# Pre-installs LNXDrive extensions so the user can interact with them.
+#
+# Usage:
+#   podman build -f containers/Containerfile.gnome-desktop -t lnxdrive-gnome-desktop .
+#   podman run -d --name lnxdrive-gnome-desktop -p 5900:5900 \
+#     --systemd=always localhost/lnxdrive-gnome-desktop
+#   vncviewer localhost:5900
+
+FROM fedora:41
+
+# --- System: systemd + core ---------------------------------------------------
+
+RUN dnf install -y \
+        systemd \
+        systemd-libs \
+        dbus-daemon \
+        dbus-x11 \
+        procps-ng \
+        util-linux \
+        passwd \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+
+# Mask unnecessary units
+RUN systemctl mask \
+        systemd-remount-fs.service \
+        systemd-firstboot.service \
+        systemd-machine-id-commit.service \
+        getty@.service \
+        serial-getty@.service \
+        gdm.service
+
+# --- GNOME Desktop + VNC server -----------------------------------------------
+
+RUN dnf install -y \
+        gnome-shell \
+        gnome-session \
+        gnome-terminal \
+        nautilus \
+        tigervnc-server \
+        dbus-tools \
+        gjs \
+        python3 \
+        python3-pip \
+        python3-gobject \
+    && pip3 install --no-cache-dir dbus-next \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+
+# --- Create test user ---------------------------------------------------------
+
+RUN useradd -m -s /bin/bash testuser \
+    && echo "testuser:testuser" | chpasswd \
+    && mkdir -p /var/lib/systemd/linger \
+    && touch /var/lib/systemd/linger/testuser
+
+# --- Create LNXDrive directories ----------------------------------------------
+
+RUN mkdir -p \
+        /home/testuser/.config/lnxdrive \
+        /home/testuser/.local/share/lnxdrive \
+        /home/testuser/.local/share/gnome-shell/extensions \
+        /home/testuser/.config/systemd/user \
+        /home/testuser/.vnc \
+        /home/testuser/OneDrive/photos/vacation \
+        /home/testuser/OneDrive/projects/src \
+        /home/testuser/OneDrive/shared \
+    && chown -R testuser:testuser /home/testuser
+
+# --- Create test files matching mock daemon statuses --------------------------
+
+RUN echo "Synced PDF" > /home/testuser/OneDrive/document.pdf \
+    && echo "Syncing doc" > /home/testuser/OneDrive/report.docx \
+    && echo "Conflict file" > /home/testuser/OneDrive/budget.xlsx \
+    && echo "Synced notes" > /home/testuser/OneDrive/notes.txt \
+    && echo "Pending pptx" > /home/testuser/OneDrive/presentation.pptx \
+    && echo "Excluded zip" > /home/testuser/OneDrive/archive.zip \
+    && echo "Cloud photo" > /home/testuser/OneDrive/photos/vacation/beach.jpg \
+    && echo "Synced readme" > /home/testuser/OneDrive/projects/readme.md \
+    && echo "Synced source" > /home/testuser/OneDrive/projects/src/main.rs \
+    && echo "Error doc" > /home/testuser/OneDrive/shared/team-notes.docx \
+    && chown -R testuser:testuser /home/testuser/OneDrive
+
+# --- VNC setup ----------------------------------------------------------------
+
+RUN echo "testuser" | vncpasswd -f > /home/testuser/.vnc/passwd \
+    && chmod 600 /home/testuser/.vnc/passwd \
+    && chown testuser:testuser /home/testuser/.vnc/passwd
+
+# --- Directory for pre-compiled binaries (mounted or copied) ------------------
+
+RUN mkdir -p /opt/lnxdrive \
+    && chown testuser:testuser /opt/lnxdrive
+
+# --- Startup script -----------------------------------------------------------
+
+RUN cat > /usr/local/bin/start-desktop.sh <<'STARTEOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+export HOME=/home/testuser
+export USER=testuser
+export DISPLAY=:1
+
+# Install binaries if available in /opt/lnxdrive
+if [ -f /opt/lnxdrive/lnxdrived ]; then
+    cp /opt/lnxdrive/lnxdrived /usr/local/bin/lnxdrived
+    chmod +x /usr/local/bin/lnxdrived
+fi
+if [ -f /opt/lnxdrive/lnxdrive ]; then
+    cp /opt/lnxdrive/lnxdrive /usr/local/bin/lnxdrive
+    chmod +x /usr/local/bin/lnxdrive
+fi
+if [ -f /opt/lnxdrive/lnxdrive-preferences ]; then
+    cp /opt/lnxdrive/lnxdrive-preferences /usr/local/bin/lnxdrive-preferences
+    chmod +x /usr/local/bin/lnxdrive-preferences
+fi
+
+# Install Nautilus extension if available
+if [ -d /opt/lnxdrive/nautilus-extension ]; then
+    mkdir -p /usr/lib64/nautilus/extensions-4/
+    cp -a /opt/lnxdrive/nautilus-extension/* /usr/lib64/nautilus/extensions-4/ 2>/dev/null || true
+fi
+
+# Install Shell extension if available
+SHELL_EXT_SRC="/opt/lnxdrive/shell-extension/lnxdrive-indicator@enigmora.com"
+SHELL_EXT_DEST="/home/testuser/.local/share/gnome-shell/extensions/lnxdrive-indicator@enigmora.com"
+if [ -d "$SHELL_EXT_SRC" ]; then
+    rm -rf "$SHELL_EXT_DEST"
+    cp -r "$SHELL_EXT_SRC" "$SHELL_EXT_DEST"
+    chown -R testuser:testuser "$SHELL_EXT_DEST"
+fi
+
+# Enable Shell extension via gsettings
+SCHEMA_DIR="/home/testuser/.local/share/glib-2.0/schemas"
+mkdir -p "$SCHEMA_DIR"
+SHELL_SCHEMA="/usr/share/glib-2.0/schemas/org.gnome.shell.gschema.xml"
+if [ -f "$SHELL_SCHEMA" ]; then
+    cp "$SHELL_SCHEMA" "$SCHEMA_DIR/"
+fi
+cat > "${SCHEMA_DIR}/99-lnxdrive.gschema.override" <<'GSEOF'
+[org.gnome.shell]
+enabled-extensions=['lnxdrive-indicator@enigmora.com']
+disable-user-extensions=false
+GSEOF
+glib-compile-schemas "$SCHEMA_DIR" 2>/dev/null || true
+export GSETTINGS_SCHEMA_DIR="$SCHEMA_DIR"
+
+# Ensure /logs is writable
+chmod 777 /logs 2>/dev/null || true
+
+# Start mock daemon
+MOCK_DAEMON="/opt/lnxdrive/mock-dbus-daemon.py"
+if [ -f "$MOCK_DAEMON" ]; then
+    su - testuser -c "
+        export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/\$(id -u)/bus
+        python3 '$MOCK_DAEMON' \
+            --authenticated \
+            --signal-interval 5 \
+            --sync-root /home/testuser/OneDrive \
+            > /logs/mock-daemon.log 2>&1 &
+    "
+fi
+
+# Start Xvnc (TigerVNC: combined X server + VNC in one process)
+Xvnc :1 -geometry 1280x800 -depth 24 \
+    -rfbport 5900 -PasswordFile /home/testuser/.vnc/passwd \
+    -SecurityTypes VncAuth \
+    > /logs/xvnc.log 2>&1 &
+sleep 2
+
+# Start GNOME session as testuser
+su - testuser -c "
+    export DISPLAY=:1
+    export XDG_SESSION_TYPE=x11
+    export GSETTINGS_SCHEMA_DIR='$SCHEMA_DIR'
+    gnome-session --session=gnome 2>/dev/null || \
+    gnome-shell --x11 2>/dev/null || \
+    echo 'Failed to start GNOME session'
+" > /logs/gnome-session.log 2>&1 &
+
+# Keep container running
+wait
+STARTEOF
+RUN chmod +x /usr/local/bin/start-desktop.sh
+
+# --- Directory for logs -------------------------------------------------------
+
+RUN mkdir -p /logs && chown testuser:testuser /logs
+
+# --- systemd as PID 1 --------------------------------------------------------
+
+CMD ["/sbin/init"]

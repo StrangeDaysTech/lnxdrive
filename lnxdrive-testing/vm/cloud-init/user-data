@@ -1,0 +1,218 @@
+#cloud-config
+# LNXDrive Test VM - Cloud-Init User Data
+#
+# Provisions a Fedora VM with GNOME desktop and all LNXDrive dependencies.
+# The host's lnxdrive-project directory is shared via 9p at /mnt/lnxdrive-project.
+
+users:
+  - name: testuser
+    plain_text_passwd: testuser
+    groups: wheel, adm
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+
+# Set hostname
+hostname: lnxdrive-test
+
+# Enable password auth for SSH
+ssh_pwauth: true
+
+# Package installation
+packages:
+  # GNOME Desktop
+  - '@workstation-product-environment'
+  # Rust build dependencies
+  - gcc
+  - gcc-c++
+  - make
+  - pkg-config
+  - openssl-devel
+  - sqlite-devel
+  - fuse3-devel
+  - libsecret-devel
+  - dbus-devel
+  - glib2-devel
+  # GNOME build dependencies
+  - meson
+  - ninja-build
+  - gtk4-devel
+  - libadwaita-devel
+  - nautilus-devel
+  - gobject-introspection-devel
+  - gettext-devel
+  - desktop-file-utils
+  # Testing tools
+  - python3
+  - python3-pip
+  - python3-gobject
+  - gjs
+  - dbus-tools
+  # Shared folder support
+  - virtiofsd
+
+package_update: true
+package_upgrade: true
+
+# Mount shared folder and run provisioning
+runcmd:
+  # Install Python dbus-next for mock daemon
+  - pip3 install dbus-next
+
+  # Install Rust toolchain for testuser
+  - su - testuser -c 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal'
+
+  # Mount the shared project directory and persist in fstab
+  - mkdir -p /mnt/lnxdrive-project
+  - mount -t 9p lnxdrive-project /mnt/lnxdrive-project -o trans=virtio,version=9p2000.L,msize=104857600 || echo "9p mount failed - will use manual copy"
+  - echo 'lnxdrive-project /mnt/lnxdrive-project 9p trans=virtio,version=9p2000.L,msize=104857600,nofail,_netdev 0 0' >> /etc/fstab
+
+  # Create LNXDrive directories for testuser
+  - su - testuser -c 'mkdir -p ~/.config/lnxdrive ~/.local/share/lnxdrive ~/.local/share/gnome-shell/extensions ~/OneDrive'
+
+  # Copy default config
+  - su - testuser -c 'cp /mnt/lnxdrive-project/lnxdrive/config/default-config.yaml ~/.config/lnxdrive/config.yaml 2>/dev/null || true'
+
+  # Build lnxdrive daemon
+  - |
+    su - testuser -c '
+      export PATH="$HOME/.cargo/bin:$PATH"
+      EXCLUDE="--exclude lnxdrive-conflict --exclude lnxdrive-audit --exclude lnxdrive-telemetry"
+      cd /mnt/lnxdrive-project/lnxdrive
+      cargo build --workspace $EXCLUDE 2>&1 | tail -20
+      # Install binaries
+      sudo cp target/debug/lnxdrived /usr/local/bin/
+      sudo cp target/debug/lnxdrive /usr/local/bin/
+      sudo chmod +x /usr/local/bin/lnxdrived /usr/local/bin/lnxdrive
+    ' || echo "Daemon build failed"
+
+  # Build lnxdrive-gnome extensions
+  - |
+    su - testuser -c '
+      cd /mnt/lnxdrive-project/lnxdrive-gnome
+      meson setup /tmp/gnome-builddir . --prefix=/usr 2>&1 | tail -10
+      meson compile -C /tmp/gnome-builddir 2>&1 | tail -10
+      sudo meson install -C /tmp/gnome-builddir 2>&1 | tail -10
+    ' || echo "GNOME extension build failed"
+
+  # Build preferences app
+  - |
+    su - testuser -c '
+      export PATH="$HOME/.cargo/bin:$PATH"
+      cd /mnt/lnxdrive-project/lnxdrive-gnome/preferences
+      cargo build 2>&1 | tail -10
+      sudo cp target/debug/lnxdrive-preferences /usr/local/bin/
+      sudo chmod +x /usr/local/bin/lnxdrive-preferences
+    ' || echo "Preferences build failed"
+
+  # Install Shell extension
+  - |
+    su - testuser -c '
+      SHELL_EXT_SRC="/mnt/lnxdrive-project/lnxdrive-gnome/shell-extension/lnxdrive-indicator@enigmora.com"
+      SHELL_EXT_DEST="$HOME/.local/share/gnome-shell/extensions/lnxdrive-indicator@enigmora.com"
+      if [ -d "$SHELL_EXT_SRC" ]; then
+        cp -r "$SHELL_EXT_SRC" "$SHELL_EXT_DEST"
+      fi
+    '
+
+  # Create daemon systemd service
+  - |
+    su - testuser -c '
+      mkdir -p ~/.config/systemd/user
+      cat > ~/.config/systemd/user/lnxdrive.service <<EOF
+    [Unit]
+    Description=LNXDrive OneDrive Sync Service
+    After=dbus.service
+
+    [Service]
+    Type=simple
+    ExecStart=/usr/local/bin/lnxdrived
+    Restart=on-failure
+    RestartSec=5
+    Environment=RUST_LOG=info
+
+    [Install]
+    WantedBy=default.target
+    EOF
+    '
+
+  # Create mock daemon systemd service
+  - |
+    su - testuser -c '
+      cat > ~/.config/systemd/user/lnxdrive-mock.service <<EOF
+    [Unit]
+    Description=LNXDrive Mock D-Bus Daemon
+    After=dbus.service
+
+    [Service]
+    Type=simple
+    ExecStart=/usr/bin/python3 /mnt/lnxdrive-project/lnxdrive-gnome/tests/mock-dbus-daemon.py --authenticated --signal-interval 5 --sync-root /home/testuser/OneDrive
+    Restart=on-failure
+    RestartSec=5
+
+    [Install]
+    WantedBy=default.target
+    EOF
+      systemctl --user daemon-reload
+      systemctl --user enable lnxdrive-mock.service
+    '
+
+  # Create test files in sync root
+  - |
+    su - testuser -c '
+      mkdir -p ~/OneDrive/photos/vacation ~/OneDrive/projects/src ~/OneDrive/shared
+      echo "Synced PDF" > ~/OneDrive/document.pdf
+      echo "Syncing doc" > ~/OneDrive/report.docx
+      echo "Conflict file" > ~/OneDrive/budget.xlsx
+      echo "Synced notes" > ~/OneDrive/notes.txt
+      echo "Pending pptx" > ~/OneDrive/presentation.pptx
+      echo "Excluded zip" > ~/OneDrive/archive.zip
+      echo "Cloud photo" > ~/OneDrive/photos/vacation/beach.jpg
+      echo "Synced readme" > ~/OneDrive/projects/readme.md
+      echo "Synced source" > ~/OneDrive/projects/src/main.rs
+      echo "Error doc" > ~/OneDrive/shared/team-notes.docx
+    '
+
+  # Enable Shell extension via systemd user service (GNOME 49+ uses systemd for autostart)
+  - |
+    su - testuser -c '
+      mkdir -p ~/.config/systemd/user/gnome-session-manager@gnome.service.d
+      cat > ~/.config/systemd/user/lnxdrive-enable-extension.service <<UNIT
+    [Unit]
+    Description=Enable LNXDrive Shell Extension
+    After=gnome-shell-wayland.target
+    PartOf=gnome-session-manager@gnome.service
+
+    [Service]
+    Type=oneshot
+    ExecStart=/usr/bin/gnome-extensions enable lnxdrive-indicator@enigmora.com
+    RemainAfterExit=true
+
+    [Install]
+    WantedBy=gnome-session-manager@gnome.service
+    UNIT
+      systemctl --user daemon-reload
+      systemctl --user enable lnxdrive-enable-extension.service
+    '
+
+  # Configure GDM auto-login for testuser
+  - |
+    mkdir -p /etc/gdm
+    cat >> /etc/gdm/custom.conf <<EOF
+
+    [daemon]
+    AutomaticLoginEnable=True
+    AutomaticLogin=testuser
+    EOF
+
+  # Set graphical target as default
+  - systemctl set-default graphical.target
+
+  # Reboot to start GNOME with everything installed
+  - reboot
+
+final_message: |
+  LNXDrive Test VM provisioning complete.
+  User: testuser / testuser
+  The VM will reboot into GNOME desktop.
+  Connect with: virt-viewer lnxdrive-test-gnome

@@ -1,0 +1,46 @@
+# Flatpak manifest for LNXDrive
+# Build with: flatpak-builder --user --install builddir org.enigmora.LNXDrive.yaml
+
+app-id: org.enigmora.LNXDrive
+runtime: org.gnome.Platform
+runtime-version: '45'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: lnxdrive-gnome
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --socket=session-bus
+  - --filesystem=home
+  - --talk-name=org.freedesktop.secrets
+  - --talk-name=org.gnome.OnlineAccounts
+
+modules:
+  - name: lnxdrive
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/rust-stable/bin
+    build-commands:
+      - cargo build --release
+      - install -Dm755 target/release/lnxdrived -t /app/bin
+      - install -Dm755 target/release/lnxdrive -t /app/bin
+    sources:
+      - type: git
+        url: https://github.com/enigmora/lnxdrive.git
+        tag: v0.1.0
+
+  - name: lnxdrive-gnome
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/rust-stable/bin
+    build-commands:
+      - cargo build --release
+      - install -Dm755 target/release/lnxdrive-gnome -t /app/bin
+    sources:
+      - type: git
+        url: https://github.com/enigmora/lnxdrive-gnome.git
+        tag: v0.1.0
