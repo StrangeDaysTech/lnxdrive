@@ -85,9 +85,10 @@ lnxdrive-testing/logs/*
 *.img
 
 # VM disk images
-vm/*.qcow2
-vm/*.iso
-vm/*.img
+lnxdrive-testing/vm/*.qcow2
+lnxdrive-testing/vm/*.iso
+lnxdrive-testing/vm/*.img
+lnxdrive-testing/vm/*.xml
 
 # =============================================================================
 # Operating System Files

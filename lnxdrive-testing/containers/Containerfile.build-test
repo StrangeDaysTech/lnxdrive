@@ -7,7 +7,7 @@
 # Usage:
 #   podman build -f containers/Containerfile.build-test -t lnxdrive-build-test .
 #   podman run -d --name lnxdrive-bt --systemd=always \
-#     -v ../lnxdrive:/src/lnxdrive-engine:ro,z \
+#     -v ../lnxdrive-engine:/src/lnxdrive-engine:ro,z \
 #     -v ../lnxdrive-gnome:/src/lnxdrive-gnome:ro,z \
 #     -v ./logs/build-latest:/logs:z \
 #     localhost/lnxdrive-build-test
