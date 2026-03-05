@@ -1,6 +1,6 @@
 /* lnxdrive-extension.c — Nautilus extension module entry point
  *
- * Copyright 2026 Strange Days Tech <https://strangedaystech.com>
+ * Copyright 2026 Strange Days Tech <https://strangedays.tech>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * This file provides the three entry points that Nautilus expects every

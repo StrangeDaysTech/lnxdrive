@@ -2,7 +2,7 @@
 name = "lnxdrive-gnome"
 version = "0.1.0"
 edition = "2021"
-authors = ["Strange Days Tech, S.A.S. <contact@strangedaystech.com>"]
+authors = ["Strange Days Tech, S.A.S. <contact@strangedays.tech>"]
 license = "GPL-3.0-or-later"
 description = "LNXDrive GNOME desktop integration"
 repository = "https://github.com/strangedaystech/lnxdrive-gnome"

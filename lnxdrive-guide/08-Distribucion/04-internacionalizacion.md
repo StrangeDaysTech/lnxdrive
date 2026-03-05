@@ -71,8 +71,8 @@ lnxdrive-gnome/
 │   ├── lnxdrive-gnome.pot       # Template extraido (strings en ingles)
 │   └── es.po                    # Traduccion al espanol
 ├── data/
-│   ├── org.strangedaystech.LNXDrive.desktop.in
-│   └── org.strangedaystech.LNXDrive.metainfo.xml.in
+│   ├── com.strangedaystech.LNXDrive.desktop.in
+│   └── com.strangedaystech.LNXDrive.metainfo.xml.in
 └── src/
     └── *.rs                     # Codigo con gettext!() macros
 ```
@@ -435,7 +435,7 @@ Los archivos de metadatos de aplicacion tambien requieren traduccion:
 #### Archivo .desktop
 
 ```ini
-# data/org.strangedaystech.LNXDrive.desktop.in
+# data/com.strangedaystech.LNXDrive.desktop.in
 [Desktop Entry]
 Name=LNXDrive
 Name[es]=LNXDrive
@@ -444,7 +444,7 @@ GenericName[es]=Cliente de Almacenamiento en la Nube
 Comment=Sync your files with cloud storage providers
 Comment[es]=Sincroniza tus archivos con proveedores de almacenamiento en la nube
 Exec=lnxdrive-gnome
-Icon=org.strangedaystech.LNXDrive
+Icon=com.strangedaystech.LNXDrive
 Terminal=false
 Type=Application
 Categories=Network;FileTransfer;
@@ -456,9 +456,9 @@ Keywords[es]=nube;sincronizar;onedrive;gdrive;dropbox;almacenamiento;
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- data/org.strangedaystech.LNXDrive.metainfo.xml.in -->
+<!-- data/com.strangedaystech.LNXDrive.metainfo.xml.in -->
 <component type="desktop-application">
-  <id>org.strangedaystech.LNXDrive</id>
+  <id>com.strangedaystech.LNXDrive</id>
   <name>LNXDrive</name>
   <name xml:lang="es">LNXDrive</name>
   <summary>Cloud storage client for Linux desktops</summary>
@@ -484,11 +484,11 @@ Keywords[es]=nube;sincronizar;onedrive;gdrive;dropbox;almacenamiento;
     </ul>
   </description>
 
-  <launchable type="desktop-id">org.strangedaystech.LNXDrive.desktop</launchable>
+  <launchable type="desktop-id">com.strangedaystech.LNXDrive.desktop</launchable>
   <url type="homepage">https://github.com/strangedaystech/lnxdrive</url>
   <url type="bugtracker">https://github.com/strangedaystech/lnxdrive/issues</url>
 
-  <developer id="org.strangedaystech">
+  <developer id="com.strangedaystech">
     <name>Strange Days Tech</name>
   </developer>
 
@@ -521,8 +521,8 @@ i18n.gettext(
 
 # Procesar .desktop
 i18n.merge_file(
-  input: 'data/org.strangedaystech.LNXDrive.desktop.in',
-  output: 'org.strangedaystech.LNXDrive.desktop',
+  input: 'data/com.strangedaystech.LNXDrive.desktop.in',
+  output: 'com.strangedaystech.LNXDrive.desktop',
   type: 'desktop',
   po_dir: 'po',
   install: true,
@@ -531,8 +531,8 @@ i18n.merge_file(
 
 # Procesar metainfo
 i18n.merge_file(
-  input: 'data/org.strangedaystech.LNXDrive.metainfo.xml.in',
-  output: 'org.strangedaystech.LNXDrive.metainfo.xml',
+  input: 'data/com.strangedaystech.LNXDrive.metainfo.xml.in',
+  output: 'com.strangedaystech.LNXDrive.metainfo.xml',
   type: 'xml',
   po_dir: 'po',
   install: true,

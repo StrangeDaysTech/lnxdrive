@@ -117,4 +117,4 @@ Total tasks implemented: 10 (T063-T072)
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

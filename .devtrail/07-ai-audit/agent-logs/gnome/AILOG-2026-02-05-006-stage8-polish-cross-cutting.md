@@ -115,4 +115,4 @@ is an accessibility string, kept in English per GNOME convention for AT tools).
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

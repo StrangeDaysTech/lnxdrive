@@ -1,6 +1,6 @@
 #!/usr/bin/env gjs
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2026 Strange Days Tech <https://strangedaystech.com>
+// SPDX-FileCopyrightText: 2026 Strange Days Tech <https://strangedays.tech>
 
 /**
  * Integration tests for the LNXDrive GNOME Shell extension D-Bus module.

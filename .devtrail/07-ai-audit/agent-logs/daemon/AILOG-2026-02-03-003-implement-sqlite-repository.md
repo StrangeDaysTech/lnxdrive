@@ -83,4 +83,4 @@ The hexagonal architecture requires a driven (secondary) adapter for state persi
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

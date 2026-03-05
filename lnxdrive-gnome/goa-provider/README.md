@@ -38,7 +38,7 @@ plumbing including WebKitGTK embedded views and GOA provider C API integration.
 
 - `gnome-online-accounts` (libgoa-1.0, libgoa-backend-1.0)
 - `webkit6` (WebKitGTK 6.x for embedded OAuth2 view)
-- `lnxdrive-daemon` D-Bus interface `org.strangedaystech.LNXDrive.Auth`
+- `lnxdrive-daemon` D-Bus interface `com.strangedaystech.LNXDrive.Auth`
 
 ### Build
 
@@ -50,4 +50,4 @@ meson setup builddir -Denable_goa=true
 
 ---
 
-*LNXDrive GNOME Integration — [Strange Days Tech](https://strangedaystech.com)*
+*LNXDrive GNOME Integration — [Strange Days Tech](https://strangedays.tech)*

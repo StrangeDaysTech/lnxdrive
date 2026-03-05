@@ -1,7 +1,7 @@
 # Flatpak manifest for LNXDrive
-# Build with: flatpak-builder --user --install builddir org.strangedaystech.LNXDrive.yaml
+# Build with: flatpak-builder --user --install builddir com.strangedaystech.LNXDrive.yaml
 
-app-id: org.strangedaystech.LNXDrive
+app-id: com.strangedaystech.LNXDrive
 runtime: org.gnome.Platform
 runtime-version: '45'
 sdk: org.gnome.Sdk

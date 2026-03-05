@@ -1,6 +1,6 @@
 /* lnxdrive-menu-provider.c — NautilusMenuProvider for context-menu actions (US2)
  *
- * Copyright 2026 Strange Days Tech <https://strangedaystech.com>
+ * Copyright 2026 Strange Days Tech <https://strangedays.tech>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Implements:

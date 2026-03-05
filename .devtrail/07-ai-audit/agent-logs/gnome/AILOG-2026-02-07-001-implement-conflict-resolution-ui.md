@@ -75,4 +75,4 @@ The conflict list page rebuilds the `PreferencesGroup` on each refresh rather th
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

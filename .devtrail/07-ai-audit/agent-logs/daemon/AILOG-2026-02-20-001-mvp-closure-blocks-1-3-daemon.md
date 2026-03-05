@@ -88,4 +88,4 @@ The MVP Closure Plan identified critical and significant gaps preventing end-to-
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

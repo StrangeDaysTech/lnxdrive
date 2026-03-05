@@ -2,7 +2,7 @@
 name = "lnxdrive-gtk3"
 version = "0.1.0"
 edition = "2021"
-authors = ["Strange Days Tech, S.A.S. <contact@strangedaystech.com>"]
+authors = ["Strange Days Tech, S.A.S. <contact@strangedays.tech>"]
 license = "GPL-3.0-or-later"
 description = "LNXDrive GTK3 client for XFCE, Cinnamon, and MATE"
 repository = "https://github.com/strangedaystech/lnxdrive-gtk3"

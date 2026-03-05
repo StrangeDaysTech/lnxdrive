@@ -102,9 +102,9 @@ github.com/strangedaystech/
 │   │   └── dbus_client.rs          # Cliente D-Bus (usa lnxdrive-ipc)
 │   ├── data/
 │   │   ├── icons/
-│   │   ├── org.strangedaystech.LNXDrive.desktop
-│   │   ├── org.strangedaystech.LNXDrive.metainfo.xml
-│   │   └── org.strangedaystech.LNXDrive.gschema.xml
+│   │   ├── com.strangedaystech.LNXDrive.desktop
+│   │   ├── com.strangedaystech.LNXDrive.metainfo.xml
+│   │   └── com.strangedaystech.LNXDrive.gschema.xml
 │   └── .github/workflows/
 │       ├── ci.yml                  # Build + test
 │       └── flatpak.yml             # Build Flatpak
@@ -176,8 +176,8 @@ github.com/strangedaystech/
     │                               # Scripts y configuraciones
     │
     ├── flatpak/
-    │   ├── org.strangedaystech.LNXDrive.yml           # Manifiesto GNOME
-    │   └── org.strangedaystech.LNXDrive.Gtk3.yml      # Manifiesto GTK3
+    │   ├── com.strangedaystech.LNXDrive.yml           # Manifiesto GNOME
+    │   └── com.strangedaystech.LNXDrive.Gtk3.yml      # Manifiesto GTK3
     ├── deb/
     │   ├── lnxdrive-core/
     │   │   └── debian/

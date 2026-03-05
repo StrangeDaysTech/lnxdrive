@@ -85,4 +85,4 @@ Per spec U2 (stale entries): If a file was deleted from OneDrive since last sync
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

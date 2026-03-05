@@ -63,10 +63,10 @@ async fn test_authorized_user_allowed() {
 
 ```bash
 # Verificar que PolicyKit policy está instalado
-ls /usr/share/polkit-1/actions/org.strangedaystech.lnxdrive.policy
+ls /usr/share/polkit-1/actions/com.strangedaystech.lnxdrive.policy
 
 # Probar con pkcheck
-pkcheck --action-id org.strangedaystech.lnxdrive.sensitive \
+pkcheck --action-id com.strangedaystech.lnxdrive.sensitive \
         --process $$ --allow-user-interaction
 ```
 

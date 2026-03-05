@@ -63,4 +63,4 @@ The GNOME 49+ autostart change (from XDG `.desktop` to systemd user services) wa
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

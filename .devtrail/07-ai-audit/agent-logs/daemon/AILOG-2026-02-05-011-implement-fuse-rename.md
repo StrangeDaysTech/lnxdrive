@@ -66,4 +66,4 @@ The Files-on-Demand feature requires full FUSE filesystem support, including the
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

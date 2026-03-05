@@ -68,4 +68,4 @@ The `watch()` method currently returns a no-op `WatchHandle`. Real inotify-based
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

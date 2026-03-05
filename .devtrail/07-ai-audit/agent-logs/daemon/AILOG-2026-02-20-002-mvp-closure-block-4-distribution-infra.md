@@ -74,4 +74,4 @@ Block 4 addressed distribution infrastructure gaps: the systemd service used a d
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

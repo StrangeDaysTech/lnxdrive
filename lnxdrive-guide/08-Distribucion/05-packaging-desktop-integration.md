@@ -46,7 +46,7 @@ Cada entorno de escritorio recibe paquetes nativos con archivos de integracion p
 | `lnxdrive.service` | `/usr/lib/systemd/user/` | Servicio systemd del daemon |
 | `com.strangedaystech.LNXDrive.service` | `/usr/share/dbus-1/services/` | Activacion D-Bus |
 | `com.strangedaystech.LNXDrive.xml` | `/usr/share/dbus-1/interfaces/` | Introspection XML |
-| `org.strangedaystech.lnxdrive.policy` | `/usr/share/polkit-1/actions/` | Politicas PolicyKit |
+| `com.strangedaystech.lnxdrive.policy` | `/usr/share/polkit-1/actions/` | Politicas PolicyKit |
 
 #### GNOME Shell Extension (`lnxdrive-gnome`)
 
@@ -68,20 +68,20 @@ Cada entorno de escritorio recibe paquetes nativos con archivos de integracion p
 
 | Archivo | Ruta de Instalacion | Funcion |
 |---------|---------------------|---------|
-| `org.strangedaystech.LNXDrive.desktop` | `/usr/share/applications/` | Entrada en menu de aplicaciones |
-| `org.strangedaystech.LNXDrive.metainfo.xml` | `/usr/share/metainfo/` | Metadata AppStream |
-| `org.strangedaystech.LNXDrive.gschema.xml` | `/usr/share/glib-2.0/schemas/` | Esquema GSettings |
-| `org.strangedaystech.LNXDrive.svg` | `/usr/share/icons/hicolor/scalable/apps/` | Icono escalable |
-| `org.strangedaystech.LNXDrive-*.png` | `/usr/share/icons/hicolor/*/apps/` | Iconos rasterizados |
+| `com.strangedaystech.LNXDrive.desktop` | `/usr/share/applications/` | Entrada en menu de aplicaciones |
+| `com.strangedaystech.LNXDrive.metainfo.xml` | `/usr/share/metainfo/` | Metadata AppStream |
+| `com.strangedaystech.LNXDrive.gschema.xml` | `/usr/share/glib-2.0/schemas/` | Esquema GSettings |
+| `com.strangedaystech.LNXDrive.svg` | `/usr/share/icons/hicolor/scalable/apps/` | Icono escalable |
+| `com.strangedaystech.LNXDrive-*.png` | `/usr/share/icons/hicolor/*/apps/` | Iconos rasterizados |
 
 #### KDE Plasma (`lnxdrive-plasma`)
 
 | Archivo | Ruta de Instalacion | Funcion |
 |---------|---------------------|---------|
-| `metadata.json` (plasmoid) | `/usr/share/plasma/plasmoids/org.strangedaystech.lnxdrive/` | Widget de Plasma |
+| `metadata.json` (plasmoid) | `/usr/share/plasma/plasmoids/com.strangedaystech.lnxdrive/` | Widget de Plasma |
 | `main.qml` (plasmoid) | `contents/ui/` dentro del plasmoid | UI del widget |
 | `lnxdrive-plasma.desktop` | `/usr/share/applications/` | Entrada en menu |
-| `org.strangedaystech.lnxdrive-plasma.service` | `/usr/share/dbus-1/services/` | KDE service file |
+| `com.strangedaystech.lnxdrive-plasma.service` | `/usr/share/dbus-1/services/` | KDE service file |
 
 #### GTK3 (`lnxdrive-gtk3`)
 
@@ -370,7 +370,7 @@ deb/lnxdrive-core/debian/
 Source: lnxdrive
 Section: net
 Priority: optional
-Maintainer: Strange Days Tech <maintainers@strangedaystech.com>
+Maintainer: Strange Days Tech <maintainers@strangedays.tech>
 Build-Depends: debhelper-compat (= 13),
                cargo,
                libfuse3-dev,
@@ -404,9 +404,9 @@ esac
 #### Flatpak
 
 ```yaml
-# flatpak/org.strangedaystech.LNXDrive.yml
+# flatpak/com.strangedaystech.LNXDrive.yml
 
-app-id: org.strangedaystech.LNXDrive
+app-id: com.strangedaystech.LNXDrive
 runtime: org.gnome.Platform
 runtime-version: '47'
 sdk: org.gnome.Sdk

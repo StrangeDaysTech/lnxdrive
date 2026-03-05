@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license = "GPL-3.0-or-later"
 description = "LNXDrive preferences and onboarding application for GNOME"
-authors = ["Strange Days Tech, S.A.S. <dev@strangedaystech.com>"]
+authors = ["Strange Days Tech, S.A.S. <dev@strangedays.tech>"]
 
 [[bin]]
 name = "lnxdrive-preferences"

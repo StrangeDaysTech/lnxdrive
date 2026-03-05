@@ -85,4 +85,4 @@ validated_date: null
 | Status | [Validated/Rejected/Modified] |
 | Comments | [Validator notes] |
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

@@ -110,4 +110,4 @@ Stage 3 checkpoint achieved:
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

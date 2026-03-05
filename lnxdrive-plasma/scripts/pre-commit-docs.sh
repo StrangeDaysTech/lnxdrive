@@ -2,7 +2,7 @@
 
 # =============================================================================
 # DevTrail - Pre-commit Hook for Documentation Validation
-# https://strangedaystech.com
+# https://strangedays.tech
 # =============================================================================
 #
 # Installation:

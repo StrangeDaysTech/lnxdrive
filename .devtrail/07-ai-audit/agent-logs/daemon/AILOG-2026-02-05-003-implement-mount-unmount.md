@@ -66,4 +66,4 @@ The `unmount()` function is intentionally simple since dropping the `BackgroundS
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

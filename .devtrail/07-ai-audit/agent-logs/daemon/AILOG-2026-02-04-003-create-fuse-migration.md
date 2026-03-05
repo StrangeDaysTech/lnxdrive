@@ -68,4 +68,4 @@ This migration is part of the 002-files-on-demand branch implementation. The mig
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

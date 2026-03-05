@@ -43,4 +43,4 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-*[Strange Days Tech](https://strangedaystech.com) — LNXDrive Project*
+*[Strange Days Tech](https://strangedays.tech) — LNXDrive Project*

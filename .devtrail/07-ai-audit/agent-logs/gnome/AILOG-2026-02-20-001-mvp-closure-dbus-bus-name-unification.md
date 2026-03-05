@@ -15,11 +15,11 @@ related: [MVP-CLOSURE-PLAN.md]
 
 ## Summary
 
-Unified the D-Bus bus name across all GNOME integration components from `org.strangedaystech.LNXDrive` to `com.strangedaystech.LNXDrive`, matching the daemon's registered name. This was a critical gap (C2) that prevented the entire GNOME layer from connecting to the running daemon.
+Unified the D-Bus bus name across all GNOME integration components from `com.strangedaystech.LNXDrive` to `com.strangedaystech.LNXDrive`, matching the daemon's registered name. This was a critical gap (C2) that prevented the entire GNOME layer from connecting to the running daemon.
 
 ## Context
 
-The LNXDrive daemon registers on D-Bus as `com.strangedaystech.LNXDrive` with object path `/com/strangedaystech/LNXDrive`. However, all GNOME client components (Nautilus extension, Preferences app, Shell extension) and test infrastructure were using `org.strangedaystech.LNXDrive` with `/org/strangedaystech/LNXDrive`. This mismatch meant no GNOME component could ever connect to the real daemon — they would silently fail to find the bus name.
+The LNXDrive daemon registers on D-Bus as `com.strangedaystech.LNXDrive` with object path `/com/strangedaystech/LNXDrive`. However, all GNOME client components (Nautilus extension, Preferences app, Shell extension) and test infrastructure were using `com.strangedaystech.LNXDrive` with `/org/strangedaystech/LNXDrive`. This mismatch meant no GNOME component could ever connect to the real daemon — they would silently fail to find the bus name.
 
 ## Actions Performed
 
@@ -35,8 +35,8 @@ The LNXDrive daemon registers on D-Bus as `com.strangedaystech.LNXDrive` with ob
 
 | File | Change |
 |------|--------|
-| `nautilus-extension/src/lnxdrive-dbus-client.h` | Changed 6 #define constants: bus name `org.strangedaystech` → `com.strangedaystech`, object path `/org/` → `/com/`, 4 interface names |
-| `nautilus-extension/src/lnxdrive-dbus-client.c` | Changed `org.strangedaystech.LNXDrive.Settings` → `com.strangedaystech.LNXDrive.Settings` on line 425 |
+| `nautilus-extension/src/lnxdrive-dbus-client.h` | Changed 6 #define constants: bus name `com.strangedaystech` → `com.strangedaystech`, object path `/org/` → `/com/`, 4 interface names |
+| `nautilus-extension/src/lnxdrive-dbus-client.c` | Changed `com.strangedaystech.LNXDrive.Settings` → `com.strangedaystech.LNXDrive.Settings` on line 425 |
 | `preferences/src/dbus_client.rs` | Changed 16 occurrences in `#[proxy()]` macros across AuthProxy, SettingsProxy, StatusProxy, SyncProxy, ConflictsProxy |
 | `shell-extension/lnxdrive-indicator@strangedaystech.com/dbus.js` | Changed BUS_NAME, OBJECT_PATH, and 6 XML interface name attributes |
 | `tests/mock-dbus-daemon.py` | Changed BUS_NAME, OBJECT_PATH, and 7 `super().__init__()` interface name strings |
@@ -45,7 +45,7 @@ The LNXDrive daemon registers on D-Bus as `com.strangedaystech.LNXDrive` with ob
 
 ## Decisions Made
 
-- **Mock daemon also changed**: Unlike the original plan which suggested keeping `org.strangedaystech` for test isolation, the mock daemon was updated to `com.strangedaystech` to match all client code. Test isolation is achieved by running tests in containers with separate D-Bus sessions, not by using different bus names.
+- **Mock daemon also changed**: Unlike the original plan which suggested keeping `com.strangedaystech` for test isolation, the mock daemon was updated to `com.strangedaystech` to match all client code. Test isolation is achieved by running tests in containers with separate D-Bus sessions, not by using different bus names.
 
 ## Impact
 
@@ -55,7 +55,7 @@ The LNXDrive daemon registers on D-Bus as `com.strangedaystech.LNXDrive` with ob
 
 ## Verification
 
-- [x] All string replacements verified with grep (0 residual `org.strangedaystech` in source files)
+- [x] All string replacements verified with grep (0 residual `com.strangedaystech` in source files)
 - [ ] Tests pass (requires container test environment)
 - [ ] Manual review performed
 
@@ -66,4 +66,4 @@ The LNXDrive daemon registers on D-Bus as `com.strangedaystech.LNXDrive` with ob
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

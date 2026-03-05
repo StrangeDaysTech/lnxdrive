@@ -211,4 +211,4 @@ This project has access to the **Context7 MCP server** for real-time documentati
 ---
 
 *DevTrail v1.0.0 | LNXDrive Monorepo*
-*[Strange Days Tech](https://strangedaystech.com) — Because every change tells a story.*
+*[Strange Days Tech](https://strangedays.tech) — Because every change tells a story.*

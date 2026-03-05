@@ -107,7 +107,7 @@ Despues de analizar las opciones, se seleccionó **Rust** como lenguaje del core
 │  • Comparte codigo con daemon                                   │
 │  • Binario standalone                                           │
 │                                                                 │
-│  Comunicacion: DBus (org.strangedaystech.LNXDrive)                     │
+│  Comunicacion: DBus (com.strangedaystech.LNXDrive)                     │
 │  • Protocolo estandar freedesktop                               │
 │  • Cualquier lenguaje puede implementar cliente                 │
 │                                                                 │

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2026 Strange Days Tech <https://strangedaystech.com>
+// SPDX-FileCopyrightText: 2026 Strange Days Tech <https://strangedays.tech>
 
 /**
  * LNXDrive Panel Indicator

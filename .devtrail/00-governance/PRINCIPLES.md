@@ -74,4 +74,4 @@ Certain types of changes **always** require human approval:
 
 ---
 
-*DevTrail v1.0.0 | [Strange Days Tech](https://strangedaystech.com)*
+*DevTrail v1.0.0 | [Strange Days Tech](https://strangedays.tech)*

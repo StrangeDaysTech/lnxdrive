@@ -87,4 +87,4 @@ This handles cases where children might be loaded before their parents from the 
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

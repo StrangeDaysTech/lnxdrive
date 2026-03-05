@@ -178,7 +178,7 @@ async fn sync_file(&self, ctx: &OperationContext, path: &Path) -> Result<()> {
 
 ```rust
 // El daemon incluye trace_id en respuestas DBus
-#[dbus_interface(name = "org.strangedaystech.LNXDrive.Sync")]
+#[dbus_interface(name = "com.strangedaystech.LNXDrive.Sync")]
 impl SyncService {
     async fn sync_file(&self, path: &str) -> fdo::Result<SyncResult> {
         let ctx = OperationContext::new(&self.current_account);
@@ -478,7 +478,7 @@ journalctl /usr/bin/gnome-shell -o json --since "1 hour ago" \
 # 5. Mensajes DBus recientes
 echo "  - DBus messages..."
 if command -v dbus-monitor &> /dev/null; then
-    timeout 5 dbus-monitor --session "interface='org.strangedaystech.LNXDrive'" \
+    timeout 5 dbus-monitor --session "interface='com.strangedaystech.LNXDrive'" \
         > "$OUTPUT_DIR/dbus-messages.txt" 2>/dev/null &
 fi
 

@@ -110,4 +110,4 @@ sqlx = { version = "0.8", features = [
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

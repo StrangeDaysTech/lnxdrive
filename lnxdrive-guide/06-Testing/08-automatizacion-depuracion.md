@@ -292,7 +292,7 @@ collect_diagnostics() {
     # 4. DBus service
     local dbus_active=$(dbus-send --session --dest=org.freedesktop.DBus \
         --type=method_call --print-reply /org/freedesktop/DBus \
-        org.freedesktop.DBus.ListNames 2>/dev/null | grep -c "org.strangedaystech.LNXDrive" || echo "0")
+        org.freedesktop.DBus.ListNames 2>/dev/null | grep -c "com.strangedaystech.LNXDrive" || echo "0")
     diag=$(echo "$diag" | jq --argjson d "$dbus_active" '.dbus_service_active = ($d > 0)')
 
     # 5. Logs recientes (si no es modo rapido)

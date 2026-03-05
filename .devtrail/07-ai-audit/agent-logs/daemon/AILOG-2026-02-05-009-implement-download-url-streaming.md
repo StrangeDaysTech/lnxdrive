@@ -75,4 +75,4 @@ The Files-on-Demand feature requires efficient file download capabilities for th
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

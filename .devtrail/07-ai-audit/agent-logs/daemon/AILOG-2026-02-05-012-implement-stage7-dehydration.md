@@ -121,4 +121,4 @@ Remaining: T086 (mount lifecycle integration)
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

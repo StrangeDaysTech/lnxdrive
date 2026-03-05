@@ -85,4 +85,4 @@ are now present. The D-Bus XML interfaces match the contract defined in
 
 ---
 
-<!-- Template: DevTrail | https://strangedaystech.com -->
+<!-- Template: DevTrail | https://strangedays.tech -->

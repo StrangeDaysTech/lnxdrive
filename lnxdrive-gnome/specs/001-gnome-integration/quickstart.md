@@ -191,18 +191,18 @@ cd preferences && cargo run
 
 ```bash
 # Monitor D-Bus traffic
-dbus-monitor --session "interface='org.strangedaystech.LNXDrive.Files'"
+dbus-monitor --session "interface='com.strangedaystech.LNXDrive.Files'"
 
 # Call D-Bus methods manually
 gdbus call --session \
-    --dest org.strangedaystech.LNXDrive \
+    --dest com.strangedaystech.LNXDrive \
     --object-path /org/strangedaystech/LNXDrive \
-    --method org.strangedaystech.LNXDrive.Files.GetFileStatus \
+    --method com.strangedaystech.LNXDrive.Files.GetFileStatus \
     "/home/user/OneDrive/document.pdf"
 
 # Check if daemon is running
 gdbus introspect --session \
-    --dest org.strangedaystech.LNXDrive \
+    --dest com.strangedaystech.LNXDrive \
     --object-path /org/strangedaystech/LNXDrive
 ```
 

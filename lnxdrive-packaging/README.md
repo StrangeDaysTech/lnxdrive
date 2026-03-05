@@ -30,7 +30,7 @@ lnxdrive-packaging/
 
 ```bash
 cd flatpak
-flatpak-builder --user --install builddir org.strangedaystech.LNXDrive.yaml
+flatpak-builder --user --install builddir com.strangedaystech.LNXDrive.yaml
 ```
 
 ### RPM (Fedora)

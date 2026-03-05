@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: lnxdrive-gnome 0.1.0\n"
-"Report-Msgid-Bugs-To: dev@strangedaystech.com\n"
+"Report-Msgid-Bugs-To: dev@strangedays.tech\n"
 "POT-Creation-Date: 2026-02-05\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"

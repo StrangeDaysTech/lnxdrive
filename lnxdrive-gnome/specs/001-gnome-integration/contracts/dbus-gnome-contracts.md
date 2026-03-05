@@ -2,7 +2,7 @@
 
 **Branch**: `001-gnome-integration` | **Date**: 2026-02-05
 
-This document defines the D-Bus interfaces consumed by the GNOME integration components. These interfaces are provided by `lnxdrive-daemon` (defined in `org.strangedaystech.LNXDrive`). The GNOME components are **clients only** — they do not serve D-Bus interfaces.
+This document defines the D-Bus interfaces consumed by the GNOME integration components. These interfaces are provided by `lnxdrive-daemon` (defined in `com.strangedaystech.LNXDrive`). The GNOME components are **clients only** — they do not serve D-Bus interfaces.
 
 ---
 
@@ -17,7 +17,7 @@ This document defines the D-Bus interfaces consumed by the GNOME integration com
 
 ---
 
-## Interface: org.strangedaystech.LNXDrive.Files
+## Interface: com.strangedaystech.LNXDrive.Files
 
 Used primarily by the Nautilus extension for per-file status queries and actions.
 
@@ -52,7 +52,7 @@ Used primarily by the Nautilus extension for per-file status queries and actions
 
 ---
 
-## Interface: org.strangedaystech.LNXDrive.Sync
+## Interface: com.strangedaystech.LNXDrive.Sync
 
 Used by Shell extension for global sync control and by Nautilus for sync signals.
 
@@ -90,7 +90,7 @@ Used by Shell extension for global sync control and by Nautilus for sync signals
 
 ---
 
-## Interface: org.strangedaystech.LNXDrive.Status
+## Interface: com.strangedaystech.LNXDrive.Status
 
 Used by Shell extension for account and quota information.
 
@@ -116,7 +116,7 @@ Used by Shell extension for account and quota information.
 
 ---
 
-## Interface: org.strangedaystech.LNXDrive.Manager
+## Interface: com.strangedaystech.LNXDrive.Manager
 
 Used by Shell extension and onboarding wizard for daemon lifecycle.
 
@@ -138,7 +138,7 @@ Used by Shell extension and onboarding wizard for daemon lifecycle.
 
 ---
 
-## Interface: org.strangedaystech.LNXDrive.Settings (consumed by Preferences panel)
+## Interface: com.strangedaystech.LNXDrive.Settings (consumed by Preferences panel)
 
 ### Methods
 
@@ -160,7 +160,7 @@ Used by Shell extension and onboarding wizard for daemon lifecycle.
 
 ---
 
-## Interface: org.strangedaystech.LNXDrive.Auth (consumed by Onboarding wizard)
+## Interface: com.strangedaystech.LNXDrive.Auth (consumed by Onboarding wizard)
 
 ### Methods
 
@@ -185,12 +185,12 @@ All D-Bus method calls may return standard D-Bus errors:
 
 | Error Name | When |
 |------------|------|
-| `org.strangedaystech.LNXDrive.Error.NotRunning` | Daemon not active |
-| `org.strangedaystech.LNXDrive.Error.NotAuthenticated` | No account configured |
-| `org.strangedaystech.LNXDrive.Error.InvalidPath` | Path not in sync root |
-| `org.strangedaystech.LNXDrive.Error.InvalidConfig` | Config validation failed |
-| `org.strangedaystech.LNXDrive.Error.NetworkError` | Cannot reach cloud |
-| `org.strangedaystech.LNXDrive.Error.InsufficientDiskSpace` | Not enough local disk space to hydrate file (FR-036) |
-| `org.strangedaystech.LNXDrive.Error.FileInUse` | File is actively used by another process, cannot dehydrate (FR-037) |
+| `com.strangedaystech.LNXDrive.Error.NotRunning` | Daemon not active |
+| `com.strangedaystech.LNXDrive.Error.NotAuthenticated` | No account configured |
+| `com.strangedaystech.LNXDrive.Error.InvalidPath` | Path not in sync root |
+| `com.strangedaystech.LNXDrive.Error.InvalidConfig` | Config validation failed |
+| `com.strangedaystech.LNXDrive.Error.NetworkError` | Cannot reach cloud |
+| `com.strangedaystech.LNXDrive.Error.InsufficientDiskSpace` | Not enough local disk space to hydrate file (FR-036) |
+| `com.strangedaystech.LNXDrive.Error.FileInUse` | File is actively used by another process, cannot dehydrate (FR-037) |
 
 GNOME components must handle these errors gracefully and display user-friendly messages.
