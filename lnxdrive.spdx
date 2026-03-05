@@ -1,0 +1,45 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: lnxdrive
+DocumentNamespace: https://github.com/StrangeDaysTech/lnxdrive
+Creator: Organization: Strange Days Tech, S.A.S.
+Created: 2025-01-27T00:00:00Z
+
+PackageName: lnxdrive
+SPDXID: SPDXRef-Package
+PackageVersion: 1.0.0
+PackageDownloadLocation: https://github.com/StrangeDaysTech/lnxdrive
+PackageHomePage: https://github.com/StrangeDaysTech/lnxdrive
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: MIT
+PackageCopyrightText: Copyright (c) 2025 Strange Days Tech, S.A.S. and LNXDrive Contributors
+PackageSummary: Documentation governance framework for AI-assisted software development.
+PackageDescription: DevTrail provides a documentation governance system that ensures traceability for all significant changes in software projects, whether made by humans or AI agents. Includes templates, validation scripts, and multi-agent support.
+
+LicenseID: LicenseRef-MIT
+ExtractedText: <text>
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</text>
+LicenseName: MIT License
+LicenseCrossReference: https://opensource.org/licenses/MIT
+
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package

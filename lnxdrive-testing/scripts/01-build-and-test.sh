@@ -19,7 +19,7 @@ PROJECT_DIR="$(cd "$TESTING_DIR/.." && pwd)"
 IMAGE_NAME="localhost/lnxdrive-build-test"
 CONTAINER_NAME="lnxdrive-build-test"
 
-LNXDRIVE_DIR="${PROJECT_DIR}/lnxdrive"
+LNXDRIVE_DIR="${PROJECT_DIR}/lnxdrive-engine"
 GNOME_DIR="${PROJECT_DIR}/lnxdrive-gnome"
 
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
@@ -108,7 +108,7 @@ podman run -d \
     --name "${CONTAINER_NAME}" \
     --systemd=always \
     "${SECURITY_OPT[@]}" \
-    -v "${LNXDRIVE_DIR}:/src/lnxdrive:ro" \
+    -v "${LNXDRIVE_DIR}:/src/lnxdrive-engine:ro" \
     -v "${GNOME_DIR}:/src/lnxdrive-gnome:ro" \
     -v "${LOG_DIR}:/logs" \
     "${IMAGE_NAME}"

@@ -24,7 +24,7 @@ After=default.target
 
 [Service]
 Type=simple
-ExecStart=/home/dev/proyectos/lnxdrive/target/debug/lnxdrive-daemon --config ~/.config/lnxdrive-dev/config.yaml
+ExecStart=/home/dev/proyectos/lnxdrive-engine/target/debug/lnxdrive-daemon --config ~/.config/lnxdrive-dev/config.yaml
 ExecStop=/bin/kill -SIGTERM $MAINPID
 Restart=no
 Environment=RUST_LOG=debug

@@ -8,7 +8,7 @@
 # require the systemd user session (D-Bus, systemctl --user).
 #
 # Expected environment:
-#   /src/lnxdrive       - mounted read-only
+#   /src/lnxdrive-engine       - mounted read-only
 #   /src/lnxdrive-gnome - mounted read-only
 #   /build              - writable build area
 #   /logs               - writable log output
@@ -82,8 +82,8 @@ step_info "TESTUSER_UID: ${TESTUSER_UID:-not set}"
 echo ""
 
 # Ensure source directories exist
-if [ ! -f /src/lnxdrive/Cargo.toml ]; then
-    echo -e "${RED}ERROR: /src/lnxdrive not mounted or invalid${NC}"
+if [ ! -f /src/lnxdrive-engine/Cargo.toml ]; then
+    echo -e "${RED}ERROR: /src/lnxdrive-engine not mounted or invalid${NC}"
     exit 1
 fi
 if [ ! -f /src/lnxdrive-gnome/meson.build ]; then
@@ -92,7 +92,7 @@ if [ ! -f /src/lnxdrive-gnome/meson.build ]; then
 fi
 
 # Prepare build directories (copy sources since cargo needs writable target/)
-cp -a /src/lnxdrive /build/lnxdrive
+cp -a /src/lnxdrive-engine /build/lnxdrive-engine
 cp -a /src/lnxdrive-gnome /build/lnxdrive-gnome
 chown -R testuser:testuser /build
 
@@ -131,7 +131,7 @@ wait_for_user_session() {
 
 wait_for_user_session
 
-# Crates excluded from default build (matching lnxdrive/Makefile, phase 4+)
+# Crates excluded from default build (matching lnxdrive-engine/Makefile, phase 4+)
 EXCLUDE_STUBS="--exclude lnxdrive-conflict --exclude lnxdrive-audit --exclude lnxdrive-telemetry"
 
 # ============================================================================
@@ -143,7 +143,7 @@ echo -e "${BOLD}=== PHASE 1: Build lnxdrive ===${NC}"
 
 run_step "Cargo build lnxdrive (workspace)" \
     "/logs/cargo-build-lnxdrive.log" \
-    cargo build --manifest-path /build/lnxdrive/Cargo.toml --workspace $EXCLUDE_STUBS
+    cargo build --manifest-path /build/lnxdrive-engine/Cargo.toml --workspace $EXCLUDE_STUBS
 
 # ============================================================================
 # PHASE 2: Unit tests lnxdrive
@@ -154,7 +154,7 @@ echo -e "${BOLD}=== PHASE 2: Unit tests lnxdrive ===${NC}"
 
 run_step "Cargo test lnxdrive (workspace)" \
     "/logs/cargo-test-lnxdrive.log" \
-    cargo test --manifest-path /build/lnxdrive/Cargo.toml --workspace $EXCLUDE_STUBS || true
+    cargo test --manifest-path /build/lnxdrive-engine/Cargo.toml --workspace $EXCLUDE_STUBS || true
 
 # ============================================================================
 # PHASE 3: Build lnxdrive-gnome
@@ -190,8 +190,8 @@ echo ""
 echo -e "${BOLD}=== PHASE 5: Daemon functional tests ===${NC}"
 
 # Install daemon binaries (as root)
-DAEMON_BIN="/build/lnxdrive/target/debug/lnxdrived"
-CLI_BIN="/build/lnxdrive/target/debug/lnxdrive"
+DAEMON_BIN="/build/lnxdrive-engine/target/debug/lnxdrived"
+CLI_BIN="/build/lnxdrive-engine/target/debug/lnxdrive"
 
 if [ -f "$DAEMON_BIN" ]; then
     cp "$DAEMON_BIN" /usr/local/bin/lnxdrived
@@ -208,7 +208,7 @@ if [ -f "$CLI_BIN" ]; then
 fi
 
 # Copy default config
-cp /src/lnxdrive/config/default-config.yaml /home/testuser/.config/lnxdrive/config.yaml
+cp /src/lnxdrive-engine/config/default-config.yaml /home/testuser/.config/lnxdrive/config.yaml
 chown testuser:testuser /home/testuser/.config/lnxdrive/config.yaml
 
 # Create systemd user service
@@ -236,8 +236,8 @@ ln -sf /home/testuser/.config/systemd/user/lnxdrive.service \
 chown -R testuser:testuser /home/testuser/.config/systemd
 
 # Copy and run functional test script (runs as testuser for systemd --user)
-if [ -f /src/lnxdrive/scripts/test-daemon-functional.sh ]; then
-    cp /src/lnxdrive/scripts/test-daemon-functional.sh /usr/local/bin/test-daemon-functional.sh
+if [ -f /src/lnxdrive-engine/scripts/test-daemon-functional.sh ]; then
+    cp /src/lnxdrive-engine/scripts/test-daemon-functional.sh /usr/local/bin/test-daemon-functional.sh
     chmod +x /usr/local/bin/test-daemon-functional.sh
     run_step "Daemon functional tests (8 checks)" \
         "/logs/daemon-functional.log" \

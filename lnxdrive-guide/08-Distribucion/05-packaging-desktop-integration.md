@@ -21,7 +21,7 @@ Cada entorno de escritorio recibe paquetes nativos con archivos de integracion p
 │  Repositorios fuente              lnxdrive-packaging          Distribucion  │
 │  ─────────────────                ──────────────────          ────────────  │
 │                                                                             │
-│  lnxdrive/                                                                  │
+│  lnxdrive-engine/                                                                  │
 │  ├── data/                                                                  │
 │  │   ├── lnxdrive.service    ──┐                                           │
 │  │   └── dbus-service.service  ├──▶  rpm/              ──▶  .rpm           │
@@ -78,7 +78,7 @@ Cada entorno de escritorio recibe paquetes nativos con archivos de integracion p
 
 | Archivo | Ruta de Instalacion | Funcion |
 |---------|---------------------|---------|
-| `metadata.json` (plasmoid) | `/usr/share/plasma/plasmoids/com.strangedaystech.lnxdrive/` | Widget de Plasma |
+| `metadata.json` (plasmoid) | `/usr/share/plasma/plasmoids/com.strangedaystech.lnxdrive-engine/` | Widget de Plasma |
 | `main.qml` (plasmoid) | `contents/ui/` dentro del plasmoid | UI del widget |
 | `lnxdrive-plasma.desktop` | `/usr/share/applications/` | Entrada en menu |
 | `com.strangedaystech.lnxdrive-plasma.service` | `/usr/share/dbus-1/services/` | KDE service file |

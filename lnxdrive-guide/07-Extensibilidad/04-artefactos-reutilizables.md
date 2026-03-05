@@ -256,7 +256,7 @@ impl ConflictEngine {
 │                                                                     │
 │  Repositorio mono-repo con workspaces:                              │
 │                                                                     │
-│  lnxdrive/                                                            │
+│  lnxdrive-engine/                                                            │
 │  ├── Cargo.toml              (workspace root)                       │
 │  ├── crates/                                                        │
 │  │   ├── lnxdrive-fuse/        → publicado como crate independiente   │

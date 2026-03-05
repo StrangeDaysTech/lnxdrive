@@ -2,7 +2,7 @@
 # LNXDrive Test VM - Cloud-Init User Data
 #
 # Provisions a Fedora VM with GNOME desktop and all LNXDrive dependencies.
-# The host's lnxdrive-project directory is shared via 9p at /mnt/lnxdrive-project.
+# The host's lnxdrive directory is shared via 9p at /mnt/lnxdrive.
 
 users:
   - name: testuser
@@ -63,22 +63,22 @@ runcmd:
   - su - testuser -c 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal'
 
   # Mount the shared project directory and persist in fstab
-  - mkdir -p /mnt/lnxdrive-project
-  - mount -t 9p lnxdrive-project /mnt/lnxdrive-project -o trans=virtio,version=9p2000.L,msize=104857600 || echo "9p mount failed - will use manual copy"
-  - echo 'lnxdrive-project /mnt/lnxdrive-project 9p trans=virtio,version=9p2000.L,msize=104857600,nofail,_netdev 0 0' >> /etc/fstab
+  - mkdir -p /mnt/lnxdrive
+  - mount -t 9p lnxdrive /mnt/lnxdrive -o trans=virtio,version=9p2000.L,msize=104857600 || echo "9p mount failed - will use manual copy"
+  - echo 'lnxdrive /mnt/lnxdrive 9p trans=virtio,version=9p2000.L,msize=104857600,nofail,_netdev 0 0' >> /etc/fstab
 
   # Create LNXDrive directories for testuser
   - su - testuser -c 'mkdir -p ~/.config/lnxdrive ~/.local/share/lnxdrive ~/.local/share/gnome-shell/extensions ~/OneDrive'
 
   # Copy default config
-  - su - testuser -c 'cp /mnt/lnxdrive-project/lnxdrive/config/default-config.yaml ~/.config/lnxdrive/config.yaml 2>/dev/null || true'
+  - su - testuser -c 'cp /mnt/lnxdrive/lnxdrive-engine/config/default-config.yaml ~/.config/lnxdrive/config.yaml 2>/dev/null || true'
 
   # Build lnxdrive daemon
   - |
     su - testuser -c '
       export PATH="$HOME/.cargo/bin:$PATH"
       EXCLUDE="--exclude lnxdrive-conflict --exclude lnxdrive-audit --exclude lnxdrive-telemetry"
-      cd /mnt/lnxdrive-project/lnxdrive
+      cd /mnt/lnxdrive/lnxdrive-engine
       cargo build --workspace $EXCLUDE 2>&1 | tail -20
       # Install binaries
       sudo cp target/debug/lnxdrived /usr/local/bin/
@@ -89,7 +89,7 @@ runcmd:
   # Build lnxdrive-gnome extensions
   - |
     su - testuser -c '
-      cd /mnt/lnxdrive-project/lnxdrive-gnome
+      cd /mnt/lnxdrive/lnxdrive-gnome
       meson setup /tmp/gnome-builddir . --prefix=/usr 2>&1 | tail -10
       meson compile -C /tmp/gnome-builddir 2>&1 | tail -10
       sudo meson install -C /tmp/gnome-builddir 2>&1 | tail -10
@@ -99,7 +99,7 @@ runcmd:
   - |
     su - testuser -c '
       export PATH="$HOME/.cargo/bin:$PATH"
-      cd /mnt/lnxdrive-project/lnxdrive-gnome/preferences
+      cd /mnt/lnxdrive/lnxdrive-gnome/preferences
       cargo build 2>&1 | tail -10
       sudo cp target/debug/lnxdrive-preferences /usr/local/bin/
       sudo chmod +x /usr/local/bin/lnxdrive-preferences
@@ -108,7 +108,7 @@ runcmd:
   # Install Shell extension
   - |
     su - testuser -c '
-      SHELL_EXT_SRC="/mnt/lnxdrive-project/lnxdrive-gnome/shell-extension/lnxdrive-indicator@strangedaystech.com"
+      SHELL_EXT_SRC="/mnt/lnxdrive/lnxdrive-gnome/shell-extension/lnxdrive-indicator@strangedaystech.com"
       SHELL_EXT_DEST="$HOME/.local/share/gnome-shell/extensions/lnxdrive-indicator@strangedaystech.com"
       if [ -d "$SHELL_EXT_SRC" ]; then
         cp -r "$SHELL_EXT_SRC" "$SHELL_EXT_DEST"
@@ -146,7 +146,7 @@ runcmd:
 
     [Service]
     Type=simple
-    ExecStart=/usr/bin/python3 /mnt/lnxdrive-project/lnxdrive-gnome/tests/mock-dbus-daemon.py --authenticated --signal-interval 5 --sync-root /home/testuser/OneDrive
+    ExecStart=/usr/bin/python3 /mnt/lnxdrive/lnxdrive-gnome/tests/mock-dbus-daemon.py --authenticated --signal-interval 5 --sync-root /home/testuser/OneDrive
     Restart=on-failure
     RestartSec=5
 

@@ -84,7 +84,7 @@ After=default.target
 
 [Service]
 Type=simple
-ExecStart=/home/dev/proyectos/lnxdrive/target/debug/lnxdrive-daemon --config ~/.config/lnxdrive-dev/config.yaml
+ExecStart=/home/dev/proyectos/lnxdrive-engine/target/debug/lnxdrive-daemon --config ~/.config/lnxdrive-dev/config.yaml
 ExecStop=/bin/kill -SIGTERM $MAINPID
 Restart=no
 Environment=RUST_LOG=debug
@@ -870,7 +870,7 @@ impl TestFileSystem {
 ### 7.1 Estructura de Proyecto para Testing
 
 ```
-lnxdrive/
+lnxdrive-engine/
 ├── crates/
 │   ├── lnxdrive-core/           # Lógica de negocio (testeable directamente)
 │   ├── lnxdrive-fuse/           # FUSE filesystem
@@ -1427,7 +1427,7 @@ def setup_logging():
 
     # Handler para archivo (debugging)
     file_handler = logging.FileHandler(
-        GLib.get_user_cache_dir() + '/lnxdrive/nautilus-extension.log'
+        GLib.get_user_cache_dir() + '/lnxdrive-engine/nautilus-extension.log'
     )
     file_handler.setFormatter(logging.Formatter(
         '%(asctime)s [%(levelname)s] %(funcName)s: %(message)s'
@@ -1454,7 +1454,7 @@ class LNXDriveExtension(GObject.GObject, Nautilus.MenuProvider):
 journalctl -f | grep lnxdrive-nautilus
 
 # O al archivo de cache
-tail -f ~/.cache/lnxdrive/nautilus-extension.log
+tail -f ~/.cache/lnxdrive-engine/nautilus-extension.log
 
 # Reiniciar Nautilus para recargar extensión y ver logs de inicio
 nautilus -q && nautilus &

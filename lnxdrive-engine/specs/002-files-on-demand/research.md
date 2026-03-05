@@ -49,7 +49,7 @@
 
 **Alternatives considered**:
 - Store in mount directory: Creates circular FUSE calls; complex dehydration.
-- `~/.cache/lnxdrive/`: XDG cache spec allows cleanup by users/tools, risking data loss.
+- `~/.cache/lnxdrive-engine/`: XDG cache spec allows cleanup by users/tools, risking data loss.
 
 ---
 

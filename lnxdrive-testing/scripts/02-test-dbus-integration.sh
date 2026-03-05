@@ -16,7 +16,7 @@ PROJECT_DIR="$(cd "$TESTING_DIR/.." && pwd)"
 IMAGE_NAME="localhost/lnxdrive-build-test"
 CONTAINER_NAME="lnxdrive-dbus-test"
 
-LNXDRIVE_DIR="${PROJECT_DIR}/lnxdrive"
+LNXDRIVE_DIR="${PROJECT_DIR}/lnxdrive-engine"
 GNOME_DIR="${PROJECT_DIR}/lnxdrive-gnome"
 
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
@@ -141,7 +141,7 @@ else
 fi
 
 # Copy source for building
-cp -a /src/lnxdrive /build/lnxdrive 2>/dev/null || true
+cp -a /src/lnxdrive-engine /build/lnxdrive-engine 2>/dev/null || true
 cp -a /src/lnxdrive-gnome /build/lnxdrive-gnome 2>/dev/null || true
 chown -R testuser:testuser /build
 
@@ -153,11 +153,11 @@ SHELL_TEST="/src/lnxdrive-gnome/tests/test-shell-extension.js"
 # ---- Phase A: Build daemon ----
 
 echo -e "${YELLOW}[INFO]${NC} Building daemon for D-Bus tests..."
-cargo build --manifest-path /build/lnxdrive/Cargo.toml --workspace $EXCLUDE_STUBS \
+cargo build --manifest-path /build/lnxdrive-engine/Cargo.toml --workspace $EXCLUDE_STUBS \
     > /logs/cargo-build.log 2>&1 || true
 
-DAEMON_BIN="/build/lnxdrive/target/debug/lnxdrived"
-CLI_BIN="/build/lnxdrive/target/debug/lnxdrive"
+DAEMON_BIN="/build/lnxdrive-engine/target/debug/lnxdrived"
+CLI_BIN="/build/lnxdrive-engine/target/debug/lnxdrive"
 
 if [ -f "$DAEMON_BIN" ]; then
     cp "$DAEMON_BIN" /usr/local/bin/lnxdrived
@@ -169,7 +169,7 @@ if [ -f "$CLI_BIN" ]; then
 fi
 
 # Set up daemon config and service
-cp /src/lnxdrive/config/default-config.yaml /home/testuser/.config/lnxdrive/config.yaml 2>/dev/null || true
+cp /src/lnxdrive-engine/config/default-config.yaml /home/testuser/.config/lnxdrive/config.yaml 2>/dev/null || true
 chown testuser:testuser /home/testuser/.config/lnxdrive/config.yaml
 
 cat > /home/testuser/.config/systemd/user/lnxdrive.service <<'SVCEOF'
@@ -302,7 +302,7 @@ podman run -d \
     --name "${CONTAINER_NAME}" \
     --systemd=always \
     "${SECURITY_OPT[@]}" \
-    -v "${LNXDRIVE_DIR}:/src/lnxdrive:ro" \
+    -v "${LNXDRIVE_DIR}:/src/lnxdrive-engine:ro" \
     -v "${GNOME_DIR}:/src/lnxdrive-gnome:ro" \
     -v "${LOG_DIR}:/logs" \
     "${IMAGE_NAME}"

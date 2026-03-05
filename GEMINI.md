@@ -11,7 +11,7 @@ This is a monorepo containing all LNXDrive components:
 
 | Directory | Description | Tech Stack |
 |-----------|-------------|------------|
-| `lnxdrive/` | Core daemon + library crates | Rust 1.75+, Cargo workspace (12 crates), tokio, zbus, sqlx |
+| `lnxdrive-engine/` | Core daemon + library crates | Rust 1.75+, Cargo workspace (12 crates), tokio, zbus, sqlx |
 | `lnxdrive-gnome/` | GNOME Shell/Nautilus/GOA integration | Meson + Rust (gtk4-rs), GJS (ES modules), C11 (Nautilus), Python |
 | `lnxdrive-gtk3/` | XFCE/MATE UI | Rust, Cargo, GTK3 |
 | `lnxdrive-plasma/` | KDE Plasma integration | C++, CMake, Qt/KDE |
@@ -68,7 +68,7 @@ AILOGs are organized by component in `.devtrail/07-ai-audit/agent-logs/`:
 
 | Subdirectory | Component |
 |--------------|-----------|
-| `daemon/` | Core daemon (lnxdrive/) |
+| `daemon/` | Core daemon (lnxdrive-engine/) |
 | `gnome/` | GNOME integration (lnxdrive-gnome/) |
 | `guide/` | Documentation & design (lnxdrive-guide/) |
 | `gtk3/` | GTK3 UI (lnxdrive-gtk3/) — create when needed |

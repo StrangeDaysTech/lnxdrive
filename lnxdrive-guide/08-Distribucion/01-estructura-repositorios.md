@@ -62,7 +62,7 @@ Este pragmatismo se traduce en usar el toolkit y lenguaje que cada entorno de es
 ```
 github.com/strangedaystech/
 │
-├── lnxdrive/                       # CORE + CLI + DAEMON
+├── lnxdrive-engine/                       # CORE + CLI + DAEMON
 │   │                               # ══════════════════
 │   │                               # Lenguaje: Rust
 │   │                               # El corazon del proyecto

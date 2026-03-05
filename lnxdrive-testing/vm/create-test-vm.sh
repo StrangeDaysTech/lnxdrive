@@ -188,7 +188,7 @@ virt-install \
     --os-variant "fedora-unknown" \
     --graphics spice \
     --channel spicevmc \
-    --filesystem source="${PROJECT_DIR}",target=lnxdrive-project,accessmode=mapped \
+    --filesystem source="${PROJECT_DIR}",target=lnxdrive,accessmode=mapped \
     --network user \
     --security type=none \
     --import \

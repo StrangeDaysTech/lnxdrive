@@ -106,27 +106,27 @@ export USER=testuser
 export DISPLAY=:1
 
 # Install binaries if available in /opt/lnxdrive
-if [ -f /opt/lnxdrive/lnxdrived ]; then
-    cp /opt/lnxdrive/lnxdrived /usr/local/bin/lnxdrived
+if [ -f /opt/lnxdrive-engine/lnxdrived ]; then
+    cp /opt/lnxdrive-engine/lnxdrived /usr/local/bin/lnxdrived
     chmod +x /usr/local/bin/lnxdrived
 fi
-if [ -f /opt/lnxdrive/lnxdrive ]; then
-    cp /opt/lnxdrive/lnxdrive /usr/local/bin/lnxdrive
+if [ -f /opt/lnxdrive-engine/lnxdrive ]; then
+    cp /opt/lnxdrive-engine/lnxdrive /usr/local/bin/lnxdrive
     chmod +x /usr/local/bin/lnxdrive
 fi
-if [ -f /opt/lnxdrive/lnxdrive-preferences ]; then
-    cp /opt/lnxdrive/lnxdrive-preferences /usr/local/bin/lnxdrive-preferences
+if [ -f /opt/lnxdrive-engine/lnxdrive-preferences ]; then
+    cp /opt/lnxdrive-engine/lnxdrive-preferences /usr/local/bin/lnxdrive-preferences
     chmod +x /usr/local/bin/lnxdrive-preferences
 fi
 
 # Install Nautilus extension if available
-if [ -d /opt/lnxdrive/nautilus-extension ]; then
+if [ -d /opt/lnxdrive-engine/nautilus-extension ]; then
     mkdir -p /usr/lib64/nautilus/extensions-4/
-    cp -a /opt/lnxdrive/nautilus-extension/* /usr/lib64/nautilus/extensions-4/ 2>/dev/null || true
+    cp -a /opt/lnxdrive-engine/nautilus-extension/* /usr/lib64/nautilus/extensions-4/ 2>/dev/null || true
 fi
 
 # Install Shell extension if available
-SHELL_EXT_SRC="/opt/lnxdrive/shell-extension/lnxdrive-indicator@strangedaystech.com"
+SHELL_EXT_SRC="/opt/lnxdrive-engine/shell-extension/lnxdrive-indicator@strangedaystech.com"
 SHELL_EXT_DEST="/home/testuser/.local/share/gnome-shell/extensions/lnxdrive-indicator@strangedaystech.com"
 if [ -d "$SHELL_EXT_SRC" ]; then
     rm -rf "$SHELL_EXT_DEST"
@@ -153,7 +153,7 @@ export GSETTINGS_SCHEMA_DIR="$SCHEMA_DIR"
 chmod 777 /logs 2>/dev/null || true
 
 # Start mock daemon
-MOCK_DAEMON="/opt/lnxdrive/mock-dbus-daemon.py"
+MOCK_DAEMON="/opt/lnxdrive-engine/mock-dbus-daemon.py"
 if [ -f "$MOCK_DAEMON" ]; then
     su - testuser -c "
         export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/\$(id -u)/bus

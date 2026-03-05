@@ -338,7 +338,7 @@ def setup_logging():
 
     # Handler para archivo (debugging)
     file_handler = logging.FileHandler(
-        GLib.get_user_cache_dir() + '/lnxdrive/nautilus-extension.log'
+        GLib.get_user_cache_dir() + '/lnxdrive-engine/nautilus-extension.log'
     )
     file_handler.setFormatter(logging.Formatter(
         '%(asctime)s [%(levelname)s] %(funcName)s: %(message)s'
@@ -365,7 +365,7 @@ class LNXDriveExtension(GObject.GObject, Nautilus.MenuProvider):
 journalctl -f | grep lnxdrive-nautilus
 
 # O al archivo de cache
-tail -f ~/.cache/lnxdrive/nautilus-extension.log
+tail -f ~/.cache/lnxdrive-engine/nautilus-extension.log
 
 # Reiniciar Nautilus para recargar extension y ver logs de inicio
 nautilus -q && nautilus &
@@ -466,7 +466,7 @@ cp /tmp/lnxdrive-fuse-dev.*/fuse.log "$OUTPUT_DIR/fuse.log" 2>/dev/null \
 
 # 3. Logs de extension Nautilus
 echo "  - Nautilus extension logs..."
-cp ~/.cache/lnxdrive/nautilus-extension.log "$OUTPUT_DIR/nautilus.log" 2>/dev/null \
+cp ~/.cache/lnxdrive-engine/nautilus-extension.log "$OUTPUT_DIR/nautilus.log" 2>/dev/null \
     || echo "    (no disponible)"
 
 # 4. Logs de GNOME Shell

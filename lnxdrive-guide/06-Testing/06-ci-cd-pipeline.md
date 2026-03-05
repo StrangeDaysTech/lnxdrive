@@ -10,7 +10,7 @@
 ### 7.1 Estructura de Proyecto para Testing
 
 ```
-lnxdrive/
+lnxdrive-engine/
 ├── crates/
 │   ├── lnxdrive-core/           # Logica de negocio (testeable directamente)
 │   ├── lnxdrive-fuse/           # FUSE filesystem

@@ -6,7 +6,7 @@ Este es el monorepo de **LNXDrive**, un cliente de sincronización de archivos e
 
 | Componente | Directorio | Fase en la Hoja de Ruta |
 |------------|-----------|------------------------|
-| Core daemon + CLI + crates | `lnxdrive/` | Fase 1-2 |
+| Core daemon + CLI + crates | `lnxdrive-engine/` | Fase 1-2 |
 | Integración GNOME | `lnxdrive-gnome/` | Fase 3 |
 | UI GTK3 (XFCE/MATE) | `lnxdrive-gtk3/` | Fase 4 |
 | Integración KDE Plasma | `lnxdrive-plasma/` | Fase 5 |
@@ -47,7 +47,7 @@ Toda referencia a etapas de diseño/desarrollo **dentro** de un componente debe 
 ## ESTADO ACTUAL
 
 ### Completadas
-- **Fase 1-2** (Core daemon + Files-on-Demand): Implementado en `lnxdrive/`
+- **Fase 1-2** (Core daemon + Files-on-Demand): Implementado en `lnxdrive-engine/`
 - **Fase 3** (Integración GNOME): Implementado en `lnxdrive-gnome/`
 
 ### Pendientes

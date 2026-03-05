@@ -105,7 +105,7 @@ El componente FUSE es donde las diferencias son más críticas:
 ```
 Aplicación (Nautilus)
        │
-       │ open("/mnt/lnxdrive/doc.pdf")
+       │ open("/mnt/lnxdrive-engine/doc.pdf")
        ▼
    Kernel Linux (VFS layer)
        │

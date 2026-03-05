@@ -29,7 +29,7 @@ TESTING_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT_DIR="$(cd "$TESTING_DIR/.." && pwd)"
 
 GNOME_DIR="${PROJECT_DIR}/lnxdrive-gnome"
-LNXDRIVE_DIR="${PROJECT_DIR}/lnxdrive"
+LNXDRIVE_DIR="${PROJECT_DIR}/lnxdrive-engine"
 
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 LOG_DIR="${TESTING_DIR}/logs/gnome-nested-${TIMESTAMP}"
@@ -179,7 +179,7 @@ fi
 
 if [ -f "${LNXDRIVE_DIR}/config/default-config.yaml" ]; then
     cp "${LNXDRIVE_DIR}/config/default-config.yaml" \
-       "${XDG_CONFIG_HOME}/lnxdrive/config.yaml"
+       "${XDG_CONFIG_HOME}/lnxdrive-engine/config.yaml"
 fi
 
 # --- Create GSettings override to enable the extension -------------------------

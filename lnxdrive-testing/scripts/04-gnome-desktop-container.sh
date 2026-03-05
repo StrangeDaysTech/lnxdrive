@@ -22,7 +22,7 @@ DESKTOP_IMAGE="localhost/lnxdrive-gnome-desktop"
 BUILD_CONTAINER="lnxdrive-build-extract"
 DESKTOP_CONTAINER="lnxdrive-gnome-desktop"
 
-LNXDRIVE_DIR="${PROJECT_DIR}/lnxdrive"
+LNXDRIVE_DIR="${PROJECT_DIR}/lnxdrive-engine"
 GNOME_DIR="${PROJECT_DIR}/lnxdrive-gnome"
 
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
@@ -112,7 +112,7 @@ podman run -d \
     --name "${BUILD_CONTAINER}" \
     --systemd=always \
     "${SECURITY_OPT[@]}" \
-    -v "${LNXDRIVE_DIR}:/src/lnxdrive:ro" \
+    -v "${LNXDRIVE_DIR}:/src/lnxdrive-engine:ro" \
     -v "${GNOME_DIR}:/src/lnxdrive-gnome:ro" \
     "${BUILD_IMAGE}"
 
@@ -127,11 +127,11 @@ podman exec \
     "${BUILD_CONTAINER}" \
     bash -c '
         EXCLUDE="--exclude lnxdrive-conflict --exclude lnxdrive-audit --exclude lnxdrive-telemetry"
-        cp -a /src/lnxdrive /build/lnxdrive
+        cp -a /src/lnxdrive-engine /build/lnxdrive-engine
         cp -a /src/lnxdrive-gnome /build/lnxdrive-gnome
 
         # Build daemon
-        cargo build --manifest-path /build/lnxdrive/Cargo.toml --workspace $EXCLUDE 2>&1 | tail -5
+        cargo build --manifest-path /build/lnxdrive-engine/Cargo.toml --workspace $EXCLUDE 2>&1 | tail -5
 
         # Build preferences
         cargo build --manifest-path /build/lnxdrive-gnome/preferences/Cargo.toml 2>&1 | tail -5
@@ -146,9 +146,9 @@ podman exec \
 echo -e "${BOLD}Step 2: Extract binaries...${NC}"
 
 # Extract daemon binaries
-podman cp "${BUILD_CONTAINER}:/build/lnxdrive/target/debug/lnxdrived" \
+podman cp "${BUILD_CONTAINER}:/build/lnxdrive-engine/target/debug/lnxdrived" \
     "${BUILD_OUTPUT}/lnxdrived" 2>/dev/null || true
-podman cp "${BUILD_CONTAINER}:/build/lnxdrive/target/debug/lnxdrive" \
+podman cp "${BUILD_CONTAINER}:/build/lnxdrive-engine/target/debug/lnxdrive" \
     "${BUILD_OUTPUT}/lnxdrive" 2>/dev/null || true
 
 # Extract preferences binary
