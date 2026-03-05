@@ -37,7 +37,7 @@ The functional test suite (`scripts/test-daemon-functional.sh`) runs 8 checks in
 | 1 | Service start | `systemctl --user start lnxdrive` succeeds |
 | 2 | Active status | Service reports "active" |
 | 3 | Process running | `lnxdrived` process exists |
-| 4 | D-Bus registered | `com.enigmora.LNXDrive` name is on the session bus |
+| 4 | D-Bus registered | `com.strangedaystech.LNXDrive` name is on the session bus |
 | 5 | CLI responds | `lnxdrive daemon status` returns exit code 0 |
 | 6 | Database created | `~/.local/share/lnxdrive/lnxdrive.db` exists |
 | 7 | Journal logs | Daemon log entries appear in systemd journal |
@@ -84,8 +84,8 @@ systemctl --user status lnxdrive
 journalctl --user -u lnxdrive -f
 
 # Inspect D-Bus
-busctl --user list | grep enigmora
-busctl --user introspect com.enigmora.LNXDrive /com/enigmora/LNXDrive
+busctl --user list | grep strangedaystech
+busctl --user introspect com.strangedaystech.LNXDrive /com/strangedaystech/LNXDrive
 
 # Run the CLI
 lnxdrive daemon status

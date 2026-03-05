@@ -108,8 +108,8 @@ runcmd:
   # Install Shell extension
   - |
     su - testuser -c '
-      SHELL_EXT_SRC="/mnt/lnxdrive-project/lnxdrive-gnome/shell-extension/lnxdrive-indicator@enigmora.com"
-      SHELL_EXT_DEST="$HOME/.local/share/gnome-shell/extensions/lnxdrive-indicator@enigmora.com"
+      SHELL_EXT_SRC="/mnt/lnxdrive-project/lnxdrive-gnome/shell-extension/lnxdrive-indicator@strangedaystech.com"
+      SHELL_EXT_DEST="$HOME/.local/share/gnome-shell/extensions/lnxdrive-indicator@strangedaystech.com"
       if [ -d "$SHELL_EXT_SRC" ]; then
         cp -r "$SHELL_EXT_SRC" "$SHELL_EXT_DEST"
       fi
@@ -185,7 +185,7 @@ runcmd:
 
     [Service]
     Type=oneshot
-    ExecStart=/usr/bin/gnome-extensions enable lnxdrive-indicator@enigmora.com
+    ExecStart=/usr/bin/gnome-extensions enable lnxdrive-indicator@strangedaystech.com
     RemainAfterExit=true
 
     [Install]

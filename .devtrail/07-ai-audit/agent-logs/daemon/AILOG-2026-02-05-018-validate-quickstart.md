@@ -118,4 +118,4 @@ Manual end-to-end testing should be performed during integration testing or QA p
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

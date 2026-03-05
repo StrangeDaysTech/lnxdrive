@@ -265,7 +265,7 @@ jobs:
     needs: unit-tests
     services:
       mock-graph:
-        image: ghcr.io/enigmora/lnxdrive-mock-graph:latest
+        image: ghcr.io/strangedaystech/lnxdrive-mock-graph:latest
         ports:
           - 8080:8080
 

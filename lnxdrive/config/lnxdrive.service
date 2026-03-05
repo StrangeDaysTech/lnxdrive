@@ -1,12 +1,12 @@
 [Unit]
 Description=LNXDrive - Cloud Storage Daemon
-Documentation=https://github.com/enigmora/lnxdrive
+Documentation=https://github.com/strangedaystech/lnxdrive
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=dbus
-BusName=com.enigmora.LNXDrive
+BusName=com.strangedaystech.LNXDrive
 ExecStart=/usr/bin/lnxdrive-daemon
 Restart=on-failure
 RestartSec=5

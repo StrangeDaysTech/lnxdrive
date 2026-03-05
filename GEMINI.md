@@ -23,7 +23,7 @@ This is a monorepo containing all LNXDrive components:
 ### Key Paths
 - **Design guide index**: `lnxdrive-guide/Guía-de-diseño-y-desarrollo.md`
 - **DevTrail root**: `.devtrail/` (single instance for entire monorepo)
-- **D-Bus name**: `com.enigmora.LNXDrive` on `/com/enigmora/LNXDrive`
+- **D-Bus name**: `com.strangedaystech.LNXDrive` on `/com/strangedaystech/LNXDrive`
 
 ---
 
@@ -173,4 +173,4 @@ Mark `review_required: true` when:
 ---
 
 *DevTrail v1.0.0 | LNXDrive Monorepo*
-*[Enigmora](https://enigmora.com) — Because every change tells a story.*
+*[Strange Days Tech](https://strangedaystech.com) — Because every change tells a story.*

@@ -56,4 +56,4 @@ During MVP closure Block S1, the `ConflictsInterface::resolve()` method was chan
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

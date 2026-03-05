@@ -5,16 +5,16 @@
 <!--
   D-Bus Interface Definition: LNXDrive Sync Service
 
-  Service Name: com.enigmora.LNXDrive
-  Object Path: /com/enigmora/LNXDrive
+  Service Name: com.strangedaystech.LNXDrive
+  Object Path: /com/strangedaystech/LNXDrive
 
   This interface exposes the sync controller to UI adapters (GNOME, KDE, etc.)
 -->
 
-<node name="/com/enigmora/LNXDrive">
+<node name="/com/strangedaystech/LNXDrive">
 
   <!-- Main sync controller interface -->
-  <interface name="com.enigmora.LNXDrive.SyncController">
+  <interface name="com.strangedaystech.LNXDrive.SyncController">
 
     <!-- Methods -->
 
@@ -116,7 +116,7 @@
   </interface>
 
   <!-- Account management interface -->
-  <interface name="com.enigmora.LNXDrive.Account">
+  <interface name="com.strangedaystech.LNXDrive.Account">
 
     <!-- Methods -->
 
@@ -168,7 +168,7 @@
   </interface>
 
   <!-- Conflict resolution interface -->
-  <interface name="com.enigmora.LNXDrive.Conflicts">
+  <interface name="com.strangedaystech.LNXDrive.Conflicts">
 
     <!-- Methods -->
 

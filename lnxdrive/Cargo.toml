@@ -17,9 +17,9 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-authors = ["Enigmora <contact@enigmora.com>"]
+authors = ["Strange Days Tech, S.A.S. <contact@strangedaystech.com>"]
 license = "GPL-3.0-or-later"
-repository = "https://github.com/enigmora/lnxdrive"
+repository = "https://github.com/strangedaystech/lnxdrive"
 rust-version = "1.75"
 
 [workspace.dependencies]

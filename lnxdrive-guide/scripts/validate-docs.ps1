@@ -1,6 +1,6 @@
 # =============================================================================
 # DevTrail - Documentation Validation Script (PowerShell)
-# https://enigmora.com
+# https://strangedaystech.com
 # =============================================================================
 #
 # Usage:

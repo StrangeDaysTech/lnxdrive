@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2026 Enigmora <https://enigmora.com>
+// SPDX-FileCopyrightText: 2026 Strange Days Tech <https://strangedaystech.com>
 
 /**
  * LNXDrive D-Bus Proxy Definitions
@@ -7,23 +7,23 @@
  * Defines XML introspection strings for the LNXDrive daemon D-Bus interfaces
  * and provides proxy wrappers for communication from the GNOME Shell extension.
  *
- * Bus name:    com.enigmora.LNXDrive
- * Object path: /com/enigmora/LNXDrive
+ * Bus name:    com.strangedaystech.LNXDrive
+ * Object path: /com/strangedaystech/LNXDrive
  *
  * Implements: FR-024, FR-025, FR-026
  */
 
 import Gio from 'gi://Gio';
 
-const BUS_NAME = 'com.enigmora.LNXDrive';
-const OBJECT_PATH = '/com/enigmora/LNXDrive';
+const BUS_NAME = 'com.strangedaystech.LNXDrive';
+const OBJECT_PATH = '/com/strangedaystech/LNXDrive';
 
 // ---------------------------------------------------------------------------
-// com.enigmora.LNXDrive.Sync
+// com.strangedaystech.LNXDrive.Sync
 // ---------------------------------------------------------------------------
 const SyncInterfaceXml = `
 <node>
-  <interface name="com.enigmora.LNXDrive.Sync">
+  <interface name="com.strangedaystech.LNXDrive.Sync">
     <method name="SyncNow"/>
     <method name="Pause"/>
     <method name="Resume"/>
@@ -50,11 +50,11 @@ const SyncInterfaceXml = `
 </node>`;
 
 // ---------------------------------------------------------------------------
-// com.enigmora.LNXDrive.Status
+// com.strangedaystech.LNXDrive.Status
 // ---------------------------------------------------------------------------
 const StatusInterfaceXml = `
 <node>
-  <interface name="com.enigmora.LNXDrive.Status">
+  <interface name="com.strangedaystech.LNXDrive.Status">
     <method name="GetQuota">
       <arg type="t" direction="out" name="used"/>
       <arg type="t" direction="out" name="total"/>
@@ -76,11 +76,11 @@ const StatusInterfaceXml = `
 </node>`;
 
 // ---------------------------------------------------------------------------
-// com.enigmora.LNXDrive.Conflicts
+// com.strangedaystech.LNXDrive.Conflicts
 // ---------------------------------------------------------------------------
 const ConflictsInterfaceXml = `
 <node>
-  <interface name="com.enigmora.LNXDrive.Conflicts">
+  <interface name="com.strangedaystech.LNXDrive.Conflicts">
     <method name="List">
       <arg type="s" direction="out" name="conflicts_json"/>
     </method>
@@ -109,11 +109,11 @@ const ConflictsInterfaceXml = `
 </node>`;
 
 // ---------------------------------------------------------------------------
-// com.enigmora.LNXDrive.Manager
+// com.strangedaystech.LNXDrive.Manager
 // ---------------------------------------------------------------------------
 const ManagerInterfaceXml = `
 <node>
-  <interface name="com.enigmora.LNXDrive.Manager">
+  <interface name="com.strangedaystech.LNXDrive.Manager">
     <method name="GetStatus">
       <arg type="s" direction="out" name="status"/>
     </method>

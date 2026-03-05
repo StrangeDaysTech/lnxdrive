@@ -94,4 +94,4 @@ API usage, signal connection patterns, and module declaration chains.
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

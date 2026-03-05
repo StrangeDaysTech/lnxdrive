@@ -13,7 +13,7 @@ related: [AILOG-2026-02-05-018]
 
 ## Summary
 
-Implemented the `com.enigmora.LNXDrive.Files` D-Bus interface in the `lnxdrive-ipc` crate. This is the first of four missing interfaces required by the GNOME integration components (Nautilus extension, Shell extension, Preferences panel).
+Implemented the `com.strangedaystech.LNXDrive.Files` D-Bus interface in the `lnxdrive-ipc` crate. This is the first of four missing interfaces required by the GNOME integration components (Nautilus extension, Shell extension, Preferences panel).
 
 ## Context
 
@@ -66,5 +66,5 @@ The GNOME integration layer expects 7 D-Bus interfaces per the contract in `dbus
 - [x] `cargo build -p lnxdrive-ipc` compiles successfully
 - [x] `cargo test -p lnxdrive-ipc` — 30 tests pass (17 existing + 13 new)
 - [x] `cargo test --workspace` — all 16 test suites pass, no regressions
-- [x] Interface name matches contract: `com.enigmora.LNXDrive.Files`
+- [x] Interface name matches contract: `com.strangedaystech.LNXDrive.Files`
 - [x] Method signatures match `dbus-gnome-contracts.md`

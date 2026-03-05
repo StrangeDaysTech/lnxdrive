@@ -64,4 +64,4 @@ The crate has 57 pre-existing compilation errors in the `usecases` module that p
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

@@ -241,4 +241,4 @@ Cargar:
 ---
 
 *Guía generada el 30 de enero de 2026*
-*Proyecto Enigmora — LNXDrive*
+*Proyecto Strange Days Tech — LNXDrive*

@@ -158,7 +158,7 @@ podman cp "${BUILD_CONTAINER}:/build/lnxdrive-gnome/preferences/target/debug/lnx
 # Copy Shell extension source directly (GJS doesn't compile)
 if [ -d "${GNOME_DIR}/shell-extension" ]; then
     mkdir -p "${BUILD_OUTPUT}/shell-extension"
-    cp -r "${GNOME_DIR}/shell-extension/lnxdrive-indicator@enigmora.com" \
+    cp -r "${GNOME_DIR}/shell-extension/lnxdrive-indicator@strangedaystech.com" \
         "${BUILD_OUTPUT}/shell-extension/" 2>/dev/null || true
 fi
 

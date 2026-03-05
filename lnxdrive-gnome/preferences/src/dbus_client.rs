@@ -5,8 +5,8 @@
 // glib::MainContext::spawn_local() — do NOT use tokio for D-Bus operations.
 //
 // D-Bus coordinates:
-//   Bus name:    com.enigmora.LNXDrive
-//   Object path: /com/enigmora/LNXDrive
+//   Bus name:    com.strangedaystech.LNXDrive
+//   Object path: /com/strangedaystech/LNXDrive
 //
 // Auth flow:
 //   The daemon runs a loopback HTTP server for OAuth2 redirect (RFC 8252).
@@ -68,11 +68,11 @@ impl From<zbus::Error> for DbusError {
 // D-Bus proxy traits (generated via the #[proxy] macro)
 // ---------------------------------------------------------------------------
 
-/// com.enigmora.LNXDrive.Auth — authentication management
+/// com.strangedaystech.LNXDrive.Auth — authentication management
 #[proxy(
-    interface = "com.enigmora.LNXDrive.Auth",
-    default_service = "com.enigmora.LNXDrive",
-    default_path = "/com/enigmora/LNXDrive"
+    interface = "com.strangedaystech.LNXDrive.Auth",
+    default_service = "com.strangedaystech.LNXDrive",
+    default_path = "/com/strangedaystech/LNXDrive"
 )]
 pub trait LnxdriveAuth {
     /// Returns true if the user is currently authenticated.
@@ -93,11 +93,11 @@ pub trait LnxdriveAuth {
     fn auth_state_changed(&self, state: &str) -> zbus::Result<()>;
 }
 
-/// com.enigmora.LNXDrive.Settings — configuration and folder management
+/// com.strangedaystech.LNXDrive.Settings — configuration and folder management
 #[proxy(
-    interface = "com.enigmora.LNXDrive.Settings",
-    default_service = "com.enigmora.LNXDrive",
-    default_path = "/com/enigmora/LNXDrive"
+    interface = "com.strangedaystech.LNXDrive.Settings",
+    default_service = "com.strangedaystech.LNXDrive",
+    default_path = "/com/strangedaystech/LNXDrive"
 )]
 trait LnxdriveSettings {
     /// Return the full configuration as a YAML string.
@@ -122,11 +122,11 @@ trait LnxdriveSettings {
     async fn get_remote_folder_tree(&self) -> zbus::Result<String>;
 }
 
-/// com.enigmora.LNXDrive.Status — account and quota information
+/// com.strangedaystech.LNXDrive.Status — account and quota information
 #[proxy(
-    interface = "com.enigmora.LNXDrive.Status",
-    default_service = "com.enigmora.LNXDrive",
-    default_path = "/com/enigmora/LNXDrive"
+    interface = "com.strangedaystech.LNXDrive.Status",
+    default_service = "com.strangedaystech.LNXDrive",
+    default_path = "/com/strangedaystech/LNXDrive"
 )]
 trait LnxdriveStatus {
     /// Return (used_bytes, total_bytes).
@@ -136,11 +136,11 @@ trait LnxdriveStatus {
     async fn get_account_info(&self) -> zbus::Result<HashMap<String, OwnedValue>>;
 }
 
-/// com.enigmora.LNXDrive.Sync — sync control
+/// com.strangedaystech.LNXDrive.Sync — sync control
 #[proxy(
-    interface = "com.enigmora.LNXDrive.Sync",
-    default_service = "com.enigmora.LNXDrive",
-    default_path = "/com/enigmora/LNXDrive"
+    interface = "com.strangedaystech.LNXDrive.Sync",
+    default_service = "com.strangedaystech.LNXDrive",
+    default_path = "/com/strangedaystech/LNXDrive"
 )]
 trait LnxdriveSync {
     /// Trigger an immediate sync cycle.
@@ -153,11 +153,11 @@ trait LnxdriveSync {
     async fn resume(&self) -> zbus::Result<()>;
 }
 
-/// com.enigmora.LNXDrive.Conflicts — conflict detection and resolution
+/// com.strangedaystech.LNXDrive.Conflicts — conflict detection and resolution
 #[proxy(
-    interface = "com.enigmora.LNXDrive.Conflicts",
-    default_service = "com.enigmora.LNXDrive",
-    default_path = "/com/enigmora/LNXDrive"
+    interface = "com.strangedaystech.LNXDrive.Conflicts",
+    default_service = "com.strangedaystech.LNXDrive",
+    default_path = "/com/strangedaystech/LNXDrive"
 )]
 pub trait LnxdriveConflicts {
     /// List all unresolved conflicts as a JSON array.

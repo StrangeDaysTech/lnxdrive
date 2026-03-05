@@ -76,7 +76,7 @@ lnxdrive-gnome/
 │       └── lnxdrive-unknown.svg
 │
 ├── shell-extension/               # GJS GNOME Shell extension
-│   └── lnxdrive-indicator@enigmora.com/
+│   └── lnxdrive-indicator@strangedaystech.com/
 │       ├── extension.js
 │       ├── metadata.json
 │       ├── prefs.js
@@ -104,9 +104,9 @@ lnxdrive-gnome/
 │   │   │   └── folder_tree.rs
 │   │   └── dbus_client.rs
 │   └── data/
-│       ├── com.enigmora.LNXDrive.Preferences.desktop.in
-│       ├── com.enigmora.LNXDrive.Preferences.metainfo.xml.in
-│       └── com.enigmora.LNXDrive.Preferences.gschema.xml
+│       ├── com.strangedaystech.LNXDrive.Preferences.desktop.in
+│       ├── com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in
+│       └── com.strangedaystech.LNXDrive.Preferences.gschema.xml
 │
 ├── po/                            # Translations
 │   ├── POTFILES.in
@@ -116,8 +116,8 @@ lnxdrive-gnome/
 ├── data/                          # Shared data files
 │   └── icons/
 │       └── hicolor/
-│           ├── scalable/apps/com.enigmora.LNXDrive.svg
-│           └── symbolic/apps/com.enigmora.LNXDrive-symbolic.svg
+│           ├── scalable/apps/com.strangedaystech.LNXDrive.svg
+│           └── symbolic/apps/com.strangedaystech.LNXDrive-symbolic.svg
 │
 └── tests/                         # Integration tests
     ├── test-nautilus-extension.py
@@ -147,7 +147,7 @@ meson compile -C builddir nautilus-extension
 cd preferences && cargo build
 
 # Shell extension (install to user dir)
-cp -r shell-extension/lnxdrive-indicator@enigmora.com \
+cp -r shell-extension/lnxdrive-indicator@strangedaystech.com \
     ~/.local/share/gnome-shell/extensions/
 ```
 
@@ -162,7 +162,7 @@ nautilus -q && nautilus &
 
 ```bash
 # Enable the extension
-gnome-extensions enable lnxdrive-indicator@enigmora.com
+gnome-extensions enable lnxdrive-indicator@strangedaystech.com
 
 # View logs
 journalctl -f -o cat /usr/bin/gnome-shell
@@ -191,19 +191,19 @@ cd preferences && cargo run
 
 ```bash
 # Monitor D-Bus traffic
-dbus-monitor --session "interface='org.enigmora.LNXDrive.Files'"
+dbus-monitor --session "interface='org.strangedaystech.LNXDrive.Files'"
 
 # Call D-Bus methods manually
 gdbus call --session \
-    --dest org.enigmora.LNXDrive \
-    --object-path /org/enigmora/LNXDrive \
-    --method org.enigmora.LNXDrive.Files.GetFileStatus \
+    --dest org.strangedaystech.LNXDrive \
+    --object-path /org/strangedaystech/LNXDrive \
+    --method org.strangedaystech.LNXDrive.Files.GetFileStatus \
     "/home/user/OneDrive/document.pdf"
 
 # Check if daemon is running
 gdbus introspect --session \
-    --dest org.enigmora.LNXDrive \
-    --object-path /org/enigmora/LNXDrive
+    --dest org.strangedaystech.LNXDrive \
+    --object-path /org/strangedaystech/LNXDrive
 ```
 
 ---
@@ -215,7 +215,7 @@ gdbus introspect --session \
 gtk4 = { version = "0.9", features = ["v4_14"] }
 libadwaita = { version = "0.7", features = ["v1_6"] }
 zbus = "5"
-# lnxdrive-ipc = { git = "https://github.com/enigmora/lnxdrive.git", package = "lnxdrive-ipc" }
+# lnxdrive-ipc = { git = "https://github.com/strangedaystech/lnxdrive.git", package = "lnxdrive-ipc" }
 oauth2 = "5"
 gettext-rs = { version = "0.7", features = ["gettext-system"] }
 serde = { version = "1", features = ["derive"] }

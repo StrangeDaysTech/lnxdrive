@@ -1,6 +1,6 @@
 /* lnxdrive-column-provider.c — NautilusColumnProvider for custom columns
  *
- * Copyright 2026 Enigmora <https://enigmora.com>
+ * Copyright 2026 Strange Days Tech <https://strangedaystech.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Provides two custom columns in Nautilus list view:

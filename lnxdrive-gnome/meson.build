@@ -14,7 +14,7 @@ gnome = import('gnome')
 i18n = import('i18n')
 
 # Application and gettext domain
-app_id = 'com.enigmora.LNXDrive'
+app_id = 'com.strangedaystech.LNXDrive'
 gettext_domain = 'lnxdrive-gnome'
 
 # Standard directories

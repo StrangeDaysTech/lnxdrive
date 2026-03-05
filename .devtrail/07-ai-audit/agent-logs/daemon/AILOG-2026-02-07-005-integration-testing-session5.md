@@ -68,4 +68,4 @@ Sessions 1–4 implemented all 7 D-Bus interfaces in `lnxdrive-ipc`, completed t
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

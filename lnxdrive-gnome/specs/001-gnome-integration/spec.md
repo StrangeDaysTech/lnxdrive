@@ -183,7 +183,7 @@ Un usuario que quiere configurar LNXDrive por primera vez va a Configuración de
 
 **Comunicación con el Daemon**
 
-- **FR-024**: Toda la comunicación entre los componentes de la interfaz GNOME y el daemon DEBE realizarse a través de la API D-Bus definida por el proyecto (`org.enigmora.LNXDrive`).
+- **FR-024**: Toda la comunicación entre los componentes de la interfaz GNOME y el daemon DEBE realizarse a través de la API D-Bus definida por el proyecto (`org.strangedaystech.LNXDrive`).
 - **FR-025**: Los componentes de la interfaz DEBEN manejar graciosamente la desconexión del daemon, mostrando un estado apropiado y reconectándose automáticamente cuando el daemon vuelva a estar disponible.
 - **FR-026**: Los componentes DEBEN suscribirse a las señales D-Bus para recibir actualizaciones en tiempo real en lugar de hacer polling.
 
@@ -216,7 +216,7 @@ Un usuario que quiere configurar LNXDrive por primera vez va a Configuración de
 
 ## Assumptions
 
-- El daemon de LNXDrive (`lnxdrive-daemon`) y la API D-Bus (`org.enigmora.LNXDrive`) ya existen y están funcionales (entregados en Fases 1-2).
+- El daemon de LNXDrive (`lnxdrive-daemon`) y la API D-Bus (`org.strangedaystech.LNXDrive`) ya existen y están funcionales (entregados en Fases 1-2).
 - El sistema FUSE de files-on-demand ya está operativo, proporcionando los estados de archivo que la extensión de Nautilus representará visualmente (entregado en Fase 2).
 - La librería IPC compartida (`lnxdrive-ipc`) ya proporciona un cliente D-Bus tipado para comunicación con el daemon.
 - El usuario objetivo usa GNOME como entorno de escritorio principal con Nautilus como gestor de archivos.

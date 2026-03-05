@@ -10,5 +10,5 @@ preferences/src/preferences/account_page.rs
 preferences/src/preferences/sync_page.rs
 preferences/src/preferences/advanced_page.rs
 preferences/src/preferences/folder_tree.rs
-preferences/data/com.enigmora.LNXDrive.Preferences.desktop.in
-preferences/data/com.enigmora.LNXDrive.Preferences.metainfo.xml.in
+preferences/data/com.strangedaystech.LNXDrive.Preferences.desktop.in
+preferences/data/com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in

@@ -69,7 +69,7 @@ Write to GNOME 45 baseline, avoid deprecated APIs from the start:
 
 ### Extension Structure
 ```
-lnxdrive-indicator@enigmora.com/
+lnxdrive-indicator@strangedaystech.com/
 ├── extension.js          # Main entry point (PanelMenu.Button)
 ├── metadata.json         # shell-version: ["45", "46", "47"]
 ├── prefs.js              # GTK4 preferences (links to main prefs app)

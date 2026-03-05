@@ -30,7 +30,7 @@ cargo build --release
 ### Desde Flatpak (recomendado)
 
 ```bash
-flatpak install flathub org.enigmora.LNXDrive
+flatpak install flathub org.strangedaystech.LNXDrive
 ```
 
 ### Desde código fuente

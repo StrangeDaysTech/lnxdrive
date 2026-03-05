@@ -70,4 +70,4 @@ Phase 4 of LNXDrive requires file transfer operations to enable synchronization 
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

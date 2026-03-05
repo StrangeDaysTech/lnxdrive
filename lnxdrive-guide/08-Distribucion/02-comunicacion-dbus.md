@@ -20,7 +20,7 @@ Todos los clientes UI se comunican con el daemon a traves de D-Bus:
 │              ┌───────────────┴───────────────┐                             │
 │              │                               │                             │
 │              │   D-Bus Session Bus           │                             │
-│              │   org.enigmora.LNXDrive       │                             │
+│              │   org.strangedaystech.LNXDrive       │                             │
 │              │                               │                             │
 │              │   Interfaces:                 │                             │
 │              │   ├── .Manager                │                             │
@@ -49,12 +49,12 @@ Todos los clientes UI se comunican con el daemon a traves de D-Bus:
 ## Interfaz D-Bus
 
 ```xml
-<!-- org.enigmora.LNXDrive.xml -->
+<!-- org.strangedaystech.LNXDrive.xml -->
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
   "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
-<node name="/org/enigmora/LNXDrive">
+<node name="/org/strangedaystech/LNXDrive">
 
-  <interface name="org.enigmora.LNXDrive.Manager">
+  <interface name="org.strangedaystech.LNXDrive.Manager">
     <!-- Control del daemon -->
     <method name="Start"/>
     <method name="Stop"/>
@@ -66,7 +66,7 @@ Todos los clientes UI se comunican con el daemon a traves de D-Bus:
     <property name="IsRunning" type="b" access="read"/>
   </interface>
 
-  <interface name="org.enigmora.LNXDrive.Sync">
+  <interface name="org.strangedaystech.LNXDrive.Sync">
     <!-- Control de sincronizacion -->
     <method name="SyncNow"/>
     <method name="Pause"/>
@@ -95,7 +95,7 @@ Todos los clientes UI se comunican con el daemon a traves de D-Bus:
     </signal>
   </interface>
 
-  <interface name="org.enigmora.LNXDrive.Files">
+  <interface name="org.strangedaystech.LNXDrive.Files">
     <!-- Operaciones de archivos -->
     <method name="GetFileStatus">
       <arg type="s" direction="in" name="path"/>
@@ -115,7 +115,7 @@ Todos los clientes UI se comunican con el daemon a traves de D-Bus:
     </method>
   </interface>
 
-  <interface name="org.enigmora.LNXDrive.Status">
+  <interface name="org.strangedaystech.LNXDrive.Status">
     <!-- Informacion de estado -->
     <method name="GetQuota">
       <arg type="t" direction="out" name="used"/>
@@ -223,8 +223,8 @@ pub enum FileStatus {
 ## DBus API Multi-Cuenta
 
 ```xml
-<!-- org.enigmora.LNXDrive.Accounts -->
-<interface name="org.enigmora.LNXDrive.Accounts">
+<!-- org.strangedaystech.LNXDrive.Accounts -->
+<interface name="org.strangedaystech.LNXDrive.Accounts">
   <!-- Gestion de cuentas -->
   <method name="ListAccounts">
     <arg type="as" direction="out" name="account_ids"/>
@@ -255,11 +255,11 @@ pub enum FileStatus {
 
 | Interfaz | Descripcion | Metodos Principales |
 |----------|-------------|---------------------|
-| `org.enigmora.LNXDrive.Manager` | Control del daemon | Start, Stop, Restart, GetStatus |
-| `org.enigmora.LNXDrive.Sync` | Control de sincronizacion | SyncNow, Pause, Resume, SyncPath |
-| `org.enigmora.LNXDrive.Files` | Operaciones de archivos | GetFileStatus, PinFile, UnpinFile, FreeSpace |
-| `org.enigmora.LNXDrive.Status` | Informacion de estado | GetQuota, GetAccountInfo |
-| `org.enigmora.LNXDrive.Accounts` | Gestion multi-cuenta | ListAccounts, AddAccount, RemoveAccount |
+| `org.strangedaystech.LNXDrive.Manager` | Control del daemon | Start, Stop, Restart, GetStatus |
+| `org.strangedaystech.LNXDrive.Sync` | Control de sincronizacion | SyncNow, Pause, Resume, SyncPath |
+| `org.strangedaystech.LNXDrive.Files` | Operaciones de archivos | GetFileStatus, PinFile, UnpinFile, FreeSpace |
+| `org.strangedaystech.LNXDrive.Status` | Informacion de estado | GetQuota, GetAccountInfo |
+| `org.strangedaystech.LNXDrive.Accounts` | Gestion multi-cuenta | ListAccounts, AddAccount, RemoveAccount |
 
 ## Senales D-Bus
 
@@ -306,13 +306,13 @@ Por defecto, cualquier proceso del usuario puede llamar métodos DBus. Sin auten
 
 **Mitigación Propuesta:**
 ```xml
-<!-- /usr/share/polkit-1/actions/org.enigmora.lnxdrive.policy -->
+<!-- /usr/share/polkit-1/actions/org.strangedaystech.lnxdrive.policy -->
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE policyconfig PUBLIC
   "-//freedesktop//DTD polkit Policy Configuration 1.0//EN"
   "http://polkit.freedesktop.org/1.0/policyconfig.dtd">
 <policyconfig>
-  <action id="org.enigmora.lnxdrive.admin">
+  <action id="org.strangedaystech.lnxdrive.admin">
     <description>Manage LNXDrive sync settings</description>
     <message>Authentication is required to manage sync</message>
     <defaults>
@@ -322,7 +322,7 @@ Por defecto, cualquier proceso del usuario puede llamar métodos DBus. Sin auten
     </defaults>
   </action>
 
-  <action id="org.enigmora.lnxdrive.sensitive">
+  <action id="org.strangedaystech.lnxdrive.sensitive">
     <description>Access sensitive operations</description>
     <message>Authentication required for sensitive operations</message>
     <defaults>
@@ -332,7 +332,7 @@ Por defecto, cualquier proceso del usuario puede llamar métodos DBus. Sin auten
       <allow_active>auth_self</allow_active>
     </defaults>
     <annotate key="org.freedesktop.policykit.imply">
-      org.enigmora.lnxdrive.admin
+      org.strangedaystech.lnxdrive.admin
     </annotate>
   </action>
 </policyconfig>
@@ -407,11 +407,11 @@ Si los métodos DBus cambian entre versiones, clientes antiguos pueden fallar. S
 **Mitigación Propuesta:**
 ```xml
 <!-- Interfaces versionadas -->
-<interface name="org.enigmora.LNXDrive.Sync">
+<interface name="org.strangedaystech.LNXDrive.Sync">
   <!-- API estable v1 -->
 </interface>
 
-<interface name="org.enigmora.LNXDrive.Sync2">
+<interface name="org.strangedaystech.LNXDrive.Sync2">
   <!-- Nueva API v2 con cambios incompatibles -->
 </interface>
 ```
@@ -420,8 +420,8 @@ Si los métodos DBus cambian entre versiones, clientes antiguos pueden fallar. S
 impl DbusService {
     fn register_interfaces(&self, conn: &Connection) {
         // Registrar todas las versiones soportadas
-        conn.register_object("/org/enigmora/LNXDrive", SyncV1Interface)?;
-        conn.register_object("/org/enigmora/LNXDrive", SyncV2Interface)?;
+        conn.register_object("/org/strangedaystech/LNXDrive", SyncV1Interface)?;
+        conn.register_object("/org/strangedaystech/LNXDrive", SyncV2Interface)?;
         
         // Deprecated interfaces muestran warning pero siguen funcionando
     }

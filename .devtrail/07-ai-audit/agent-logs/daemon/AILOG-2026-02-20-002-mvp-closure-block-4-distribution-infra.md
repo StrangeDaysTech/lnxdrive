@@ -24,11 +24,11 @@ Block 4 addressed distribution infrastructure gaps: the systemd service used a d
 ## Actions Performed
 
 1. **M2: Updated systemd service** (`config/lnxdrive.service`)
-   - Changed `Type=simple` to `Type=dbus` with `BusName=com.enigmora.LNXDrive`
+   - Changed `Type=simple` to `Type=dbus` with `BusName=com.strangedaystech.LNXDrive`
    - Changed `ExecStart=%h/.cargo/bin/lnxdrived` to `ExecStart=/usr/bin/lnxdrive-daemon`
    - Added `PrivateTmp=true` hardening
 
-2. **Created D-Bus activation file** (`config/com.enigmora.LNXDrive.service`)
+2. **Created D-Bus activation file** (`config/com.strangedaystech.LNXDrive.service`)
    - New file for `/usr/share/dbus-1/services/`
    - Includes `SystemdService=lnxdrive.service` to delegate lifecycle to systemd
 
@@ -45,7 +45,7 @@ Block 4 addressed distribution infrastructure gaps: the systemd service used a d
 | File | Change |
 |------|--------|
 | `config/lnxdrive.service` | Type=dbus, BusName, ExecStart=/usr/bin/lnxdrive-daemon, PrivateTmp |
-| `config/com.enigmora.LNXDrive.service` | NEW — D-Bus activation file |
+| `config/com.strangedaystech.LNXDrive.service` | NEW — D-Bus activation file |
 | `config/lnxdrive-autostart.desktop` | NEW — XDG autostart entry |
 | `.github/workflows/ci.yml` | Removed crate exclusions, added libfuse3-dev |
 
@@ -74,4 +74,4 @@ Block 4 addressed distribution infrastructure gaps: the systemd service used a d
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

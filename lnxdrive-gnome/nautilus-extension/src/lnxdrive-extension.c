@@ -1,6 +1,6 @@
 /* lnxdrive-extension.c — Nautilus extension module entry point
  *
- * Copyright 2026 Enigmora <https://enigmora.com>
+ * Copyright 2026 Strange Days Tech <https://strangedaystech.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * This file provides the three entry points that Nautilus expects every

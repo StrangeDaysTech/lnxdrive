@@ -71,4 +71,4 @@ LNXDrive requires incremental sync capabilities to efficiently detect changes in
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

@@ -81,4 +81,4 @@ The `GraphCloudProvider` wraps the existing `GraphClient` to implement the `IClo
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

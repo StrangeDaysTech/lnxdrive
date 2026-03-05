@@ -89,4 +89,4 @@ The partial implementations are **non-blocking** for the current phase and will 
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

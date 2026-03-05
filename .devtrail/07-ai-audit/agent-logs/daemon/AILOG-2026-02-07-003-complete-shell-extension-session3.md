@@ -45,8 +45,8 @@ After Sessions 1-2 implemented all D-Bus interfaces in `lnxdrive-ipc`, the Shell
 
 | File | Change |
 |------|--------|
-| `shell-extension/lnxdrive-indicator@enigmora.com/menuItems.js` | Added GLib import, `_formatLastSyncTime()`, last sync time label, connection status label+signals, initial conflict loading, `_getLastSyncText()`, `_getConnectionText()` |
-| `shell-extension/lnxdrive-indicator@enigmora.com/indicator.js` | Added `_refreshIconFromSyncStatus()`, `ConnectionChanged` signal handler, `ConnectionStatus` property change handler |
+| `shell-extension/lnxdrive-indicator@strangedaystech.com/menuItems.js` | Added GLib import, `_formatLastSyncTime()`, last sync time label, connection status label+signals, initial conflict loading, `_getLastSyncText()`, `_getConnectionText()` |
+| `shell-extension/lnxdrive-indicator@strangedaystech.com/indicator.js` | Added `_refreshIconFromSyncStatus()`, `ConnectionChanged` signal handler, `ConnectionStatus` property change handler |
 | `tests/test-shell-extension.js` | Added 4 new tests for ConnectionStatus, ConnectionChanged, LastSyncTime, PendingChanges |
 
 ## Decisions Made

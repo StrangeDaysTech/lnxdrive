@@ -1,6 +1,6 @@
 #!/usr/bin/env gjs
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2026 Enigmora <https://enigmora.com>
+// SPDX-FileCopyrightText: 2026 Strange Days Tech <https://strangedaystech.com>
 
 /**
  * Integration tests for the LNXDrive GNOME Shell extension D-Bus module.
@@ -81,8 +81,8 @@ function assertEqual(actual, expected, message) {
 // ---------------------------------------------------------------------------
 // D-Bus constants (must match dbus.js and the mock daemon)
 // ---------------------------------------------------------------------------
-const BUS_NAME = 'com.enigmora.LNXDrive';
-const OBJECT_PATH = '/com/enigmora/LNXDrive';
+const BUS_NAME = 'com.strangedaystech.LNXDrive';
+const OBJECT_PATH = '/com/strangedaystech/LNXDrive';
 
 // ---------------------------------------------------------------------------
 // Import the dbus.js module
@@ -94,7 +94,7 @@ const SCRIPT_DIR = GLib.path_get_dirname(
     GLib.filename_from_uri(import.meta.url)[0]
 );
 const EXTENSION_DIR = GLib.build_filenamev([
-    SCRIPT_DIR, '..', 'shell-extension', 'lnxdrive-indicator@enigmora.com',
+    SCRIPT_DIR, '..', 'shell-extension', 'lnxdrive-indicator@strangedaystech.com',
 ]);
 
 // Dynamic import of the dbus module
@@ -222,11 +222,11 @@ if (noDaemonMode) {
             const proxies = await dbusModule.createProxies();
             assert(proxies !== null, 'proxies should not be null');
 
-            assertEqual(proxies.sync.g_interface_name, 'com.enigmora.LNXDrive.Sync',
+            assertEqual(proxies.sync.g_interface_name, 'com.strangedaystech.LNXDrive.Sync',
                 'sync proxy interface name mismatch');
-            assertEqual(proxies.status.g_interface_name, 'com.enigmora.LNXDrive.Status',
+            assertEqual(proxies.status.g_interface_name, 'com.strangedaystech.LNXDrive.Status',
                 'status proxy interface name mismatch');
-            assertEqual(proxies.manager.g_interface_name, 'com.enigmora.LNXDrive.Manager',
+            assertEqual(proxies.manager.g_interface_name, 'com.strangedaystech.LNXDrive.Manager',
                 'manager proxy interface name mismatch');
         });
 
@@ -347,7 +347,7 @@ if (noDaemonMode) {
             assert(proxies.conflicts !== null && proxies.conflicts !== undefined,
                 'proxies.conflicts should exist');
             assertEqual(proxies.conflicts.g_interface_name,
-                'com.enigmora.LNXDrive.Conflicts',
+                'com.strangedaystech.LNXDrive.Conflicts',
                 'conflicts proxy interface name mismatch');
         });
 
@@ -694,7 +694,7 @@ if (daemonAvailable && !noDaemonMode) {
         // Create a Files proxy via raw Gio (not part of dbus.js createProxies)
         const FilesXml = `
         <node>
-          <interface name="com.enigmora.LNXDrive.Files">
+          <interface name="com.strangedaystech.LNXDrive.Files">
             <method name="GetBatchFileStatus">
               <arg type="as" direction="in" name="paths"/>
               <arg type="a{ss}" direction="out" name="statuses"/>

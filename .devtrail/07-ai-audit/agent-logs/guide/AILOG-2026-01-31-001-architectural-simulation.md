@@ -147,4 +147,4 @@ The project was at the design documentation phase, requiring validation before i
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

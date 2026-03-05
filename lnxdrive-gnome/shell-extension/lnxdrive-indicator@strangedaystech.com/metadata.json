@@ -1,0 +1,9 @@
+{
+    "uuid": "lnxdrive-indicator@strangedaystech.com",
+    "name": "LNXDrive",
+    "description": "Cloud sync status indicator for LNXDrive",
+    "shell-version": ["45", "46", "47", "48", "49"],
+    "version": 1,
+    "url": "https://github.com/strangedaystech/lnxdrive-gnome",
+    "settings-schema": "com.strangedaystech.LNXDrive.Indicator"
+}

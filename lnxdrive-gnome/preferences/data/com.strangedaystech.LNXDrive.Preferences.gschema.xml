@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="lnxdrive-preferences">
 
-  <schema id="com.enigmora.LNXDrive.Preferences"
-          path="/com/enigmora/LNXDrive/Preferences/">
+  <schema id="com.strangedaystech.LNXDrive.Preferences"
+          path="/com/strangedaystech/LNXDrive/Preferences/">
 
     <key name="window-width" type="i">
       <default>800</default>

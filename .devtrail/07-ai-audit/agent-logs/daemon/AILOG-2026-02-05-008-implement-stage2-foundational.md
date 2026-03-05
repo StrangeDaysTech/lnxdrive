@@ -122,4 +122,4 @@ Stage 2 checkpoint achieved: "Domain model updated, config extended, database mi
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

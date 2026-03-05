@@ -88,4 +88,4 @@ from Phase 5 through Phase 11, using parallel sub-agents to maximize throughput.
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

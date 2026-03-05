@@ -61,4 +61,4 @@ The only compiler warnings are about `error` and `print_json` methods being unus
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

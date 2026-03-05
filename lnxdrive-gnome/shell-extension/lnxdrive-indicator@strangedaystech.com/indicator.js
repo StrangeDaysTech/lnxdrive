@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2026 Enigmora <https://enigmora.com>
+// SPDX-FileCopyrightText: 2026 Strange Days Tech <https://strangedaystech.com>
 
 /**
  * LNXDrive Panel Indicator
@@ -57,7 +57,7 @@ class LnxdriveIndicator extends PanelMenu.Button {
 
         // Create the status icon (symbolic icon for the top bar)
         this._icon = new St.Icon({
-            icon_name: 'com.enigmora.LNXDrive-symbolic',
+            icon_name: 'com.strangedaystech.LNXDrive-symbolic',
             style_class: 'system-status-icon',
         });
         this.add_child(this._icon);

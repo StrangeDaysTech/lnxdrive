@@ -68,4 +68,4 @@ The container approach was chosen over host-level systemd testing because:
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

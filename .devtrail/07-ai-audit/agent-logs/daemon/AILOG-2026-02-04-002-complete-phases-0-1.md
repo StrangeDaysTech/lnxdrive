@@ -78,4 +78,4 @@ The spec 001-core-cli had 251/254 tasks completed. The remaining gaps were:
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

@@ -2,10 +2,10 @@
 name = "lnxdrive-cosmic"
 version = "0.1.0"
 edition = "2021"
-authors = ["Enigmora <contact@enigmora.com>"]
+authors = ["Strange Days Tech, S.A.S. <contact@strangedaystech.com>"]
 license = "GPL-3.0-or-later"
 description = "LNXDrive client for COSMIC Desktop"
-repository = "https://github.com/enigmora/lnxdrive-cosmic"
+repository = "https://github.com/strangedaystech/lnxdrive-cosmic"
 rust-version = "1.75"
 
 [[bin]]
@@ -18,7 +18,7 @@ iced = { version = "0.12", features = ["tokio"] }
 libcosmic = { git = "https://github.com/pop-os/libcosmic" }
 
 # D-Bus communication with daemon
-lnxdrive-ipc = { git = "https://github.com/enigmora/lnxdrive.git" }
+lnxdrive-ipc = { git = "https://github.com/strangedaystech/lnxdrive.git" }
 
 # Async runtime
 tokio = { version = "1.35", features = ["full"] }

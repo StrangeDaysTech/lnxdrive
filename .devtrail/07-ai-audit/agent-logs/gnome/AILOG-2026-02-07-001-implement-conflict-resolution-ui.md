@@ -19,7 +19,7 @@ Added the complete conflict resolution user interface across all GNOME component
 
 ## Context
 
-The lnxdrive daemon (Fase 5) now detects and stores conflicts via `com.enigmora.LNXDrive.Conflicts` D-Bus interface. The GNOME integration needed UI components for users to view, inspect, and resolve file conflicts. The preferences app had 3 tabs (Account, Sync, Advanced) but no conflict management. The shell extension showed a simple conflict counter but no individual entries.
+The lnxdrive daemon (Fase 5) now detects and stores conflicts via `com.strangedaystech.LNXDrive.Conflicts` D-Bus interface. The GNOME integration needed UI components for users to view, inspect, and resolve file conflicts. The preferences app had 3 tabs (Account, Sync, Advanced) but no conflict management. The shell extension showed a simple conflict counter but no individual entries.
 
 ## Actions Performed
 
@@ -69,10 +69,10 @@ The lnxdrive daemon (Fase 5) now detects and stores conflicts via `com.enigmora.
 
 ## Additional Notes
 
-This commit is on branch `feat/002-conflict-resolution-ui` based on `main`. PR: https://github.com/Enigmora/lnxdrive-gnome/pull/3
+This commit is on branch `feat/002-conflict-resolution-ui` based on `main`. PR: https://github.com/Strange Days Tech/lnxdrive-gnome/pull/3
 
 The conflict list page rebuilds the `PreferencesGroup` on each refresh rather than diffing individual rows. This is acceptable for the expected conflict count (<100) but could be optimized with a `gio::ListStore` model if needed in the future.
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

@@ -62,4 +62,4 @@ The implementation includes comprehensive unit tests covering all state transiti
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

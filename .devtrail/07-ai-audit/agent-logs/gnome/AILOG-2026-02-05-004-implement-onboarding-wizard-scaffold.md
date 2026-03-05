@@ -86,4 +86,4 @@ already configured. This task created all source files under `preferences/src/`.
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

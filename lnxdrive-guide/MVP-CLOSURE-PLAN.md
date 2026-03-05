@@ -12,7 +12,7 @@
 | ID | Brecha | Estado |
 |----|--------|--------|
 | C1 | `filesystem.rs` open() no invoca `HydrationManager` | **RESUELTO** — open() inicia hydration async, read() bloquea con wait_for_range() |
-| C2 | Bus name mismatch org vs com | **RESUELTO** — Unificado a `com.enigmora.LNXDrive` en 8 archivos |
+| C2 | Bus name mismatch org vs com | **RESUELTO** — Unificado a `com.strangedaystech.LNXDrive` en 8 archivos |
 | C3 | 7 iconos de emblema referenciados por Nautilus | **RESUELTO** — Ya existian en nautilus-extension/icons/ con meson.build configurado |
 
 ### Significativas (funcionalidad incompleta)
@@ -43,7 +43,7 @@
 
 ### Bloque 1 — Funcionalidad end-to-end ✅ COMPLETADO
 
-- **C2**: Unificado D-Bus bus name a `com.enigmora.LNXDrive` en 8 archivos (Nautilus .h/.c, Preferences .rs, Shell dbus.js, mock daemon .py, tests .js/.py)
+- **C2**: Unificado D-Bus bus name a `com.strangedaystech.LNXDrive` en 8 archivos (Nautilus .h/.c, Preferences .rs, Shell dbus.js, mock daemon .py, tests .js/.py)
 - **C1**: HydrationManager conectado en FUSE — open() inicia hydration async para archivos Online, read() bloquea con wait_for_range(), constructor acepta Optional<HydrationManager>
 - **C3**: Los 7 iconos SVG simbolicos (16x16, currentColor) ya existian en nautilus-extension/icons/ con meson.build configurado
 
@@ -60,10 +60,10 @@
 
 ### Bloque 4 — Infraestructura para distribucion ✅ COMPLETADO
 
-- **M2**: Systemd service actualizado: `Type=dbus`, `BusName=com.enigmora.LNXDrive`, `ExecStart=/usr/bin/lnxdrive-daemon`, `PrivateTmp=true`
+- **M2**: Systemd service actualizado: `Type=dbus`, `BusName=com.strangedaystech.LNXDrive`, `ExecStart=/usr/bin/lnxdrive-daemon`, `PrivateTmp=true`
 - **M3**: Creado `lnxdrive-autostart.desktop` (XDG autostart para escritorios que lo soportan). Para GNOME 49+, el `WantedBy=default.target` del service + D-Bus activation cubre el autostart.
 - **M5**: CI actualizado: eliminadas exclusiones de 4 crates, agregado `libfuse3-dev` + `pkg-config` como deps del sistema. Ahora compila y testea el workspace completo.
-- **Bonus**: Creado archivo de activacion D-Bus (`com.enigmora.LNXDrive.service`) con `SystemdService=lnxdrive.service` para arranque bajo demanda.
+- **Bonus**: Creado archivo de activacion D-Bus (`com.strangedaystech.LNXDrive.service`) con `SystemdService=lnxdrive.service` para arranque bajo demanda.
 
 ---
 
@@ -80,18 +80,18 @@
 
 ### Repo lnxdrive (Rust daemon) — Bloque 4
 - `config/lnxdrive.service` — Type=dbus, BusName, ExecStart=/usr/bin/lnxdrive-daemon, PrivateTmp
-- `config/com.enigmora.LNXDrive.service` — (NUEVO) D-Bus activation file
+- `config/com.strangedaystech.LNXDrive.service` — (NUEVO) D-Bus activation file
 - `config/lnxdrive-autostart.desktop` — (NUEVO) XDG autostart para login
 - `.github/workflows/ci.yml` — Eliminadas exclusiones, agregadas deps de sistema (libfuse3-dev)
 
 ### Repo lnxdrive-gnome (GNOME integration)
-- `nautilus-extension/src/lnxdrive-dbus-client.h` — bus name com.enigmora
-- `nautilus-extension/src/lnxdrive-dbus-client.c` — bus name com.enigmora
-- `preferences/src/dbus_client.rs` — bus name com.enigmora (16 ocurrencias)
-- `shell-extension/lnxdrive-indicator@enigmora.com/dbus.js` — bus name com.enigmora
-- `tests/mock-dbus-daemon.py` — bus name com.enigmora
-- `tests/test-shell-extension.js` — bus name com.enigmora
-- `tests/test-nautilus-extension.py` — bus name com.enigmora
+- `nautilus-extension/src/lnxdrive-dbus-client.h` — bus name com.strangedaystech
+- `nautilus-extension/src/lnxdrive-dbus-client.c` — bus name com.strangedaystech
+- `preferences/src/dbus_client.rs` — bus name com.strangedaystech (16 ocurrencias)
+- `shell-extension/lnxdrive-indicator@strangedaystech.com/dbus.js` — bus name com.strangedaystech
+- `tests/mock-dbus-daemon.py` — bus name com.strangedaystech
+- `tests/test-shell-extension.js` — bus name com.strangedaystech
+- `tests/test-nautilus-extension.py` — bus name com.strangedaystech
 
 ---
 

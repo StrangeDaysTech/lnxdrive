@@ -64,4 +64,4 @@ The `--full` flag currently logs the intent but the actual clearing of the delta
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

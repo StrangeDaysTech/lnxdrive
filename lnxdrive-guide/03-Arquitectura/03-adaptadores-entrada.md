@@ -24,14 +24,14 @@ Las interfaces de usuario son **adaptadores**, no el sistema. El núcleo expone 
 ┌──────────────────────────────────────────────────────────────────┐
 │                        lnxdrive-daemon                             │
 │  ┌──────────────────────────────────────────────────────────┐    │
-│  │  DBus Service: org.enigmora.LNXDrive                       │    │
+│  │  DBus Service: org.strangedaystech.LNXDrive                       │    │
 │  │  ─────────────────────────────────────────────────────── │    │
 │  │  Interfaces:                                             │    │
-│  │  • org.enigmora.LNXDrive.Sync                              │    │
-│  │  • org.enigmora.LNXDrive.Auth                              │    │
-│  │  • org.enigmora.LNXDrive.Conflicts                         │    │
-│  │  • org.enigmora.LNXDrive.State                             │    │
-│  │  • org.enigmora.LNXDrive.Metrics                           │    │
+│  │  • org.strangedaystech.LNXDrive.Sync                              │    │
+│  │  • org.strangedaystech.LNXDrive.Auth                              │    │
+│  │  • org.strangedaystech.LNXDrive.Conflicts                         │    │
+│  │  • org.strangedaystech.LNXDrive.State                             │    │
+│  │  • org.strangedaystech.LNXDrive.Metrics                           │    │
 │  │                                                          │    │
 │  │  Signals:                                                │    │
 │  │  • SyncProgressChanged(path, progress)                   │    │

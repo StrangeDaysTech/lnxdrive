@@ -83,4 +83,4 @@ Microsoft Graph API enforces rate limits (~600 requests per 10 minutes per app p
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

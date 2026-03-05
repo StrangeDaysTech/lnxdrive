@@ -37,7 +37,7 @@ The GNOME integration components (Nautilus extension, GNOME Shell status indicat
 ## Decisions Made
 
 - **Library choice**: Used `dbus-next` (as specified in requirements) with its `@method()`, `@signal()`, `@dbus_property()` decorators from `dbus_next.service`.
-- **Interface naming**: Interface names match the D-Bus contract exactly (e.g., `org.enigmora.LNXDrive.Files`), registered at the canonical object path `/org/enigmora/LNXDrive`.
+- **Interface naming**: Interface names match the D-Bus contract exactly (e.g., `org.strangedaystech.LNXDrive.Files`), registered at the canonical object path `/org/strangedaystech/LNXDrive`.
 - **Signal emission**: Signals with multiple out arguments return a list, matching dbus-next convention. No-argument signals (SyncStarted) use `pass` with no return annotation.
 - **Sync simulation**: `SyncNow()` spawns a background asyncio task that emits `SyncProgress` per file with 0.8s delays, then `SyncCompleted`. `Pause()` cancels the task.
 - **Periodic emitter**: A separate `PeriodicEmitter` class cycles through `FileStatusChanged`, `SyncProgress` (when syncing), and `QuotaChanged` (every 6th tick) at the configurable interval.
@@ -64,4 +64,4 @@ The GNOME integration components (Nautilus extension, GNOME Shell status indicat
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

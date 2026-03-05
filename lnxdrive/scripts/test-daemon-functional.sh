@@ -105,10 +105,10 @@ fi
 # --- Check 4: D-Bus name registered ------------------------------------------
 
 echo -e "${BOLD}Check 4/8: D-Bus name registered${NC}"
-if busctl --user list 2>/dev/null | grep -q "com.enigmora.LNXDrive"; then
-    pass "D-Bus name 'com.enigmora.LNXDrive' is registered"
+if busctl --user list 2>/dev/null | grep -q "com.strangedaystech.LNXDrive"; then
+    pass "D-Bus name 'com.strangedaystech.LNXDrive' is registered"
 else
-    fail "D-Bus name 'com.enigmora.LNXDrive' not found on session bus"
+    fail "D-Bus name 'com.strangedaystech.LNXDrive' not found on session bus"
     info "Current D-Bus names:"
     busctl --user list 2>&1 | head -20 || true
 fi

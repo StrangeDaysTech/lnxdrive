@@ -4,15 +4,15 @@
 //! with the LNXDrive daemon via D-Bus session bus.
 //!
 //! # Interfaces
-//! - `com.enigmora.LNXDrive.SyncController` - Sync control (legacy)
-//! - `com.enigmora.LNXDrive.Account` - Account management (legacy)
-//! - `com.enigmora.LNXDrive.Conflicts` - Conflict resolution
-//! - `com.enigmora.LNXDrive.Files` - File status queries, pin/unpin, sync-by-path
-//! - `com.enigmora.LNXDrive.Sync` - Global sync control with properties
-//! - `com.enigmora.LNXDrive.Status` - Account and quota information
-//! - `com.enigmora.LNXDrive.Auth` - OAuth2 authentication
-//! - `com.enigmora.LNXDrive.Settings` - Configuration management
-//! - `com.enigmora.LNXDrive.Manager` - Daemon lifecycle
+//! - `com.strangedaystech.LNXDrive.SyncController` - Sync control (legacy)
+//! - `com.strangedaystech.LNXDrive.Account` - Account management (legacy)
+//! - `com.strangedaystech.LNXDrive.Conflicts` - Conflict resolution
+//! - `com.strangedaystech.LNXDrive.Files` - File status queries, pin/unpin, sync-by-path
+//! - `com.strangedaystech.LNXDrive.Sync` - Global sync control with properties
+//! - `com.strangedaystech.LNXDrive.Status` - Account and quota information
+//! - `com.strangedaystech.LNXDrive.Auth` - OAuth2 authentication
+//! - `com.strangedaystech.LNXDrive.Settings` - Configuration management
+//! - `com.strangedaystech.LNXDrive.Manager` - Daemon lifecycle
 //!
 //! # Usage
 //!

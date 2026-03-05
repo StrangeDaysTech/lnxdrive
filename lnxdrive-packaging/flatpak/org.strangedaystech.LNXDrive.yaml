@@ -1,7 +1,7 @@
 # Flatpak manifest for LNXDrive
-# Build with: flatpak-builder --user --install builddir org.enigmora.LNXDrive.yaml
+# Build with: flatpak-builder --user --install builddir org.strangedaystech.LNXDrive.yaml
 
-app-id: org.enigmora.LNXDrive
+app-id: org.strangedaystech.LNXDrive
 runtime: org.gnome.Platform
 runtime-version: '45'
 sdk: org.gnome.Sdk
@@ -30,7 +30,7 @@ modules:
       - install -Dm755 target/release/lnxdrive -t /app/bin
     sources:
       - type: git
-        url: https://github.com/enigmora/lnxdrive.git
+        url: https://github.com/strangedaystech/lnxdrive.git
         tag: v0.1.0
 
   - name: lnxdrive-gnome
@@ -42,5 +42,5 @@ modules:
       - install -Dm755 target/release/lnxdrive-gnome -t /app/bin
     sources:
       - type: git
-        url: https://github.com/enigmora/lnxdrive-gnome.git
+        url: https://github.com/strangedaystech/lnxdrive-gnome.git
         tag: v0.1.0

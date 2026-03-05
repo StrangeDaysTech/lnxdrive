@@ -76,7 +76,7 @@ loop Reconnection attempts (every 5s)
     end
 end
 
-Daemon -> DBus: RequestName("org.enigmora.LNXDrive")
+Daemon -> DBus: RequestName("org.strangedaystech.LNXDrive")
 DBus --> Daemon: name acquired
 
 Daemon -> DBus: emit ServiceRestarted()

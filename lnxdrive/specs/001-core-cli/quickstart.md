@@ -69,7 +69,7 @@ Before starting development:
    edition = "2021"
    rust-version = "1.75"
    license = "GPL-3.0-or-later"
-   repository = "https://github.com/Enigmora/lnxdrive"
+   repository = "https://github.com/Strange Days Tech/lnxdrive"
 
    [workspace.dependencies]
    tokio = { version = "1.35", features = ["full"] }

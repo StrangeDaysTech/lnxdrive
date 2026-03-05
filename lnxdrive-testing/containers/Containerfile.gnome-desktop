@@ -126,8 +126,8 @@ if [ -d /opt/lnxdrive/nautilus-extension ]; then
 fi
 
 # Install Shell extension if available
-SHELL_EXT_SRC="/opt/lnxdrive/shell-extension/lnxdrive-indicator@enigmora.com"
-SHELL_EXT_DEST="/home/testuser/.local/share/gnome-shell/extensions/lnxdrive-indicator@enigmora.com"
+SHELL_EXT_SRC="/opt/lnxdrive/shell-extension/lnxdrive-indicator@strangedaystech.com"
+SHELL_EXT_DEST="/home/testuser/.local/share/gnome-shell/extensions/lnxdrive-indicator@strangedaystech.com"
 if [ -d "$SHELL_EXT_SRC" ]; then
     rm -rf "$SHELL_EXT_DEST"
     cp -r "$SHELL_EXT_SRC" "$SHELL_EXT_DEST"
@@ -143,7 +143,7 @@ if [ -f "$SHELL_SCHEMA" ]; then
 fi
 cat > "${SCHEMA_DIR}/99-lnxdrive.gschema.override" <<'GSEOF'
 [org.gnome.shell]
-enabled-extensions=['lnxdrive-indicator@enigmora.com']
+enabled-extensions=['lnxdrive-indicator@strangedaystech.com']
 disable-user-extensions=false
 GSEOF
 glib-compile-schemas "$SCHEMA_DIR" 2>/dev/null || true

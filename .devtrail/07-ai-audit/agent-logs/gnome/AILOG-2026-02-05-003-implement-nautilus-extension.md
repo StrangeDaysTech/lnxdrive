@@ -78,4 +78,4 @@ Stage 3 of the GNOME integration plan (spec 001-gnome-integration) requires a Na
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

@@ -39,7 +39,7 @@ chmod 700 "$XDG_RUNTIME_DIR"
 
 # Copiar extension en desarrollo
 mkdir -p "$XDG_DATA_HOME/gnome-shell/extensions"
-cp -r ./lnxdrive-gnome-extension "$XDG_DATA_HOME/gnome-shell/extensions/lnxdrive@enigmora.org"
+cp -r ./lnxdrive-gnome-extension "$XDG_DATA_HOME/gnome-shell/extensions/lnxdrive@strangedaystech.org"
 
 # Copiar extension de Nautilus
 mkdir -p "$XDG_DATA_HOME/nautilus-python/extensions"

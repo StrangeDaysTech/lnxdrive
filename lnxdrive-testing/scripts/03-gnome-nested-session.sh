@@ -132,8 +132,8 @@ echo "Error document" > "${SYNC_ROOT}/shared/team-notes.docx"
 
 # --- Install Shell extension into isolated XDG --------------------------------
 
-SHELL_EXT_SRC="${GNOME_DIR}/shell-extension/lnxdrive-indicator@enigmora.com"
-SHELL_EXT_DEST="${XDG_DATA_HOME}/gnome-shell/extensions/lnxdrive-indicator@enigmora.com"
+SHELL_EXT_SRC="${GNOME_DIR}/shell-extension/lnxdrive-indicator@strangedaystech.com"
+SHELL_EXT_DEST="${XDG_DATA_HOME}/gnome-shell/extensions/lnxdrive-indicator@strangedaystech.com"
 
 if [ -d "$SHELL_EXT_SRC" ]; then
     echo -e "${YELLOW}Installing Shell extension...${NC}"
@@ -194,14 +194,14 @@ if [ -f "$SHELL_SCHEMA" ]; then
 fi
 
 # Copy the LNXDrive Preferences schema
-PREFS_SCHEMA="${GNOME_DIR}/preferences/data/com.enigmora.LNXDrive.Preferences.gschema.xml"
+PREFS_SCHEMA="${GNOME_DIR}/preferences/data/com.strangedaystech.LNXDrive.Preferences.gschema.xml"
 if [ -f "$PREFS_SCHEMA" ]; then
     cp "$PREFS_SCHEMA" "$SCHEMA_DIR/"
 fi
 
 cat > "${SCHEMA_DIR}/99-lnxdrive-test.gschema.override" <<'EOF'
 [org.gnome.shell]
-enabled-extensions=['lnxdrive-indicator@enigmora.com']
+enabled-extensions=['lnxdrive-indicator@strangedaystech.com']
 disable-user-extensions=false
 EOF
 

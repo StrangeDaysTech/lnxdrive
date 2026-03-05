@@ -43,4 +43,4 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-*[Enigmora](https://enigmora.com) — LNXDrive Project*
+*[Strange Days Tech](https://strangedaystech.com) — LNXDrive Project*

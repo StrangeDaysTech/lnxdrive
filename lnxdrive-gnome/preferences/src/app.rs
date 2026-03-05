@@ -64,7 +64,7 @@ glib::wrapper! {
 
 impl LnxdriveApp {
     /// Application ID following GNOME conventions.
-    const APP_ID: &'static str = "com.enigmora.LNXDrive.Preferences";
+    const APP_ID: &'static str = "com.strangedaystech.LNXDrive.Preferences";
 
     pub fn new() -> Self {
         let app: Self = glib::Object::builder()

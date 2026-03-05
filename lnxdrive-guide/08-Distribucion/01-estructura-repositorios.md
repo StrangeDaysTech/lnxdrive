@@ -60,7 +60,7 @@ Este pragmatismo se traduce en usar el toolkit y lenguaje que cada entorno de es
 ### 17.3 Estructura de Repositorios
 
 ```
-github.com/enigmora/
+github.com/strangedaystech/
 │
 ├── lnxdrive/                       # CORE + CLI + DAEMON
 │   │                               # ══════════════════
@@ -102,9 +102,9 @@ github.com/enigmora/
 │   │   └── dbus_client.rs          # Cliente D-Bus (usa lnxdrive-ipc)
 │   ├── data/
 │   │   ├── icons/
-│   │   ├── org.enigmora.LNXDrive.desktop
-│   │   ├── org.enigmora.LNXDrive.metainfo.xml
-│   │   └── org.enigmora.LNXDrive.gschema.xml
+│   │   ├── org.strangedaystech.LNXDrive.desktop
+│   │   ├── org.strangedaystech.LNXDrive.metainfo.xml
+│   │   └── org.strangedaystech.LNXDrive.gschema.xml
 │   └── .github/workflows/
 │       ├── ci.yml                  # Build + test
 │       └── flatpak.yml             # Build Flatpak
@@ -176,8 +176,8 @@ github.com/enigmora/
     │                               # Scripts y configuraciones
     │
     ├── flatpak/
-    │   ├── org.enigmora.LNXDrive.yml           # Manifiesto GNOME
-    │   └── org.enigmora.LNXDrive.Gtk3.yml      # Manifiesto GTK3
+    │   ├── org.strangedaystech.LNXDrive.yml           # Manifiesto GNOME
+    │   └── org.strangedaystech.LNXDrive.Gtk3.yml      # Manifiesto GTK3
     ├── deb/
     │   ├── lnxdrive-core/
     │   │   └── debian/
@@ -297,7 +297,7 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/enigmora/lnxdrive-test:latest
+      image: ghcr.io/strangedaystech/lnxdrive-test:latest
     steps:
       - uses: actions/checkout@v4
       - name: Integration tests
@@ -449,7 +449,7 @@ edition = "2021"
 lnxdrive-ipc = "1.0"
 
 # O desde git durante desarrollo
-# lnxdrive-ipc = { git = "https://github.com/enigmora/lnxdrive", branch = "main" }
+# lnxdrive-ipc = { git = "https://github.com/strangedaystech/lnxdrive", branch = "main" }
 
 gtk4 = "0.8"
 libadwaita = "0.6"

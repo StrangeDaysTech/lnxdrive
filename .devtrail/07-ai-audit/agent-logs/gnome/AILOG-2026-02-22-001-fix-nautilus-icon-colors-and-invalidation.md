@@ -78,4 +78,4 @@ emblem because the invalidation callback in `lnxdrive-extension.c` was a no-op.
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

@@ -286,8 +286,8 @@ lnxdrive hydrate onedrive:trabajo:/Proyectos/archivo.zip
 ### 13.7 DBus API Multi-Cuenta
 
 ```xml
-<!-- org.enigmora.LNXDrive.Accounts -->
-<interface name="org.enigmora.LNXDrive.Accounts">
+<!-- org.strangedaystech.LNXDrive.Accounts -->
+<interface name="org.strangedaystech.LNXDrive.Accounts">
   <!-- Lista todas las cuentas configuradas -->
   <method name="List">
     <arg type="a(ssssb)" direction="out" name="accounts"/>

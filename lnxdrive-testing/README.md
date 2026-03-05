@@ -1,6 +1,6 @@
 # LNXDrive Testing
 
-Test infrastructure for the [LNXDrive](https://github.com/Enigmora/lnxdrive) ecosystem — a Linux OneDrive sync client.
+Test infrastructure for the [LNXDrive](https://github.com/Strange Days Tech/lnxdrive) ecosystem — a Linux OneDrive sync client.
 
 Orchestrates build verification, D-Bus integration tests, and visual testing across multiple isolation levels using Podman containers, GNOME nested sessions, and QEMU VMs.
 
@@ -92,8 +92,8 @@ lnxdrive-testing/
 
 The testing infrastructure validates three sibling repositories:
 
-- **[lnxdrive](https://github.com/Enigmora/lnxdrive)** — Rust daemon (`lnxdrived`) and CLI
-- **[lnxdrive-gnome](https://github.com/Enigmora/lnxdrive-gnome)** — GNOME Shell extension, Nautilus extension, and preferences app
+- **[lnxdrive](https://github.com/Strange Days Tech/lnxdrive)** — Rust daemon (`lnxdrived`) and CLI
+- **[lnxdrive-gnome](https://github.com/Strange Days Tech/lnxdrive-gnome)** — GNOME Shell extension, Nautilus extension, and preferences app
 
 ### Test Levels
 

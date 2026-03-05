@@ -40,7 +40,7 @@ mod imp {
             let obj = self.obj();
 
             // Load GSettings for window geometry persistence.
-            let settings = gio::Settings::new("com.enigmora.LNXDrive.Preferences");
+            let settings = gio::Settings::new("com.strangedaystech.LNXDrive.Preferences");
 
             let width = settings.int("window-width");
             let height = settings.int("window-height");

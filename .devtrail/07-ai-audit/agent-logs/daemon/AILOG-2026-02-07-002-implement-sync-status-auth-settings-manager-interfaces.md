@@ -30,15 +30,15 @@ After Session 1 added the `Files` interface, the daemon still lacked 5 interface
 
 2. **Implemented 5 new interface structs** following the existing `#[zbus::interface]` pattern:
 
-   - **`SyncInterface`** (`com.enigmora.LNXDrive.Sync`): 3 methods (`sync_now`, `pause`, `resume`), 3 read-only properties (`SyncStatus`, `LastSyncTime`, `PendingChanges`), 4 signals. Coexists with legacy `SyncController`.
+   - **`SyncInterface`** (`com.strangedaystech.LNXDrive.Sync`): 3 methods (`sync_now`, `pause`, `resume`), 3 read-only properties (`SyncStatus`, `LastSyncTime`, `PendingChanges`), 4 signals. Coexists with legacy `SyncController`.
 
-   - **`StatusInterface`** (`com.enigmora.LNXDrive.Status`): 2 methods (`get_quota` → `(u64, u64)`, `get_account_info` → `HashMap<String, OwnedValue>` for D-Bus `a{sv}`), 1 property (`ConnectionStatus`), 2 signals.
+   - **`StatusInterface`** (`com.strangedaystech.LNXDrive.Status`): 2 methods (`get_quota` → `(u64, u64)`, `get_account_info` → `HashMap<String, OwnedValue>` for D-Bus `a{sv}`), 1 property (`ConnectionStatus`), 2 signals.
 
-   - **`AuthInterface`** (`com.enigmora.LNXDrive.Auth`): 4 methods (`start_auth` → `(String, String)`, `complete_auth` with CSRF validation → `bool`, `is_authenticated` → `bool`, `logout`), 1 signal.
+   - **`AuthInterface`** (`com.strangedaystech.LNXDrive.Auth`): 4 methods (`start_auth` → `(String, String)`, `complete_auth` with CSRF validation → `bool`, `is_authenticated` → `bool`, `logout`), 1 signal.
 
-   - **`SettingsInterface`** (`com.enigmora.LNXDrive.Settings`): 7 methods (get/set config, folders, exclusion patterns, remote folder tree), 1 signal.
+   - **`SettingsInterface`** (`com.strangedaystech.LNXDrive.Settings`): 7 methods (get/set config, folders, exclusion patterns, remote folder tree), 1 signal.
 
-   - **`ManagerInterface`** (`com.enigmora.LNXDrive.Manager`): 4 methods (`start`, `stop`, `restart`, `get_status`), 2 read-only properties (`Version`, `IsRunning`).
+   - **`ManagerInterface`** (`com.strangedaystech.LNXDrive.Manager`): 4 methods (`start`, `stop`, `restart`, `get_status`), 2 read-only properties (`Version`, `IsRunning`).
 
 3. **Registered all 5 interfaces** in `DbusService::start()`.
 4. **Updated `lib.rs`** to re-export all new interface types.
@@ -53,7 +53,7 @@ After Session 1 added the `Files` interface, the daemon still lacked 5 interface
 
 ## Decisions Made
 
-- **Sync coexists with SyncController**: The new `Sync` interface uses the contract-specified name (`com.enigmora.LNXDrive.Sync`) while the legacy `SyncController` remains for backward compatibility. Both share the same `DaemonState`.
+- **Sync coexists with SyncController**: The new `Sync` interface uses the contract-specified name (`com.strangedaystech.LNXDrive.Sync`) while the legacy `SyncController` remains for backward compatibility. Both share the same `DaemonState`.
 - **`a{sv}` via OwnedValue**: `StatusInterface::get_account_info()` returns `HashMap<String, OwnedValue>` to match the D-Bus `a{sv}` type in the contract, rather than JSON strings used by the legacy `Account` interface.
 - **CSRF validation in CompleteAuth**: Auth flow includes CSRF state token verification to prevent cross-site request forgery, matching the OAuth2 PKCE flow pattern.
 - **Empty config rejection**: `SetConfig` silently rejects empty YAML strings to prevent accidental config wipe.

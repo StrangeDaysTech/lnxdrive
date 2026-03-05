@@ -42,7 +42,7 @@ Estructura base
   └──────────────────────┴─────────────────────────────────────────────────────────────────────┘
   Uso Rápido
 
-  cd /E/Proyectos/Enigmora/lnxdrive-project/testing
+  cd /E/Proyectos/Strange Days Tech/lnxdrive-project/testing
   make check-deps          # Verifica qué está disponible
   make build-test          # Compila + tests completos (~10-15 min primera vez)
   make test-dbus           # Solo tests D-Bus

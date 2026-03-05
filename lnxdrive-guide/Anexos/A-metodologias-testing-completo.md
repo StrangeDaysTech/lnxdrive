@@ -505,7 +505,7 @@ chmod 700 "$XDG_RUNTIME_DIR"
 
 # Copiar extensión en desarrollo
 mkdir -p "$XDG_DATA_HOME/gnome-shell/extensions"
-cp -r ./lnxdrive-gnome-extension "$XDG_DATA_HOME/gnome-shell/extensions/lnxdrive@enigmora.org"
+cp -r ./lnxdrive-gnome-extension "$XDG_DATA_HOME/gnome-shell/extensions/lnxdrive@strangedaystech.org"
 
 # Copiar extensión de Nautilus
 mkdir -p "$XDG_DATA_HOME/nautilus-python/extensions"
@@ -1125,7 +1125,7 @@ jobs:
     needs: unit-tests
     services:
       mock-graph:
-        image: ghcr.io/enigmora/lnxdrive-mock-graph:latest
+        image: ghcr.io/strangedaystech/lnxdrive-mock-graph:latest
         ports:
           - 8080:8080
 
@@ -1722,7 +1722,7 @@ La inversión en infraestructura de testing (scripts, containers, VM) se paga r�
 ---
 
 *Documento de investigación generado el 29 de enero de 2026*
-*Proyecto Enigmora - LNXDrive*
+*Proyecto Strange Days Tech - LNXDrive*
 
 ---
 

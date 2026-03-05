@@ -167,4 +167,4 @@ Mark `review_required: true` when:
 
 ---
 
-*DevTrail v2.0.0 | [Handbook](https://enigmora.github.io/devtrail/) | [Enigmora](https://enigmora.com)*
+*DevTrail v2.0.0 | [Handbook](https://strangedaystech.github.io/devtrail/) | [Strange Days Tech](https://strangedaystech.com)*

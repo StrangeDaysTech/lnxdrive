@@ -79,4 +79,4 @@ LNXDrive requires OAuth2 authentication with Microsoft's identity platform to ac
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

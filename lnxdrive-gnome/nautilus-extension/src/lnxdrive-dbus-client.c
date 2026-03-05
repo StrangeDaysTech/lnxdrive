@@ -1,6 +1,6 @@
 /* lnxdrive-dbus-client.c — D-Bus client for communication with lnxdrive-daemon
  *
- * Copyright 2026 Enigmora <https://enigmora.com>
+ * Copyright 2026 Strange Days Tech <https://strangedaystech.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Terminology glossary (keep in sync with lnxdrive-guide):
@@ -422,7 +422,7 @@ fetch_sync_root_async (LnxdriveDbusClient *self)
         NULL,
         LNXDRIVE_DBUS_BUS_NAME,
         LNXDRIVE_DBUS_OBJECT_PATH,
-        "com.enigmora.LNXDrive.Settings",
+        "com.strangedaystech.LNXDrive.Settings",
         NULL,
         on_settings_proxy_ready,
         self);

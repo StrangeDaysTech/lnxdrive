@@ -108,4 +108,4 @@ Progress: 93 of ~105 tasks complete for spec 002-files-on-demand.
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

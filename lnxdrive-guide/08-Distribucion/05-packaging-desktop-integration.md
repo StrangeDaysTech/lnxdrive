@@ -44,15 +44,15 @@ Cada entorno de escritorio recibe paquetes nativos con archivos de integracion p
 | Archivo | Ruta de Instalacion | Funcion |
 |---------|---------------------|---------|
 | `lnxdrive.service` | `/usr/lib/systemd/user/` | Servicio systemd del daemon |
-| `com.enigmora.LNXDrive.service` | `/usr/share/dbus-1/services/` | Activacion D-Bus |
-| `com.enigmora.LNXDrive.xml` | `/usr/share/dbus-1/interfaces/` | Introspection XML |
-| `org.enigmora.lnxdrive.policy` | `/usr/share/polkit-1/actions/` | Politicas PolicyKit |
+| `com.strangedaystech.LNXDrive.service` | `/usr/share/dbus-1/services/` | Activacion D-Bus |
+| `com.strangedaystech.LNXDrive.xml` | `/usr/share/dbus-1/interfaces/` | Introspection XML |
+| `org.strangedaystech.lnxdrive.policy` | `/usr/share/polkit-1/actions/` | Politicas PolicyKit |
 
 #### GNOME Shell Extension (`lnxdrive-gnome`)
 
 | Archivo | Ruta de Instalacion | Funcion |
 |---------|---------------------|---------|
-| `metadata.json` | `/usr/share/gnome-shell/extensions/lnxdrive-indicator@enigmora.com/` | Metadata de la extension |
+| `metadata.json` | `/usr/share/gnome-shell/extensions/lnxdrive-indicator@strangedaystech.com/` | Metadata de la extension |
 | `extension.js` | (mismo directorio) | Punto de entrada de la extension |
 | `dbus.js` | (mismo directorio) | Proxy D-Bus |
 | `prefs.js` | (mismo directorio) | Panel de preferencias |
@@ -68,20 +68,20 @@ Cada entorno de escritorio recibe paquetes nativos con archivos de integracion p
 
 | Archivo | Ruta de Instalacion | Funcion |
 |---------|---------------------|---------|
-| `org.enigmora.LNXDrive.desktop` | `/usr/share/applications/` | Entrada en menu de aplicaciones |
-| `org.enigmora.LNXDrive.metainfo.xml` | `/usr/share/metainfo/` | Metadata AppStream |
-| `org.enigmora.LNXDrive.gschema.xml` | `/usr/share/glib-2.0/schemas/` | Esquema GSettings |
-| `org.enigmora.LNXDrive.svg` | `/usr/share/icons/hicolor/scalable/apps/` | Icono escalable |
-| `org.enigmora.LNXDrive-*.png` | `/usr/share/icons/hicolor/*/apps/` | Iconos rasterizados |
+| `org.strangedaystech.LNXDrive.desktop` | `/usr/share/applications/` | Entrada en menu de aplicaciones |
+| `org.strangedaystech.LNXDrive.metainfo.xml` | `/usr/share/metainfo/` | Metadata AppStream |
+| `org.strangedaystech.LNXDrive.gschema.xml` | `/usr/share/glib-2.0/schemas/` | Esquema GSettings |
+| `org.strangedaystech.LNXDrive.svg` | `/usr/share/icons/hicolor/scalable/apps/` | Icono escalable |
+| `org.strangedaystech.LNXDrive-*.png` | `/usr/share/icons/hicolor/*/apps/` | Iconos rasterizados |
 
 #### KDE Plasma (`lnxdrive-plasma`)
 
 | Archivo | Ruta de Instalacion | Funcion |
 |---------|---------------------|---------|
-| `metadata.json` (plasmoid) | `/usr/share/plasma/plasmoids/org.enigmora.lnxdrive/` | Widget de Plasma |
+| `metadata.json` (plasmoid) | `/usr/share/plasma/plasmoids/org.strangedaystech.lnxdrive/` | Widget de Plasma |
 | `main.qml` (plasmoid) | `contents/ui/` dentro del plasmoid | UI del widget |
 | `lnxdrive-plasma.desktop` | `/usr/share/applications/` | Entrada en menu |
-| `org.enigmora.lnxdrive-plasma.service` | `/usr/share/dbus-1/services/` | KDE service file |
+| `org.strangedaystech.lnxdrive-plasma.service` | `/usr/share/dbus-1/services/` | KDE service file |
 
 #### GTK3 (`lnxdrive-gtk3`)
 
@@ -110,13 +110,13 @@ El daemon se ejecuta como un servicio de usuario systemd. La activacion D-Bus pe
 
 [Unit]
 Description=LNXDrive - Cloud Storage Daemon
-Documentation=https://github.com/enigmora/lnxdrive
+Documentation=https://github.com/strangedaystech/lnxdrive
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=dbus
-BusName=com.enigmora.LNXDrive
+BusName=com.strangedaystech.LNXDrive
 ExecStart=/usr/bin/lnxdrive-daemon
 Restart=on-failure
 RestartSec=5
@@ -135,10 +135,10 @@ WantedBy=default.target
 #### Archivo de Activacion D-Bus
 
 ```ini
-# /usr/share/dbus-1/services/com.enigmora.LNXDrive.service
+# /usr/share/dbus-1/services/com.strangedaystech.LNXDrive.service
 
 [D-BUS Service]
-Name=com.enigmora.LNXDrive
+Name=com.strangedaystech.LNXDrive
 Exec=/usr/bin/lnxdrive-daemon
 SystemdService=lnxdrive.service
 ```
@@ -295,7 +295,7 @@ Version:        1.0.0
 Release:        1%{?dist}
 Summary:        Cloud storage daemon for Linux
 License:        GPL-3.0-or-later
-URL:            https://github.com/enigmora/lnxdrive
+URL:            https://github.com/strangedaystech/lnxdrive
 
 BuildRequires:  rust-packaging
 BuildRequires:  systemd-rpm-macros
@@ -313,8 +313,8 @@ This package contains the daemon, CLI, and FUSE filesystem.
 install -Dm755 target/release/lnxdrive-daemon %{buildroot}%{_bindir}/lnxdrive-daemon
 install -Dm755 target/release/lnxdrive-cli %{buildroot}%{_bindir}/lnxdrive
 install -Dm644 data/lnxdrive.service %{buildroot}%{_userunitdir}/lnxdrive.service
-install -Dm644 data/com.enigmora.LNXDrive.service \
-    %{buildroot}%{_datadir}/dbus-1/services/com.enigmora.LNXDrive.service
+install -Dm644 data/com.strangedaystech.LNXDrive.service \
+    %{buildroot}%{_datadir}/dbus-1/services/com.strangedaystech.LNXDrive.service
 
 %post
 %systemd_user_post lnxdrive.service
@@ -330,7 +330,7 @@ install -Dm644 data/com.enigmora.LNXDrive.service \
 %{_bindir}/lnxdrive-daemon
 %{_bindir}/lnxdrive
 %{_userunitdir}/lnxdrive.service
-%{_datadir}/dbus-1/services/com.enigmora.LNXDrive.service
+%{_datadir}/dbus-1/services/com.strangedaystech.LNXDrive.service
 ```
 
 ```spec
@@ -370,7 +370,7 @@ deb/lnxdrive-core/debian/
 Source: lnxdrive
 Section: net
 Priority: optional
-Maintainer: Enigmora <maintainers@enigmora.com>
+Maintainer: Strange Days Tech <maintainers@strangedaystech.com>
 Build-Depends: debhelper-compat (= 13),
                cargo,
                libfuse3-dev,
@@ -404,9 +404,9 @@ esac
 #### Flatpak
 
 ```yaml
-# flatpak/org.enigmora.LNXDrive.yml
+# flatpak/org.strangedaystech.LNXDrive.yml
 
-app-id: org.enigmora.LNXDrive
+app-id: org.strangedaystech.LNXDrive
 runtime: org.gnome.Platform
 runtime-version: '47'
 sdk: org.gnome.Sdk
@@ -428,7 +428,7 @@ finish-args:
   # Para FUSE
   - --device=all
   # Talk al daemon
-  - --talk-name=com.enigmora.LNXDrive
+  - --talk-name=com.strangedaystech.LNXDrive
 
 modules:
   - name: lnxdrive-daemon
@@ -439,14 +439,14 @@ modules:
       - install -Dm755 target/release/lnxdrive /app/bin/lnxdrive
     sources:
       - type: git
-        url: https://github.com/enigmora/lnxdrive.git
+        url: https://github.com/strangedaystech/lnxdrive.git
         tag: v1.0.0
 
   - name: lnxdrive-gnome
     buildsystem: meson
     sources:
       - type: git
-        url: https://github.com/enigmora/lnxdrive-gnome.git
+        url: https://github.com/strangedaystech/lnxdrive-gnome.git
         tag: v1.0.0
 ```
 
@@ -462,7 +462,7 @@ pkgver=1.0.0
 pkgrel=1
 pkgdesc='Cloud storage daemon for Linux'
 arch=('x86_64')
-url='https://github.com/enigmora/lnxdrive'
+url='https://github.com/strangedaystech/lnxdrive'
 license=('GPL-3.0-or-later')
 depends=('fuse3' 'dbus')
 makedepends=('rust' 'cargo')
@@ -479,8 +479,8 @@ package() {
     install -Dm755 target/release/lnxdrive-daemon "$pkgdir/usr/bin/lnxdrive-daemon"
     install -Dm755 target/release/lnxdrive "$pkgdir/usr/bin/lnxdrive"
     install -Dm644 data/lnxdrive.service "$pkgdir/usr/lib/systemd/user/lnxdrive.service"
-    install -Dm644 data/com.enigmora.LNXDrive.service \
-        "$pkgdir/usr/share/dbus-1/services/com.enigmora.LNXDrive.service"
+    install -Dm644 data/com.strangedaystech.LNXDrive.service \
+        "$pkgdir/usr/share/dbus-1/services/com.strangedaystech.LNXDrive.service"
     install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 ```

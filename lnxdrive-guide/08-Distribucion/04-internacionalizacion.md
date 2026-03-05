@@ -71,8 +71,8 @@ lnxdrive-gnome/
 │   ├── lnxdrive-gnome.pot       # Template extraido (strings en ingles)
 │   └── es.po                    # Traduccion al espanol
 ├── data/
-│   ├── org.enigmora.LNXDrive.desktop.in
-│   └── org.enigmora.LNXDrive.metainfo.xml.in
+│   ├── org.strangedaystech.LNXDrive.desktop.in
+│   └── org.strangedaystech.LNXDrive.metainfo.xml.in
 └── src/
     └── *.rs                     # Codigo con gettext!() macros
 ```
@@ -101,7 +101,7 @@ fn show_sync_status(files: u32) {
 
 ```po
 # Spanish translation for lnxdrive-gnome
-# Copyright (C) 2026 Enigmora
+# Copyright (C) 2026 Strange Days Tech
 # This file is distributed under the same license as the lnxdrive-gnome package.
 #
 msgid ""
@@ -435,7 +435,7 @@ Los archivos de metadatos de aplicacion tambien requieren traduccion:
 #### Archivo .desktop
 
 ```ini
-# data/org.enigmora.LNXDrive.desktop.in
+# data/org.strangedaystech.LNXDrive.desktop.in
 [Desktop Entry]
 Name=LNXDrive
 Name[es]=LNXDrive
@@ -444,7 +444,7 @@ GenericName[es]=Cliente de Almacenamiento en la Nube
 Comment=Sync your files with cloud storage providers
 Comment[es]=Sincroniza tus archivos con proveedores de almacenamiento en la nube
 Exec=lnxdrive-gnome
-Icon=org.enigmora.LNXDrive
+Icon=org.strangedaystech.LNXDrive
 Terminal=false
 Type=Application
 Categories=Network;FileTransfer;
@@ -456,9 +456,9 @@ Keywords[es]=nube;sincronizar;onedrive;gdrive;dropbox;almacenamiento;
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- data/org.enigmora.LNXDrive.metainfo.xml.in -->
+<!-- data/org.strangedaystech.LNXDrive.metainfo.xml.in -->
 <component type="desktop-application">
-  <id>org.enigmora.LNXDrive</id>
+  <id>org.strangedaystech.LNXDrive</id>
   <name>LNXDrive</name>
   <name xml:lang="es">LNXDrive</name>
   <summary>Cloud storage client for Linux desktops</summary>
@@ -484,12 +484,12 @@ Keywords[es]=nube;sincronizar;onedrive;gdrive;dropbox;almacenamiento;
     </ul>
   </description>
 
-  <launchable type="desktop-id">org.enigmora.LNXDrive.desktop</launchable>
-  <url type="homepage">https://github.com/enigmora/lnxdrive</url>
-  <url type="bugtracker">https://github.com/enigmora/lnxdrive/issues</url>
+  <launchable type="desktop-id">org.strangedaystech.LNXDrive.desktop</launchable>
+  <url type="homepage">https://github.com/strangedaystech/lnxdrive</url>
+  <url type="bugtracker">https://github.com/strangedaystech/lnxdrive/issues</url>
 
-  <developer id="org.enigmora">
-    <name>Enigmora</name>
+  <developer id="org.strangedaystech">
+    <name>Strange Days Tech</name>
   </developer>
 
   <content_rating type="oars-1.1" />
@@ -521,8 +521,8 @@ i18n.gettext(
 
 # Procesar .desktop
 i18n.merge_file(
-  input: 'data/org.enigmora.LNXDrive.desktop.in',
-  output: 'org.enigmora.LNXDrive.desktop',
+  input: 'data/org.strangedaystech.LNXDrive.desktop.in',
+  output: 'org.strangedaystech.LNXDrive.desktop',
   type: 'desktop',
   po_dir: 'po',
   install: true,
@@ -531,8 +531,8 @@ i18n.merge_file(
 
 # Procesar metainfo
 i18n.merge_file(
-  input: 'data/org.enigmora.LNXDrive.metainfo.xml.in',
-  output: 'org.enigmora.LNXDrive.metainfo.xml',
+  input: 'data/org.strangedaystech.LNXDrive.metainfo.xml.in',
+  output: 'org.strangedaystech.LNXDrive.metainfo.xml',
   type: 'xml',
   po_dir: 'po',
   install: true,

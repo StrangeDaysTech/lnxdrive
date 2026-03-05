@@ -2,14 +2,14 @@
 """
 Mock D-Bus Daemon for LNXDrive GNOME Integration Testing.
 
-Implements all 7 D-Bus interfaces of com.enigmora.LNXDrive on the session bus:
-  - com.enigmora.LNXDrive.Files
-  - com.enigmora.LNXDrive.Sync
-  - com.enigmora.LNXDrive.Status
-  - com.enigmora.LNXDrive.Manager
-  - com.enigmora.LNXDrive.Conflicts
-  - com.enigmora.LNXDrive.Settings
-  - com.enigmora.LNXDrive.Auth
+Implements all 7 D-Bus interfaces of com.strangedaystech.LNXDrive on the session bus:
+  - com.strangedaystech.LNXDrive.Files
+  - com.strangedaystech.LNXDrive.Sync
+  - com.strangedaystech.LNXDrive.Status
+  - com.strangedaystech.LNXDrive.Manager
+  - com.strangedaystech.LNXDrive.Conflicts
+  - com.strangedaystech.LNXDrive.Settings
+  - com.strangedaystech.LNXDrive.Auth
 
 Usage:
     python3 mock-dbus-daemon.py [--authenticated] [--signal-interval N] [--sync-root PATH]
@@ -47,18 +47,18 @@ log = logging.getLogger("lnxdrive-mock")
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-BUS_NAME = "com.enigmora.LNXDrive"
-OBJECT_PATH = "/com/enigmora/LNXDrive"
+BUS_NAME = "com.strangedaystech.LNXDrive"
+OBJECT_PATH = "/com/strangedaystech/LNXDrive"
 
 
 # ===================================================================
-# 1. com.enigmora.LNXDrive.Files
+# 1. com.strangedaystech.LNXDrive.Files
 # ===================================================================
 class FilesInterface(ServiceInterface):
-    """Mock implementation of com.enigmora.LNXDrive.Files."""
+    """Mock implementation of com.strangedaystech.LNXDrive.Files."""
 
     def __init__(self, sync_root: str) -> None:
-        super().__init__("com.enigmora.LNXDrive.Files")
+        super().__init__("com.strangedaystech.LNXDrive.Files")
         self._sync_root = sync_root
 
         # Hardcoded file statuses keyed by path relative to sync_root.
@@ -152,13 +152,13 @@ class FilesInterface(ServiceInterface):
 
 
 # ===================================================================
-# 2. com.enigmora.LNXDrive.Sync
+# 2. com.strangedaystech.LNXDrive.Sync
 # ===================================================================
 class SyncInterface(ServiceInterface):
-    """Mock implementation of com.enigmora.LNXDrive.Sync."""
+    """Mock implementation of com.strangedaystech.LNXDrive.Sync."""
 
     def __init__(self) -> None:
-        super().__init__("com.enigmora.LNXDrive.Sync")
+        super().__init__("com.strangedaystech.LNXDrive.Sync")
         self._sync_status: str = "idle"
         self._last_sync_time: int = int(time.time()) - 300  # 5 min ago
         self._pending_changes: int = 7
@@ -265,13 +265,13 @@ class SyncInterface(ServiceInterface):
 
 
 # ===================================================================
-# 3. com.enigmora.LNXDrive.Status
+# 3. com.strangedaystech.LNXDrive.Status
 # ===================================================================
 class StatusInterface(ServiceInterface):
-    """Mock implementation of com.enigmora.LNXDrive.Status."""
+    """Mock implementation of com.strangedaystech.LNXDrive.Status."""
 
     def __init__(self) -> None:
-        super().__init__("com.enigmora.LNXDrive.Status")
+        super().__init__("com.strangedaystech.LNXDrive.Status")
         self._connection_status: str = "online"
         self._used: int = 5_368_709_120   # 5 GB
         self._total: int = 16_106_127_360  # ~15 GB
@@ -311,13 +311,13 @@ class StatusInterface(ServiceInterface):
 
 
 # ===================================================================
-# 4. com.enigmora.LNXDrive.Manager
+# 4. com.strangedaystech.LNXDrive.Manager
 # ===================================================================
 class ManagerInterface(ServiceInterface):
-    """Mock implementation of com.enigmora.LNXDrive.Manager."""
+    """Mock implementation of com.strangedaystech.LNXDrive.Manager."""
 
     def __init__(self) -> None:
-        super().__init__("com.enigmora.LNXDrive.Manager")
+        super().__init__("com.strangedaystech.LNXDrive.Manager")
         self._is_running: bool = True
         self._version: str = "0.1.0-mock"
 
@@ -361,13 +361,13 @@ class ManagerInterface(ServiceInterface):
 
 
 # ===================================================================
-# 5. com.enigmora.LNXDrive.Conflicts
+# 5. com.strangedaystech.LNXDrive.Conflicts
 # ===================================================================
 class ConflictsInterface(ServiceInterface):
-    """Mock implementation of com.enigmora.LNXDrive.Conflicts."""
+    """Mock implementation of com.strangedaystech.LNXDrive.Conflicts."""
 
     def __init__(self, sync_root: str) -> None:
-        super().__init__("com.enigmora.LNXDrive.Conflicts")
+        super().__init__("com.strangedaystech.LNXDrive.Conflicts")
         self._sync_root = sync_root
         # Pre-populated mock conflicts
         self._conflicts: list[dict[str, Any]] = [
@@ -457,7 +457,7 @@ class ConflictsInterface(ServiceInterface):
 
 
 # ===================================================================
-# 6. com.enigmora.LNXDrive.Settings
+# 6. com.strangedaystech.LNXDrive.Settings
 # ===================================================================
 
 _DEFAULT_CONFIG_YAML = """\
@@ -498,10 +498,10 @@ _REMOTE_FOLDER_TREE = json.dumps(
 
 
 class SettingsInterface(ServiceInterface):
-    """Mock implementation of com.enigmora.LNXDrive.Settings."""
+    """Mock implementation of com.strangedaystech.LNXDrive.Settings."""
 
     def __init__(self, sync_root: str) -> None:
-        super().__init__("com.enigmora.LNXDrive.Settings")
+        super().__init__("com.strangedaystech.LNXDrive.Settings")
         self._config_yaml: str = _DEFAULT_CONFIG_YAML.replace("~/OneDrive", sync_root)
         self._selected_folders: list[str] = ["/Documents", "/Photos", "/Projects"]
         self._exclusion_patterns: list[str] = ["*.tmp", "~$*", ".~lock.*", "Thumbs.db"]
@@ -554,13 +554,13 @@ class SettingsInterface(ServiceInterface):
 
 
 # ===================================================================
-# 6. com.enigmora.LNXDrive.Auth
+# 6. com.strangedaystech.LNXDrive.Auth
 # ===================================================================
 class AuthInterface(ServiceInterface):
-    """Mock implementation of com.enigmora.LNXDrive.Auth."""
+    """Mock implementation of com.strangedaystech.LNXDrive.Auth."""
 
     def __init__(self, authenticated: bool) -> None:
-        super().__init__("com.enigmora.LNXDrive.Auth")
+        super().__init__("com.strangedaystech.LNXDrive.Auth")
         self._authenticated: bool = authenticated
 
     # -- methods ----------------------------------------------------------
@@ -741,13 +741,13 @@ async def run(args: argparse.Namespace) -> None:
     log.info("  Signal interval: %.1fs", args.signal_interval)
     log.info("=" * 60)
     log.info("Interfaces:")
-    log.info("  - com.enigmora.LNXDrive.Files")
-    log.info("  - com.enigmora.LNXDrive.Sync")
-    log.info("  - com.enigmora.LNXDrive.Status")
-    log.info("  - com.enigmora.LNXDrive.Manager")
-    log.info("  - com.enigmora.LNXDrive.Conflicts")
-    log.info("  - com.enigmora.LNXDrive.Settings")
-    log.info("  - com.enigmora.LNXDrive.Auth")
+    log.info("  - com.strangedaystech.LNXDrive.Files")
+    log.info("  - com.strangedaystech.LNXDrive.Sync")
+    log.info("  - com.strangedaystech.LNXDrive.Status")
+    log.info("  - com.strangedaystech.LNXDrive.Manager")
+    log.info("  - com.strangedaystech.LNXDrive.Conflicts")
+    log.info("  - com.strangedaystech.LNXDrive.Settings")
+    log.info("  - com.strangedaystech.LNXDrive.Auth")
     log.info("Press Ctrl+C to stop.")
 
     # Start the periodic emitter.

@@ -1,6 +1,6 @@
 /* lnxdrive-info-provider.c — NautilusInfoProvider for overlay icons (US1)
  *
- * Copyright 2026 Enigmora <https://enigmora.com>
+ * Copyright 2026 Strange Days Tech <https://strangedaystech.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Implements:

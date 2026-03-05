@@ -112,4 +112,4 @@ Total tasks implemented: 6 (T073-T078)
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

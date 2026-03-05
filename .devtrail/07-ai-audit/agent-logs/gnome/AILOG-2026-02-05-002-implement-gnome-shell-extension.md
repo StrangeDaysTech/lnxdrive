@@ -42,13 +42,13 @@ for real-time updates (FR-026).
 
 | File | Change |
 |------|--------|
-| `shell-extension/lnxdrive-indicator@enigmora.com/metadata.json` | New: Extension metadata for GNOME Shell 45-47 |
-| `shell-extension/lnxdrive-indicator@enigmora.com/extension.js` | New: Extension entry point with enable/disable lifecycle |
-| `shell-extension/lnxdrive-indicator@enigmora.com/dbus.js` | New: D-Bus XML introspection and proxy creation |
-| `shell-extension/lnxdrive-indicator@enigmora.com/indicator.js` | New: Panel indicator with icon states and daemon monitoring |
-| `shell-extension/lnxdrive-indicator@enigmora.com/menuItems.js` | New: Dropdown menu with sync/conflicts/quota/actions sections |
-| `shell-extension/lnxdrive-indicator@enigmora.com/prefs.js` | New: Extension preferences window |
-| `shell-extension/lnxdrive-indicator@enigmora.com/stylesheet.css` | New: St CSS styles for indicator states and quota bar |
+| `shell-extension/lnxdrive-indicator@strangedaystech.com/metadata.json` | New: Extension metadata for GNOME Shell 45-47 |
+| `shell-extension/lnxdrive-indicator@strangedaystech.com/extension.js` | New: Extension entry point with enable/disable lifecycle |
+| `shell-extension/lnxdrive-indicator@strangedaystech.com/dbus.js` | New: D-Bus XML introspection and proxy creation |
+| `shell-extension/lnxdrive-indicator@strangedaystech.com/indicator.js` | New: Panel indicator with icon states and daemon monitoring |
+| `shell-extension/lnxdrive-indicator@strangedaystech.com/menuItems.js` | New: Dropdown menu with sync/conflicts/quota/actions sections |
+| `shell-extension/lnxdrive-indicator@strangedaystech.com/prefs.js` | New: Extension preferences window |
+| `shell-extension/lnxdrive-indicator@strangedaystech.com/stylesheet.css` | New: St CSS styles for indicator states and quota bar |
 
 ## Decisions Made
 
@@ -78,11 +78,11 @@ for real-time updates (FR-026).
 
 ## Additional Notes
 
-The extension UUID `lnxdrive-indicator@enigmora.com` matches the meson.build install rules
+The extension UUID `lnxdrive-indicator@strangedaystech.com` matches the meson.build install rules
 in `shell-extension/meson.build`. All 7 files listed in the meson.build `shell_ext_sources`
 are now present. The D-Bus XML interfaces match the contract defined in
 `lnxdrive-guide/08-Distribucion/02-comunicacion-dbus.md`.
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

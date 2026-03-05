@@ -1,4 +1,4 @@
-shell_ext_uuid = 'lnxdrive-indicator@enigmora.com'
+shell_ext_uuid = 'lnxdrive-indicator@strangedaystech.com'
 shell_ext_dir = datadir / 'gnome-shell' / 'extensions' / shell_ext_uuid
 
 shell_ext_sources = files(

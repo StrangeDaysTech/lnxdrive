@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license = "GPL-3.0-or-later"
 description = "LNXDrive preferences and onboarding application for GNOME"
-authors = ["Enigmora <dev@enigmora.com>"]
+authors = ["Strange Days Tech, S.A.S. <dev@strangedaystech.com>"]
 
 [[bin]]
 name = "lnxdrive-preferences"
@@ -14,7 +14,7 @@ path = "src/main.rs"
 gtk4 = { version = "0.9", features = ["v4_14"] }
 libadwaita = { version = "0.7", features = ["v1_6"] }
 zbus = "5"
-# lnxdrive-ipc = { git = "https://github.com/enigmora/lnxdrive.git", package = "lnxdrive-ipc" }
+# lnxdrive-ipc = { git = "https://github.com/strangedaystech/lnxdrive.git", package = "lnxdrive-ipc" }
 oauth2 = "5"
 gettext-rs = { version = "0.7", features = ["gettext-system"] }
 serde = { version = "1", features = ["derive"] }

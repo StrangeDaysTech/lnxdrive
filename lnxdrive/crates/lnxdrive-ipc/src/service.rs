@@ -3,15 +3,15 @@
 //! Provides the D-Bus interfaces that UI clients and CLI tools use to
 //! communicate with the running LNXDrive daemon:
 //!
-//! - `com.enigmora.LNXDrive.SyncController` - Start, pause, and query sync (legacy)
-//! - `com.enigmora.LNXDrive.Account` - Account information and auth status (legacy)
-//! - `com.enigmora.LNXDrive.Conflicts` - Conflict listing and resolution
-//! - `com.enigmora.LNXDrive.Files` - File status queries, pin/unpin, sync-by-path
-//! - `com.enigmora.LNXDrive.Sync` - Global sync control with properties and signals
-//! - `com.enigmora.LNXDrive.Status` - Account and quota information
-//! - `com.enigmora.LNXDrive.Auth` - OAuth2 authentication flow
-//! - `com.enigmora.LNXDrive.Settings` - Configuration management
-//! - `com.enigmora.LNXDrive.Manager` - Daemon lifecycle management
+//! - `com.strangedaystech.LNXDrive.SyncController` - Start, pause, and query sync (legacy)
+//! - `com.strangedaystech.LNXDrive.Account` - Account information and auth status (legacy)
+//! - `com.strangedaystech.LNXDrive.Conflicts` - Conflict listing and resolution
+//! - `com.strangedaystech.LNXDrive.Files` - File status queries, pin/unpin, sync-by-path
+//! - `com.strangedaystech.LNXDrive.Sync` - Global sync control with properties and signals
+//! - `com.strangedaystech.LNXDrive.Status` - Account and quota information
+//! - `com.strangedaystech.LNXDrive.Auth` - OAuth2 authentication flow
+//! - `com.strangedaystech.LNXDrive.Settings` - Configuration management
+//! - `com.strangedaystech.LNXDrive.Manager` - Daemon lifecycle management
 //!
 //! Signals are emitted on state changes, sync progress, and errors.
 
@@ -23,10 +23,10 @@ use tracing::{debug, info, warn};
 use zbus::zvariant::{OwnedValue, Value};
 
 /// D-Bus well-known name for the LNXDrive daemon
-pub const DBUS_NAME: &str = "com.enigmora.LNXDrive";
+pub const DBUS_NAME: &str = "com.strangedaystech.LNXDrive";
 
 /// D-Bus object path for the service
-pub const DBUS_PATH: &str = "/com/enigmora/LNXDrive";
+pub const DBUS_PATH: &str = "/com/strangedaystech/LNXDrive";
 
 // ============================================================================
 // Daemon state shared with D-Bus interfaces
@@ -180,7 +180,7 @@ impl SyncControllerInterface {
     }
 }
 
-#[zbus::interface(name = "com.enigmora.LNXDrive.SyncController")]
+#[zbus::interface(name = "com.strangedaystech.LNXDrive.SyncController")]
 impl SyncControllerInterface {
     /// Triggers an immediate sync cycle
     ///
@@ -275,7 +275,7 @@ impl AccountInterface {
     }
 }
 
-#[zbus::interface(name = "com.enigmora.LNXDrive.Account")]
+#[zbus::interface(name = "com.strangedaystech.LNXDrive.Account")]
 impl AccountInterface {
     /// Returns account information as a JSON string
     ///
@@ -320,7 +320,7 @@ impl ConflictsInterface {
     }
 }
 
-#[zbus::interface(name = "com.enigmora.LNXDrive.Conflicts")]
+#[zbus::interface(name = "com.strangedaystech.LNXDrive.Conflicts")]
 impl ConflictsInterface {
     /// Returns a JSON array of unresolved conflicts
     ///
@@ -482,7 +482,7 @@ impl FilesInterface {
     }
 }
 
-#[zbus::interface(name = "com.enigmora.LNXDrive.Files")]
+#[zbus::interface(name = "com.strangedaystech.LNXDrive.Files")]
 impl FilesInterface {
     /// Returns the sync status of a single file
     ///
@@ -581,7 +581,7 @@ impl FilesInterface {
 }
 
 // ============================================================================
-// Sync interface (com.enigmora.LNXDrive.Sync)
+// Sync interface (com.strangedaystech.LNXDrive.Sync)
 // ============================================================================
 
 /// D-Bus interface for global sync control
@@ -599,7 +599,7 @@ impl SyncInterface {
     }
 }
 
-#[zbus::interface(name = "com.enigmora.LNXDrive.Sync")]
+#[zbus::interface(name = "com.strangedaystech.LNXDrive.Sync")]
 impl SyncInterface {
     /// Trigger an immediate full sync cycle
     async fn sync_now(&self) {
@@ -695,7 +695,7 @@ impl SyncInterface {
 }
 
 // ============================================================================
-// Status interface (com.enigmora.LNXDrive.Status)
+// Status interface (com.strangedaystech.LNXDrive.Status)
 // ============================================================================
 
 /// D-Bus interface for account and quota information
@@ -712,7 +712,7 @@ impl StatusInterface {
     }
 }
 
-#[zbus::interface(name = "com.enigmora.LNXDrive.Status")]
+#[zbus::interface(name = "com.strangedaystech.LNXDrive.Status")]
 impl StatusInterface {
     /// Returns storage quota as (used_bytes, total_bytes)
     async fn get_quota(&self) -> (u64, u64) {
@@ -770,7 +770,7 @@ impl StatusInterface {
 }
 
 // ============================================================================
-// Auth interface (com.enigmora.LNXDrive.Auth)
+// Auth interface (com.strangedaystech.LNXDrive.Auth)
 // ============================================================================
 
 /// D-Bus interface for authentication
@@ -787,7 +787,7 @@ impl AuthInterface {
     }
 }
 
-#[zbus::interface(name = "com.enigmora.LNXDrive.Auth")]
+#[zbus::interface(name = "com.strangedaystech.LNXDrive.Auth")]
 impl AuthInterface {
     /// Generates an OAuth2 authorization URL and CSRF state token
     ///
@@ -862,7 +862,7 @@ impl AuthInterface {
 }
 
 // ============================================================================
-// Settings interface (com.enigmora.LNXDrive.Settings)
+// Settings interface (com.strangedaystech.LNXDrive.Settings)
 // ============================================================================
 
 /// D-Bus interface for configuration management
@@ -879,7 +879,7 @@ impl SettingsInterface {
     }
 }
 
-#[zbus::interface(name = "com.enigmora.LNXDrive.Settings")]
+#[zbus::interface(name = "com.strangedaystech.LNXDrive.Settings")]
 impl SettingsInterface {
     /// Returns the full configuration as a YAML string
     async fn get_config(&self) -> String {
@@ -942,7 +942,7 @@ impl SettingsInterface {
 }
 
 // ============================================================================
-// Manager interface (com.enigmora.LNXDrive.Manager)
+// Manager interface (com.strangedaystech.LNXDrive.Manager)
 // ============================================================================
 
 /// D-Bus interface for daemon lifecycle management
@@ -959,7 +959,7 @@ impl ManagerInterface {
     }
 }
 
-#[zbus::interface(name = "com.enigmora.LNXDrive.Manager")]
+#[zbus::interface(name = "com.strangedaystech.LNXDrive.Manager")]
 impl ManagerInterface {
     /// Starts the daemon
     async fn start(&self) {
@@ -1012,7 +1012,7 @@ impl ManagerInterface {
 ///
 /// Creates a `zbus::Connection` on the session bus, registers all
 /// interface objects at the well-known path, and requests the
-/// well-known name `com.enigmora.LNXDrive`.
+/// well-known name `com.strangedaystech.LNXDrive`.
 pub struct DbusService {
     state: Arc<Mutex<DaemonState>>,
 }
@@ -1140,8 +1140,8 @@ mod tests {
 
     #[test]
     fn test_dbus_constants() {
-        assert_eq!(DBUS_NAME, "com.enigmora.LNXDrive");
-        assert_eq!(DBUS_PATH, "/com/enigmora/LNXDrive");
+        assert_eq!(DBUS_NAME, "com.strangedaystech.LNXDrive");
+        assert_eq!(DBUS_PATH, "/com/strangedaystech/LNXDrive");
     }
 
     #[tokio::test]

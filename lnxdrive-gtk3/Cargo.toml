@@ -2,10 +2,10 @@
 name = "lnxdrive-gtk3"
 version = "0.1.0"
 edition = "2021"
-authors = ["Enigmora <contact@enigmora.com>"]
+authors = ["Strange Days Tech, S.A.S. <contact@strangedaystech.com>"]
 license = "GPL-3.0-or-later"
 description = "LNXDrive GTK3 client for XFCE, Cinnamon, and MATE"
-repository = "https://github.com/enigmora/lnxdrive-gtk3"
+repository = "https://github.com/strangedaystech/lnxdrive-gtk3"
 rust-version = "1.75"
 
 [[bin]]
@@ -20,7 +20,7 @@ gtk = "0.18"
 libappindicator = "0.9"
 
 # D-Bus communication with daemon
-lnxdrive-ipc = { git = "https://github.com/enigmora/lnxdrive.git" }
+lnxdrive-ipc = { git = "https://github.com/strangedaystech/lnxdrive.git" }
 
 # Async runtime
 tokio = { version = "1.35", features = ["full"] }

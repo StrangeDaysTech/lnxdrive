@@ -84,4 +84,4 @@ The implementation follows the task specifications with appropriate placeholders
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

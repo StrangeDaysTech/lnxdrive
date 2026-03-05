@@ -5,7 +5,7 @@
 
 ## Summary
 
-Implement the Phase 3 "GNOME Integration" of the LNXDrive project: a multi-component desktop integration layer that provides native GNOME experience for the LNXDrive cloud sync system. The integration consists of four deliverables — a Nautilus file manager extension (C), a GNOME Shell status indicator (GJS), a GTK4/libadwaita preferences panel with onboarding wizard (Rust), and a GNOME Online Accounts provider (C, P3). All components communicate with the existing `lnxdrive-daemon` exclusively via the D-Bus API (`org.enigmora.LNXDrive`).
+Implement the Phase 3 "GNOME Integration" of the LNXDrive project: a multi-component desktop integration layer that provides native GNOME experience for the LNXDrive cloud sync system. The integration consists of four deliverables — a Nautilus file manager extension (C), a GNOME Shell status indicator (GJS), a GTK4/libadwaita preferences panel with onboarding wizard (Rust), and a GNOME Online Accounts provider (C, P3). All components communicate with the existing `lnxdrive-daemon` exclusively via the D-Bus API (`org.strangedaystech.LNXDrive`).
 
 ## Technical Context
 
@@ -27,7 +27,7 @@ The project constitution (`.specify/memory/constitution.md`) is an unfilled temp
 
 - **Hexagonal architecture**: GNOME components are pure driving adapters consuming D-Bus ports — no core logic in UI. ✅
 - **UI as implementation detail**: All components are interchangeable per the guide's Principle #4. ✅
-- **D-Bus as communication channel**: All UI-to-daemon communication via `org.enigmora.LNXDrive`. ✅
+- **D-Bus as communication channel**: All UI-to-daemon communication via `org.strangedaystech.LNXDrive`. ✅
 - **YAML as source of truth**: Preferences panel reads/writes config through daemon, not directly. ✅
 - **Conventional commits + branch strategy**: Working on `001-gnome-integration` branch. ✅
 
@@ -74,7 +74,7 @@ lnxdrive-gnome/
 │       └── lnxdrive-unknown.svg
 │
 ├── shell-extension/                    # GJS GNOME Shell extension
-│   └── lnxdrive-indicator@enigmora.com/
+│   └── lnxdrive-indicator@strangedaystech.com/
 │       ├── extension.js                # PanelMenu.Button indicator
 │       ├── metadata.json               # shell-version: ["45", "46", "47"]
 │       ├── prefs.js                    # Minimal prefs (launch main prefs app)
@@ -102,9 +102,9 @@ lnxdrive-gnome/
 │   │   │   └── folder_tree.rs          # ListView + TreeListModel + CheckButton
 │   │   └── dbus_client.rs              # zbus proxy (hand-rolled; lnxdrive-ipc pending)
 │   └── data/
-│       ├── com.enigmora.LNXDrive.Preferences.desktop.in
-│       ├── com.enigmora.LNXDrive.Preferences.metainfo.xml.in
-│       └── com.enigmora.LNXDrive.Preferences.gschema.xml
+│       ├── com.strangedaystech.LNXDrive.Preferences.desktop.in
+│       ├── com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in
+│       └── com.strangedaystech.LNXDrive.Preferences.gschema.xml
 │
 ├── po/                                 # i18n translations (gettext)
 │   ├── POTFILES.in
@@ -113,8 +113,8 @@ lnxdrive-gnome/
 │
 ├── data/                               # Shared data files
 │   └── icons/hicolor/
-│       ├── scalable/apps/com.enigmora.LNXDrive.svg
-│       └── symbolic/apps/com.enigmora.LNXDrive-symbolic.svg
+│       ├── scalable/apps/com.strangedaystech.LNXDrive.svg
+│       └── symbolic/apps/com.strangedaystech.LNXDrive-symbolic.svg
 │
 └── tests/                              # Integration tests
     ├── test-nautilus-extension.py       # Python script: D-Bus mock + verify overlay behavior
@@ -140,7 +140,7 @@ lnxdrive-gnome/
 **Goal**: Overlay icons and context menu in Nautilus.
 
 1. **Module skeleton** (`lnxdrive-extension.c`): `nautilus_module_initialize()`, `list_types()`, `shutdown()`. Register GTypes implementing `InfoProvider`, `MenuProvider`, `ColumnProvider`.
-2. **D-Bus client** (`lnxdrive-dbus-client.c`): `GDBusProxy` to `org.enigmora.LNXDrive.Files`. Local cache of file statuses (hash map: path → status). Subscribe to `FileStatusChanged` signal. Handle daemon unavailability (`notify::g-name-owner`).
+2. **D-Bus client** (`lnxdrive-dbus-client.c`): `GDBusProxy` to `org.strangedaystech.LNXDrive.Files`. Local cache of file statuses (hash map: path → status). Subscribe to `FileStatusChanged` signal. Handle daemon unavailability (`notify::g-name-owner`).
 3. **InfoProvider** (`lnxdrive-info-provider.c`): `update_file_info()` — check if file is under sync root, query status from cache (or batch-query via D-Bus), call `add_emblem()` with appropriate icon name, `add_string_attribute()` for column data. Return `NAUTILUS_OPERATION_COMPLETE` from cache or `IN_PROGRESS` for async.
 4. **MenuProvider** (`lnxdrive-menu-provider.c`): `get_file_items()` — check file status, build "LNXDrive" submenu with state-appropriate actions (Pin, Unpin, Sync Now). Connect `activate` signals to D-Bus method calls.
 5. **ColumnProvider** (`lnxdrive-column-provider.c`): Two columns — "LNXDrive Status" and "Last Synced".

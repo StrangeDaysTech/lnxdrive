@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
         QStringLiteral("0.1.0"),
         i18n("OneDrive client for KDE Plasma"),
         KAboutLicense::GPL_V3,
-        i18n("(c) 2024 Enigmora")
+        i18n("(c) 2024 Strange Days Tech")
     );
 
     KAboutData::setApplicationData(aboutData);

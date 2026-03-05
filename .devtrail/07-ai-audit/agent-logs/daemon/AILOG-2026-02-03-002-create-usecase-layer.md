@@ -69,4 +69,4 @@ The domain entities (T025-T044) and port trait definitions (T047-T060) were bein
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2026 Enigmora <https://enigmora.com>
+// SPDX-FileCopyrightText: 2026 Strange Days Tech <https://strangedaystech.com>
 
 /**
  * LNXDrive Extension Preferences
@@ -28,7 +28,7 @@ export default class LnxdrivePreferences extends ExtensionPreferences {
 
         const page = new Adw.PreferencesPage({
             title: 'LNXDrive',
-            icon_name: 'com.enigmora.LNXDrive-symbolic',
+            icon_name: 'com.strangedaystech.LNXDrive-symbolic',
         });
 
         const group = new Adw.PreferencesGroup({

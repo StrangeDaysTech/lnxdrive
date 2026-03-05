@@ -89,4 +89,4 @@ The mount command supports both human-readable and JSON output formats. When run
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

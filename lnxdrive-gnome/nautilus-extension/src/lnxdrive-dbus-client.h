@@ -1,6 +1,6 @@
 /* lnxdrive-dbus-client.h — D-Bus client for communication with lnxdrive-daemon
  *
- * Copyright 2026 Enigmora <https://enigmora.com>
+ * Copyright 2026 Strange Days Tech <https://strangedaystech.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Terminology glossary (keep in sync with lnxdrive-guide):
@@ -26,17 +26,17 @@ G_DECLARE_FINAL_TYPE (LnxdriveDbusClient, lnxdrive_dbus_client,
 /* ---------------------------------------------------------------------------
  * D-Bus constants
  * ---------------------------------------------------------------------------*/
-#define LNXDRIVE_DBUS_BUS_NAME    "com.enigmora.LNXDrive"
-#define LNXDRIVE_DBUS_OBJECT_PATH "/com/enigmora/LNXDrive"
-#define LNXDRIVE_DBUS_IFACE_FILES "com.enigmora.LNXDrive.Files"
+#define LNXDRIVE_DBUS_BUS_NAME    "com.strangedaystech.LNXDrive"
+#define LNXDRIVE_DBUS_OBJECT_PATH "/com/strangedaystech/LNXDrive"
+#define LNXDRIVE_DBUS_IFACE_FILES "com.strangedaystech.LNXDrive.Files"
 
 /* D-Bus error domains */
 #define LNXDRIVE_DBUS_ERROR_INSUFFICIENT_DISK_SPACE \
-    "com.enigmora.LNXDrive.Error.InsufficientDiskSpace"
+    "com.strangedaystech.LNXDrive.Error.InsufficientDiskSpace"
 #define LNXDRIVE_DBUS_ERROR_FILE_IN_USE \
-    "com.enigmora.LNXDrive.Error.FileInUse"
+    "com.strangedaystech.LNXDrive.Error.FileInUse"
 #define LNXDRIVE_DBUS_ERROR_INVALID_PATH \
-    "com.enigmora.LNXDrive.Error.InvalidPath"
+    "com.strangedaystech.LNXDrive.Error.InvalidPath"
 
 /* ---------------------------------------------------------------------------
  * Callback type for requesting Nautilus to re-read file info.

@@ -122,4 +122,4 @@ getfattr -n user.lnxdrive.state /mnt/onedrive/document.docx
 
 ---
 
-<!-- Template: DevTrail | https://enigmora.com -->
+<!-- Template: DevTrail | https://strangedaystech.com -->

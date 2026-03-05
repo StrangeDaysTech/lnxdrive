@@ -27,8 +27,8 @@ cargo_build_target = custom_target(
 
 # Desktop file
 i18n.merge_file(
-  input: 'data' / 'com.enigmora.LNXDrive.Preferences.desktop.in',
-  output: 'com.enigmora.LNXDrive.Preferences.desktop',
+  input: 'data' / 'com.strangedaystech.LNXDrive.Preferences.desktop.in',
+  output: 'com.strangedaystech.LNXDrive.Preferences.desktop',
   type: 'desktop',
   po_dir: meson.project_source_root() / 'po',
   install: true,
@@ -37,8 +37,8 @@ i18n.merge_file(
 
 # AppStream metainfo
 i18n.merge_file(
-  input: 'data' / 'com.enigmora.LNXDrive.Preferences.metainfo.xml.in',
-  output: 'com.enigmora.LNXDrive.Preferences.metainfo.xml',
+  input: 'data' / 'com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in',
+  output: 'com.strangedaystech.LNXDrive.Preferences.metainfo.xml',
   type: 'xml',
   po_dir: meson.project_source_root() / 'po',
   install: true,
@@ -47,6 +47,6 @@ i18n.merge_file(
 
 # GSettings schema
 install_data(
-  'data' / 'com.enigmora.LNXDrive.Preferences.gschema.xml',
+  'data' / 'com.strangedaystech.LNXDrive.Preferences.gschema.xml',
   install_dir: datadir / 'glib-2.0' / 'schemas',
 )

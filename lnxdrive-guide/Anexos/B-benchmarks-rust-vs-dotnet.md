@@ -542,7 +542,7 @@ Si se desea usar C# para algo, los únicos componentes donde sería aceptable:
 ---
 
 *Análisis generado el 29 de enero de 2026*
-*Proyecto Enigmora - LNXDrive*
+*Proyecto Strange Days Tech - LNXDrive*
 
 ---
 
