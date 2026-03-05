@@ -1,8 +1,6 @@
-# Contributing to DevTrail
+# Contributing to LNXDrive
 
-Thank you for your interest in contributing to DevTrail! This document provides guidelines and information for contributors.
-
-**Languages**: English | [Español](docs/i18n/es/CONTRIBUTING.md)
+Thank you for your interest in contributing to LNXDrive! This document provides guidelines and information for contributors.
 
 ## Table of Contents
 
@@ -10,9 +8,9 @@ Thank you for your interest in contributing to DevTrail! This document provides 
 - [Contributor License Agreement (CLA)](#contributor-license-agreement-cla)
 - [How Can I Contribute?](#how-can-i-contribute)
 - [Development Setup](#development-setup)
+- [Project Structure](#project-structure)
 - [Pull Request Process](#pull-request-process)
 - [Style Guidelines](#style-guidelines)
-- [Documentation Standards](#documentation-standards)
 
 ---
 
@@ -32,10 +30,10 @@ This project requires all contributors to sign a **Contributor License Agreement
 
 1. When you open your first pull request, CLA Assistant will automatically post a comment asking you to sign the CLA.
 2. Click the link in the comment to review and sign the agreement.
-3. The CLA only needs to be signed once — it covers all future contributions to this project.
+3. The CLA only needs to be signed once -- it covers all future contributions to this project.
 4. Once signed, CLA Assistant will update the PR check status and your contribution can proceed to review.
 
-If you have questions about the CLA, please open a [Discussion](https://github.com/StrangeDaysTech/devtrail/discussions).
+If you have questions about the CLA, please open a [Discussion](https://github.com/StrangeDaysTech/lnxdrive/discussions).
 
 ---
 
@@ -49,10 +47,9 @@ Before creating a bug report, please check existing issues to avoid duplicates.
 
 - A clear, descriptive title
 - Steps to reproduce the behavior
-- Expected behavior
-- Actual behavior
-- Screenshots (if applicable)
-- Environment details (OS, AI platform, etc.)
+- Expected behavior vs. actual behavior
+- Screenshots or logs (if applicable)
+- Environment details (distribution, desktop environment, kernel version)
 
 ### Suggesting Features
 
@@ -88,34 +85,39 @@ Code contributions should:
 ### Prerequisites
 
 - **Git**
-- **A text editor** (VS Code recommended)
-- **Bash** (for Linux/Mac validation scripts)
-- **PowerShell** (for Windows validation scripts)
-- **Rust toolchain** (for CLI development — install via [rustup.rs](https://rustup.rs/))
-- **Node.js 20+** (optional, for markdownlint)
+- **Rust 1.75+** (install via [rustup.rs](https://rustup.rs/))
+- **Meson & Ninja** (for GNOME integration builds)
+- **GJS** (for GNOME Shell extension development)
+- **GTK 4 development libraries** (for GNOME UI)
+- **D-Bus development libraries** (for IPC)
+- **FUSE 3 development libraries** (for files-on-demand)
+- **SQLite 3** (for local state storage)
+- **Podman** (optional, for container-based testing)
 
 ### Setup Steps
 
 1. **Fork the repository**
 
-   Click "Fork" on the [GitHub repository page](https://github.com/StrangeDaysTech/devtrail).
+   Click "Fork" on the [GitHub repository page](https://github.com/StrangeDaysTech/lnxdrive).
 
 2. **Clone your fork**
    ```bash
-   git clone https://github.com/your-username/devtrail.git
-   cd devtrail
+   git clone https://github.com/your-username/lnxdrive.git
+   cd lnxdrive
    ```
 
-3. **Install the pre-commit hook**
+3. **Build the engine**
    ```bash
-   cp dist/scripts/pre-commit-docs.sh .git/hooks/pre-commit
-   chmod +x .git/hooks/pre-commit
+   cd lnxdrive-engine
+   cargo build
+   cargo test
    ```
 
-4. **Install development tools (optional)**
+4. **Build the GNOME integration** (optional)
    ```bash
-   # Markdown linting
-   npm install -g markdownlint-cli
+   cd lnxdrive-gnome
+   meson setup builddir
+   meson compile -C builddir
    ```
 
 5. **Create a branch**
@@ -125,24 +127,61 @@ Code contributions should:
    git checkout -b fix/your-bug-fix
    ```
 
-6. **Make your changes and validate**
-   ```bash
-   # Linux/Mac
-   bash dist/scripts/pre-commit-docs.sh
+---
 
-   # Windows
-   .\dist\scripts\validate-docs.ps1
-   ```
+## Project Structure
+
+LNXDrive is a monorepo with the following components:
+
+```
+lnxdrive/
+├── lnxdrive-engine/       # Core daemon + library crates (Rust, Cargo workspace)
+│   └── crates/
+│       ├── lnxdrive-core/       # Domain logic and ports
+│       ├── lnxdrive-daemon/     # systemd service
+│       ├── lnxdrive-cli/        # Command-line interface
+│       ├── lnxdrive-ipc/        # D-Bus IPC layer
+│       ├── lnxdrive-fuse/       # Files-on-demand (FUSE)
+│       ├── lnxdrive-sync/       # Sync engine
+│       ├── lnxdrive-graph/      # Microsoft Graph adapter
+│       ├── lnxdrive-cache/      # SQLite state cache
+│       ├── lnxdrive-conflict/   # Conflict resolution
+│       ├── lnxdrive-audit/      # Audit trail
+│       └── lnxdrive-telemetry/  # Metrics and observability
+├── lnxdrive-gnome/        # GNOME Shell/Nautilus/GOA integration
+├── lnxdrive-gtk3/         # XFCE/MATE UI (GTK3)
+├── lnxdrive-plasma/       # KDE Plasma integration (Qt/C++)
+├── lnxdrive-cosmic/       # COSMIC desktop UI (Rust)
+├── lnxdrive-packaging/    # Flatpak, AppImage, Debian, AUR
+├── lnxdrive-guide/        # Design and development guide
+├── lnxdrive-testing/      # Container/VM test infrastructure
+└── .devtrail/             # Project documentation trail
+```
+
+For a deep understanding of the architecture and design decisions, refer to the [Design Guide](lnxdrive-guide/).
 
 ---
 
 ## Pull Request Process
 
+### Branch Naming
+
+| Prefix | Purpose |
+|--------|---------|
+| `feature/` or `feat/` | New features |
+| `fix/` | Bug fixes |
+| `hotfix/` | Urgent production fixes |
+| `docs/` | Documentation only |
+| `refactor/` | Code refactoring |
+| `test/` | Test changes |
+
+> **Important:** Never commit directly to `main`. All changes must go through feature/fix branches and Pull Requests.
+
 ### Before Submitting
 
-- [ ] Run validation scripts successfully
-- [ ] Update documentation if needed
-- [ ] Add yourself to CONTRIBUTORS.md (if applicable)
+- [ ] Code compiles without warnings
+- [ ] Tests pass (`cargo test` in the relevant crate)
+- [ ] Documentation is updated if needed
 - [ ] Write a clear PR description
 
 ### PR Title Format
@@ -153,41 +192,19 @@ Use conventional commit format:
 type(scope): description
 
 Examples:
-feat(templates): add template for security reviews
-fix(validation): correct regex for file naming
-docs(readme): clarify installation steps
-chore(ci): update GitHub Actions workflow
+feat(sync): add delta sync for Microsoft Graph
+fix(fuse): correct placeholder state on hydration
+docs(guide): clarify hexagonal architecture layers
+refactor(daemon): extract signal handling to module
 ```
 
 **Types:**
-- `feat` - New feature
-- `fix` - Bug fix
-- `docs` - Documentation changes
-- `chore` - Maintenance tasks
-- `refactor` - Code refactoring
-- `test` - Test additions or fixes
-
-### PR Description Template
-
-```markdown
-## Summary
-Brief description of changes
-
-## Motivation
-Why is this change needed?
-
-## Changes
-- Change 1
-- Change 2
-
-## Testing
-How were these changes tested?
-
-## Checklist
-- [ ] Validation scripts pass
-- [ ] Documentation updated
-- [ ] No sensitive information included
-```
+- `feat` -- New feature
+- `fix` -- Bug fix
+- `docs` -- Documentation changes
+- `chore` -- Maintenance tasks
+- `refactor` -- Code refactoring
+- `test` -- Test additions or fixes
 
 ### Review Process
 
@@ -199,137 +216,29 @@ How were these changes tested?
 
 ## Style Guidelines
 
-### Markdown
+### Rust Code
+
+- Follow standard Rust conventions (`rustfmt`, `clippy`)
+- Use the workspace dependency versions defined in the root `Cargo.toml`
+- Write doc comments for public APIs
+- Prefer explicit error handling over `unwrap()`
+
+### GNOME / GJS Code
+
+- Follow GNOME coding conventions
+- Use ES modules for GJS extensions
+
+### Markdown / Documentation
 
 - Use ATX-style headers (`#`, `##`, etc.)
 - Use fenced code blocks with language identifiers
-- Use tables for structured data
 - Keep lines under 120 characters when practical
-- Use blank lines to separate sections
 
-### YAML Front-matter
+### Commit Messages
 
-```yaml
----
-id: TYPE-YYYY-MM-DD-NNN
-title: Clear, descriptive title
-status: draft | accepted | deprecated
-created: YYYY-MM-DD
-# Additional fields as needed
----
-```
-
-### File Naming
-
-DevTrail documents:
-```
-[TYPE]-[YYYY-MM-DD]-[NNN]-[description].md
-```
-
-- Use lowercase for description
-- Use hyphens to separate words
-- Keep descriptions concise but clear
-
-### Code in Scripts
-
-- Use clear variable names
-- Add comments for complex logic
-- Follow shell/PowerShell best practices
-
----
-
-## Documentation Standards
-
-### Adding a New Document Type
-
-If you're proposing a new document type:
-
-1. **Create the template**
-   - Add `TEMPLATE-NEWTYPE.md` to `dist/.devtrail/templates/`
-   - Follow existing template patterns
-
-2. **Update governance docs**
-   - `dist/.devtrail/00-governance/DOCUMENTATION-POLICY.md`
-   - `dist/.devtrail/00-governance/AGENT-RULES.md`
-   - `dist/.devtrail/QUICK-REFERENCE.md`
-
-3. **Update agent configs**
-   - `dist/dist-templates/directives/` (distribution templates)
-
-4. **Update validation**
-   - `dist/scripts/pre-commit-docs.sh`
-   - `dist/scripts/validate-docs.ps1`
-   - `dist/.github/workflows/docs-validation.yml`
-
-5. **Document the change**
-   - Create an ADR explaining the new type
-   - Update the README if needed
-
-### Writing Templates
-
-Templates should include:
-
-- Complete YAML front-matter with all fields
-- Clear section headers
-- Placeholder text explaining what goes in each section
-- Examples where helpful
-
-### Writing Governance Documents
-
-- Be clear and unambiguous
-- Use tables for reference information
-- Include examples
-- Keep rules actionable
-
----
-
-## CLI Development
-
-The DevTrail CLI is written in Rust and located in the `cli/` directory.
-
-### Building
-
-```bash
-cd cli
-cargo build
-```
-
-### Running Tests
-
-```bash
-cd cli
-cargo test
-```
-
-### Release Build
-
-```bash
-cd cli
-cargo build --release
-```
-
-The release binary is optimized with LTO and stripped for minimal size.
-
-### Architecture
-
-```
-cli/src/
-├── main.rs          # Entry point + clap CLI definition
-├── commands/
-│   ├── mod.rs       # Subcommand routing
-│   ├── init.rs      # devtrail init [path]
-│   ├── update.rs    # devtrail update
-│   ├── remove.rs    # devtrail remove [--full]
-│   ├── update_cli.rs # devtrail update-cli
-│   └── about.rs     # devtrail about
-├── config.rs        # Config and checksums management
-├── download.rs      # GitHub Releases download
-├── inject.rs        # Directive file injection (markers)
-├── manifest.rs      # dist-manifest.yml parsing
-├── platform.rs      # OS/arch detection for binary downloads
-├── self_update.rs   # CLI binary self-update logic
-└── utils.rs         # Helpers (hashing, colors, paths)
-```
+- Use conventional commits format
+- Write the subject line in imperative mood ("add feature", not "added feature")
+- Keep the subject under 72 characters
 
 ---
 
@@ -337,8 +246,8 @@ cli/src/
 
 If you have questions about contributing:
 
-1. Check existing [Issues](https://github.com/StrangeDaysTech/devtrail/issues)
-2. Check [Discussions](https://github.com/StrangeDaysTech/devtrail/discussions)
+1. Check existing [Issues](https://github.com/StrangeDaysTech/lnxdrive/issues)
+2. Check [Discussions](https://github.com/StrangeDaysTech/lnxdrive/discussions)
 3. Open a new Discussion for general questions
 4. Open an Issue for specific bugs or features
 
@@ -350,12 +259,11 @@ Contributors are recognized in:
 
 - GitHub's contributor graph
 - Release notes for significant contributions
-- CONTRIBUTORS.md (for recurring contributors)
 
-Thank you for helping make DevTrail better!
+Thank you for helping make LNXDrive better!
 
 ---
 
-*DevTrail — Because every change tells a story.*
+*LNXDrive -- Because your files belong everywhere.*
 
-[Strange Days Tech](https://strangedays.tech)
+[Strange Days Tech, S.A.S.](https://strangedays.tech)
