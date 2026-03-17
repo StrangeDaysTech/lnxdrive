@@ -6,6 +6,8 @@
 mod app;
 mod conflicts;
 mod dbus_client;
+#[cfg(feature = "goa")]
+pub mod goa_sso;
 mod onboarding;
 mod preferences;
 mod window;

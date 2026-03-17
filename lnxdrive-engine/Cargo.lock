@@ -1650,6 +1650,7 @@ dependencies = [
  "url",
  "webbrowser",
  "wiremock",
+ "zbus",
 ]
 
 [[package]]

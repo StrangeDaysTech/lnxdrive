@@ -5,4 +5,4 @@ option('enable_shell', type: 'boolean', value: true,
 option('enable_preferences', type: 'boolean', value: true,
        description: 'Build GTK4/libadwaita preferences application')
 option('enable_goa', type: 'boolean', value: false,
-       description: 'Build GNOME Online Accounts provider (P3, deferred)')
+       description: 'Build GNOME Online Accounts provider for Microsoft SSO')

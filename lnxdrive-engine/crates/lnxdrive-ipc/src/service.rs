@@ -110,6 +110,8 @@ pub struct DaemonState {
     pub auth_url: Option<String>,
     /// CSRF state token for in-progress auth flow
     pub auth_csrf_state: Option<String>,
+    /// Authentication source: "browser", "goa", or None
+    pub auth_source: Option<String>,
 
     // -- Settings interface state --
 
@@ -151,6 +153,7 @@ impl Default for DaemonState {
             is_authenticated: false,
             auth_url: None,
             auth_csrf_state: None,
+            auth_source: None,
             config_yaml: String::new(),
             selected_folders: Vec::new(),
             exclusion_patterns: Vec::new(),
@@ -831,6 +834,42 @@ impl AuthInterface {
         // In a real implementation, the daemon exchanges the code for tokens.
         // Here we just mark as authenticated.
         state.is_authenticated = true;
+        state.auth_source = Some("browser".to_string());
+        state.auth_url = None;
+        state.auth_csrf_state = None;
+        true
+    }
+
+    /// Completes authentication using pre-obtained tokens (e.g. from GOA)
+    ///
+    /// # Arguments
+    /// * `access_token` - The OAuth2 access token
+    /// * `refresh_token` - The OAuth2 refresh token
+    /// * `expires_at_unix` - Token expiration as Unix timestamp (seconds)
+    ///
+    /// # Returns
+    /// `true` if tokens were accepted, `false` if rejected (empty tokens)
+    async fn complete_auth_with_tokens(
+        &self,
+        access_token: String,
+        refresh_token: String,
+        expires_at_unix: i64,
+    ) -> bool {
+        let mut state = self.state.lock().await;
+
+        if access_token.is_empty() || refresh_token.is_empty() {
+            warn!("Auth.CompleteAuthWithTokens called with empty tokens");
+            return false;
+        }
+
+        if expires_at_unix <= 0 {
+            warn!("Auth.CompleteAuthWithTokens called with invalid expiry");
+            return false;
+        }
+
+        info!("Auth.CompleteAuthWithTokens called (expires_at={})", expires_at_unix);
+        state.is_authenticated = true;
+        state.auth_source = Some("goa".to_string());
         state.auth_url = None;
         state.auth_csrf_state = None;
         true
@@ -847,6 +886,7 @@ impl AuthInterface {
         let mut state = self.state.lock().await;
         info!("Auth.Logout called");
         state.is_authenticated = false;
+        state.auth_source = None;
         state.account_email = None;
         state.account_display_name = None;
         state.auth_url = None;
@@ -1802,6 +1842,87 @@ mod tests {
         assert!(!locked.is_authenticated);
         assert!(locked.account_email.is_none());
         assert!(locked.account_display_name.is_none());
+        assert!(locked.auth_source.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_auth_complete_with_tokens_success() {
+        let state = Arc::new(Mutex::new(DaemonState::default()));
+        let auth = AuthInterface::new(Arc::clone(&state));
+
+        let result = auth
+            .complete_auth_with_tokens(
+                "access-token-abc".to_string(),
+                "refresh-token-xyz".to_string(),
+                1742400000, // valid future timestamp
+            )
+            .await;
+        assert!(result);
+
+        let locked = state.lock().await;
+        assert!(locked.is_authenticated);
+        assert_eq!(locked.auth_source.as_deref(), Some("goa"));
+    }
+
+    #[tokio::test]
+    async fn test_auth_complete_with_tokens_empty_access() {
+        let state = Arc::new(Mutex::new(DaemonState::default()));
+        let auth = AuthInterface::new(Arc::clone(&state));
+
+        let result = auth
+            .complete_auth_with_tokens(
+                String::new(),
+                "refresh-token".to_string(),
+                1742400000,
+            )
+            .await;
+        assert!(!result);
+        assert!(!state.lock().await.is_authenticated);
+    }
+
+    #[tokio::test]
+    async fn test_auth_complete_with_tokens_empty_refresh() {
+        let state = Arc::new(Mutex::new(DaemonState::default()));
+        let auth = AuthInterface::new(Arc::clone(&state));
+
+        let result = auth
+            .complete_auth_with_tokens(
+                "access-token".to_string(),
+                String::new(),
+                1742400000,
+            )
+            .await;
+        assert!(!result);
+        assert!(!state.lock().await.is_authenticated);
+    }
+
+    #[tokio::test]
+    async fn test_auth_complete_with_tokens_invalid_expiry() {
+        let state = Arc::new(Mutex::new(DaemonState::default()));
+        let auth = AuthInterface::new(Arc::clone(&state));
+
+        let result = auth
+            .complete_auth_with_tokens(
+                "access-token".to_string(),
+                "refresh-token".to_string(),
+                0,
+            )
+            .await;
+        assert!(!result);
+        assert!(!state.lock().await.is_authenticated);
+    }
+
+    #[tokio::test]
+    async fn test_auth_complete_auth_sets_browser_source() {
+        let state = Arc::new(Mutex::new(DaemonState {
+            auth_csrf_state: Some("state-123".to_string()),
+            ..DaemonState::default()
+        }));
+        let auth = AuthInterface::new(Arc::clone(&state));
+
+        auth.complete_auth("code".to_string(), "state-123".to_string())
+            .await;
+        assert_eq!(state.lock().await.auth_source.as_deref(), Some("browser"));
     }
 
     #[tokio::test]

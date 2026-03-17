@@ -522,6 +522,50 @@ impl GraphAuthAdapter {
         flow.refresh_token(refresh_token).await
     }
 
+    /// Refreshes tokens via GNOME Online Accounts D-Bus.
+    ///
+    /// When the auth source is "goa", the daemon delegates token refresh to GOA
+    /// instead of performing the OAuth2 refresh_token exchange itself.
+    /// GOA manages the refresh token internally; we only get a new access_token.
+    ///
+    /// # Arguments
+    /// * `goa_account_path` - D-Bus object path of the GOA account
+    ///   (e.g. "/org/gnome/OnlineAccounts/Accounts/1234")
+    pub async fn refresh_via_goa(&self, goa_account_path: &str) -> Result<Tokens> {
+        info!("Refreshing access token via GOA (path={})", goa_account_path);
+
+        let conn = zbus::Connection::session()
+            .await
+            .context("Failed to connect to session bus for GOA refresh")?;
+
+        let reply = conn
+            .call_method(
+                Some(zbus::names::BusName::from_static_str("org.gnome.OnlineAccounts")
+                    .expect("valid bus name")),
+                goa_account_path,
+                Some(zbus::names::InterfaceName::from_static_str("org.gnome.OnlineAccounts.OAuth2Based")
+                    .expect("valid interface name")),
+                "GetAccessToken",
+                &(),
+            )
+            .await
+            .context("GOA GetAccessToken call failed")?;
+
+        let (access_token, expires_in): (String, i32) = reply
+            .body()
+            .deserialize()
+            .context("Failed to deserialize GOA GetAccessToken response")?;
+
+        let expires_at = Utc::now() + Duration::seconds(expires_in as i64);
+
+        info!("Successfully refreshed access token via GOA (expires_in={}s)", expires_in);
+        Ok(Tokens {
+            access_token,
+            refresh_token: None,
+            expires_at,
+        })
+    }
+
     /// Returns a reference to the current configuration
     pub fn config(&self) -> &OAuth2Config {
         &self.config
