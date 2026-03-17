@@ -37,6 +37,10 @@ if get_option('enable_preferences')
   subdir('preferences')
 endif
 
+if get_option('enable_goa')
+  subdir('goa-provider')
+endif
+
 subdir('data')
 subdir('po')
 

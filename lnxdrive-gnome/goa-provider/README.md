@@ -1,44 +1,48 @@
 # GNOME Online Accounts Provider — LNXDrive
 
-**Status**: P3 — Not yet implemented (deferred)
+**Status**: Implemented (S5)
 
-## Planned Architecture
+## Architecture
 
-The GOA provider will be a C shared library implementing the `GoaProvider` GObject
-interface, registered with GNOME Online Accounts to provide native Microsoft account
+The GOA provider is a C shared library implementing the `GoaOAuth2Provider` GObject
+subclass, registered with GNOME Online Accounts to provide native Microsoft account
 integration in GNOME Settings → Online Accounts.
 
 ### Components
 
 | Component | Description |
 |-----------|-------------|
-| `GoaProvider` implementation | C shared library loaded by `gnome-online-accounts` |
-| OAuth2 with WebKitGTK | Embedded web view for the Microsoft authentication flow |
-| Token handoff | Pass OAuth2 tokens to `lnxdrive-daemon` via `Auth.CompleteAuth()` D-Bus method |
-| Account lifecycle | Monitor GOA for account addition/removal, notify daemon accordingly |
+| `lnxdrive-goa-module.c` | GIO module entry point — registers the provider type |
+| `lnxdrive-goa-provider.c` | `GoaOAuth2Provider` subclass with Microsoft OAuth2 endpoints |
+| `lnxdrive-goa-dbus.c` | D-Bus helper — hands off GOA tokens to the daemon |
+| Shell extension GOA monitor | Watches `AccountRemoved` signals and calls `Auth.Logout()` |
 
 ### Functional Requirements Coverage
 
 | FR | Description | Status |
 |----|-------------|--------|
-| FR-019 | Provider registration in GNOME Online Accounts | Not implemented |
-| FR-020 | OAuth2 PKCE authentication via embedded WebView | Not implemented |
-| FR-021 | SSO — reuse existing Microsoft accounts from GOA | Not implemented |
-| FR-022 | Automatic token refresh via GOA infrastructure | Not implemented |
-| FR-023 | Account removal propagation to daemon | Not implemented |
+| FR-019 | Provider registration in GNOME Online Accounts | Implemented |
+| FR-020 | OAuth2 authentication via GOA | Implemented |
+| FR-021 | SSO — reuse existing Microsoft accounts from GOA | Implemented |
+| FR-022 | Automatic token refresh via GOA infrastructure | Implemented |
+| FR-023 | Account removal propagation to daemon | Implemented |
 
-### Why Deferred
+### D-Bus Integration
 
-The onboarding wizard (US5, P1) provides a fully functional independent authentication
-path using system browser + loopback redirect (RFC 8252). GOA integration adds SSO
-polish (reuse existing Microsoft accounts) but requires significant platform-specific
-plumbing including WebKitGTK embedded views and GOA provider C API integration.
+The provider uses `Auth.CompleteAuthWithTokens(access_token, refresh_token, expires_at_unix)`
+to pass GOA-obtained tokens to the daemon. This method was added specifically for GOA
+integration, separate from the existing `CompleteAuth(code, state)` which expects an
+authorization code.
+
+Token refresh for GOA-sourced auth is delegated back to GOA via
+`org.gnome.OnlineAccounts.OAuth2Based.GetAccessToken()`.
 
 ### Dependencies
 
-- `gnome-online-accounts` (libgoa-1.0, libgoa-backend-1.0)
-- `webkit6` (WebKitGTK 6.x for embedded OAuth2 view)
-- `lnxdrive-daemon` D-Bus interface `com.strangedaystech.LNXDrive.Auth`
+- `gnome-online-accounts` (libgoa-1.0, libgoa-backend-1.0) >= 3.48
+- `webkitgtk-6.0` or `webkit2gtk-6.0` (GOA OAuth2 embedded view)
+- `gio-2.0` >= 2.76
+- LNXDrive daemon D-Bus interface `com.strangedaystech.LNXDrive.Auth`
 
 ### Build
 
@@ -46,6 +50,17 @@ This component is gated behind the `enable_goa` Meson option (default: false):
 
 ```bash
 meson setup builddir -Denable_goa=true
+ninja -C builddir
+```
+
+The shared library installs to the GOA provider module directory
+(typically `/usr/lib64/goa-1.0/web-extensions/`).
+
+### Testing
+
+```bash
+# Load the provider in a test environment
+GOA_PROVIDER_MODULE_DIR=./builddir/lnxdrive-gnome/goa-provider gnome-control-center online-accounts
 ```
 
 ---

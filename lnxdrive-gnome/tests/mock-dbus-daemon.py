@@ -562,6 +562,7 @@ class AuthInterface(ServiceInterface):
     def __init__(self, authenticated: bool) -> None:
         super().__init__("com.strangedaystech.LNXDrive.Auth")
         self._authenticated: bool = authenticated
+        self._auth_source: str | None = None
 
     # -- methods ----------------------------------------------------------
 
@@ -576,6 +577,21 @@ class AuthInterface(ServiceInterface):
     def CompleteAuth(self, code: "s", state: "s") -> "b":
         log.info("Auth.CompleteAuth(code=%s, state=%s) -> true", code, state)
         self._authenticated = True
+        self._auth_source = "browser"
+        self.AuthStateChanged("authenticated")
+        return True
+
+    @method()
+    def CompleteAuthWithTokens(self, access_token: "s", refresh_token: "s", expires_at_unix: "x") -> "b":
+        if not access_token or not refresh_token:
+            log.warning("Auth.CompleteAuthWithTokens called with empty tokens -> false")
+            return False
+        if expires_at_unix <= 0:
+            log.warning("Auth.CompleteAuthWithTokens called with invalid expiry -> false")
+            return False
+        log.info("Auth.CompleteAuthWithTokens(expires_at=%d) -> true", expires_at_unix)
+        self._authenticated = True
+        self._auth_source = "goa"
         self.AuthStateChanged("authenticated")
         return True
 
@@ -588,6 +604,7 @@ class AuthInterface(ServiceInterface):
     def Logout(self):
         log.info("Auth.Logout()")
         self._authenticated = False
+        self._auth_source = None
         self.AuthStateChanged("disconnected")
 
     # -- signals ----------------------------------------------------------

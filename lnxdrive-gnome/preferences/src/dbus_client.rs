@@ -84,6 +84,14 @@ pub trait LnxdriveAuth {
     /// Finish an auth flow with an explicit code + state (manual/CLI/GOA).
     async fn complete_auth(&self, code: &str, state: &str) -> zbus::Result<bool>;
 
+    /// Complete auth using pre-obtained tokens (e.g. from GNOME Online Accounts).
+    async fn complete_auth_with_tokens(
+        &self,
+        access_token: &str,
+        refresh_token: &str,
+        expires_at_unix: i64,
+    ) -> zbus::Result<bool>;
+
     /// Log out the current user and revoke tokens.
     async fn logout(&self) -> zbus::Result<()>;
 
@@ -221,6 +229,19 @@ impl DbusClient {
     pub async fn complete_auth(&self, code: &str, state: &str) -> Result<bool, DbusError> {
         let proxy = LnxdriveAuthProxy::new(&self.connection).await?;
         Ok(proxy.complete_auth(code, state).await?)
+    }
+
+    /// Complete auth with pre-obtained tokens from GNOME Online Accounts.
+    pub async fn complete_auth_with_tokens(
+        &self,
+        access_token: &str,
+        refresh_token: &str,
+        expires_at_unix: i64,
+    ) -> Result<bool, DbusError> {
+        let proxy = LnxdriveAuthProxy::new(&self.connection).await?;
+        Ok(proxy
+            .complete_auth_with_tokens(access_token, refresh_token, expires_at_unix)
+            .await?)
     }
 
     /// Log out the current user.

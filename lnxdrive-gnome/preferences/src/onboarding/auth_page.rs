@@ -17,6 +17,8 @@ use libadwaita::prelude::*;
 use gtk4::subclass::prelude::ObjectSubclassIsExt;
 
 use crate::dbus_client::LnxdriveAuthProxy;
+#[cfg(feature = "goa")]
+use crate::goa_sso;
 
 use super::folder_page::FolderPage;
 use super::OnboardingView;
@@ -30,6 +32,8 @@ mod imp {
         pub onboarding_view: RefCell<Option<OnboardingView>>,
         pub status_page: RefCell<Option<adw::StatusPage>>,
         pub sign_in_button: RefCell<Option<gtk4::Button>>,
+        #[cfg(feature = "goa")]
+        pub goa_button: RefCell<Option<gtk4::Button>>,
         pub spinner: RefCell<Option<gtk4::Spinner>>,
         pub cancel_button: RefCell<Option<gtk4::Button>>,
         pub error_banner: RefCell<Option<adw::Banner>>,
@@ -42,6 +46,8 @@ mod imp {
                 onboarding_view: RefCell::new(None),
                 status_page: RefCell::new(None),
                 sign_in_button: RefCell::new(None),
+                #[cfg(feature = "goa")]
+                goa_button: RefCell::new(None),
                 spinner: RefCell::new(None),
                 cancel_button: RefCell::new(None),
                 error_banner: RefCell::new(None),
@@ -133,12 +139,43 @@ impl AuthPage {
             ))
             .build();
 
+        // GOA SSO button (only when goa feature is enabled)
+        #[cfg(feature = "goa")]
+        {
+            let goa_button = gtk4::Button::builder()
+                .label(&gettext("Use existing Microsoft account"))
+                .halign(gtk4::Align::Center)
+                .css_classes(["suggested-action", "pill"])
+                .visible(false) // hidden until GOA check completes
+                .build();
+            imp.goa_button.replace(Some(goa_button.clone()));
+
+            // Check for existing GOA account asynchronously
+            let goa_btn = goa_button.clone();
+            glib::MainContext::default().spawn_local(async move {
+                if goa_sso::has_lnxdrive_goa_account().await {
+                    goa_btn.set_visible(true);
+                }
+            });
+
+            // Connect GOA button click
+            let page_clone = self.clone();
+            let wl_clone = waiting_label.clone();
+            goa_button.connect_clicked(move |_| {
+                page_clone.on_goa_sign_in_clicked(&wl_clone);
+            });
+        }
+
         // Button box
         let button_box = gtk4::Box::builder()
             .orientation(gtk4::Orientation::Vertical)
             .spacing(12)
             .halign(gtk4::Align::Center)
             .build();
+        #[cfg(feature = "goa")]
+        if let Some(ref goa_btn) = *imp.goa_button.borrow() {
+            button_box.append(goa_btn);
+        }
         button_box.append(&sign_in_button);
         button_box.append(&spinner);
         button_box.append(&waiting_label.clone());
@@ -289,6 +326,77 @@ impl AuthPage {
                     page.show_error(&format!(
                         "{}: {}",
                         gettext("Could not start authentication"),
+                        e
+                    ));
+                    page.set_waiting_state(false, &wl);
+                }
+            }
+        });
+    }
+
+    /// Called when the user clicks "Use existing Microsoft account" (GOA SSO).
+    #[cfg(feature = "goa")]
+    fn on_goa_sign_in_clicked(&self, waiting_label: &gtk4::Label) {
+        let imp = self.imp();
+
+        let onboarding_view = match imp.onboarding_view.borrow().clone() {
+            Some(v) => v,
+            None => return,
+        };
+
+        let dbus_client = match onboarding_view.dbus_client().as_ref() {
+            Some(c) => c.clone(),
+            None => return,
+        };
+
+        self.set_waiting_state(true, waiting_label);
+
+        let page = self.clone();
+        let ov = onboarding_view.clone();
+        let wl = waiting_label.clone();
+
+        glib::MainContext::default().spawn_local(async move {
+            match goa_sso::get_goa_tokens().await {
+                Ok((access_token, refresh_token, expires_at)) => {
+                    match dbus_client
+                        .complete_auth_with_tokens(&access_token, &refresh_token, expires_at)
+                        .await
+                    {
+                        Ok(true) => {
+                            // Fetch account info and push folder page
+                            if let Ok(info) = dbus_client.get_account_info().await {
+                                let mut ob_state = ov.state_mut();
+                                ob_state.account_email = info
+                                    .get("email")
+                                    .and_then(|v| String::try_from(v.clone()).ok());
+                                ob_state.account_name = info
+                                    .get("display_name")
+                                    .and_then(|v| String::try_from(v.clone()).ok());
+                            }
+                            let folder_page = FolderPage::new(&ov);
+                            ov.nav_view().push(&folder_page);
+                            page.set_waiting_state(false, &wl);
+                        }
+                        Ok(false) => {
+                            page.show_error(&gettext(
+                                "The daemon rejected the GOA tokens. Try signing in manually.",
+                            ));
+                            page.set_waiting_state(false, &wl);
+                        }
+                        Err(e) => {
+                            page.show_error(&format!(
+                                "{}: {}",
+                                gettext("D-Bus error"),
+                                e
+                            ));
+                            page.set_waiting_state(false, &wl);
+                        }
+                    }
+                }
+                Err(e) => {
+                    page.show_error(&format!(
+                        "{}: {}",
+                        gettext("Could not get GOA tokens"),
                         e
                     ));
                     page.set_waiting_state(false, &wl);
