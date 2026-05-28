@@ -24,6 +24,7 @@ use lnxdrive_graph::{
 use lnxdrive_ipc::service::{DaemonState, DaemonSyncState, DbusService, DBUS_NAME};
 
 mod goa_auth_backend;
+mod health;
 use goa_auth_backend::GoaAuthBackend;
 use lnxdrive_sync::{engine::SyncEngine, filesystem::LocalFileSystemAdapter};
 use tokio::sync::Mutex;
@@ -110,20 +111,17 @@ impl DaemonService {
         // RISK-002 mitigation: wire the GOA-backed AuthBackend so
         // `Auth.CompleteAuthViaGOA` can persist tokens in the keyring without
         // exposing them as D-Bus method arguments.
-        let dbus_service = DbusService::new(Arc::clone(&self.daemon_state))
-            .with_auth_backend(Arc::new(GoaAuthBackend::new()));
-        let _dbus_connection = match dbus_service.start().await {
+        let dbus_service = Arc::new(
+            DbusService::new(Arc::clone(&self.daemon_state))
+                .with_auth_backend(Arc::new(GoaAuthBackend::new())),
+        );
+        let initial_connection = match dbus_service.start().await {
             Ok(conn) => {
                 info!("D-Bus service started, acquired name {}", DBUS_NAME);
                 conn
             }
             Err(e) => {
-                let err_str = format!("{e:#}");
-                if err_str.contains("already taken")
-                    || err_str.contains("already owned")
-                    || err_str.contains("NameTaken")
-                    || err_str.contains("name already")
-                {
+                if health::is_name_taken_error(&e) {
                     error!(
                         "Another instance of lnxdrived is already running (D-Bus name {} is taken)",
                         DBUS_NAME
@@ -137,6 +135,34 @@ impl DaemonService {
             }
         };
 
+        // RISK-001 mitigation: hand the connection to the health monitor, which
+        // owns it for the rest of the process lifetime and re-registers every
+        // interface (with backoff) if the session bus drops.
+        let health_handle = health::spawn_health_monitor(
+            Arc::clone(&dbus_service),
+            initial_connection,
+            Arc::clone(&self.daemon_state),
+            self.shutdown.clone(),
+            health::HealthConfig::default(),
+        );
+
+        // Run the daemon's main work, then always await the monitor on exit so
+        // the connection is dropped cleanly regardless of which path returns.
+        let result = self.run_inner().await;
+        self.shutdown.cancel();
+        if let Err(e) = health_handle.await {
+            warn!(error = %e, "Health monitor task join error");
+        }
+        result
+    }
+
+    /// The daemon's main work: account/token load, sync engine, FUSE auto-mount,
+    /// and the periodic polling loop.
+    ///
+    /// Split out of [`DaemonService::run`] so the D-Bus connection and its
+    /// health monitor share a single common exit point (RISK-001): every early
+    /// return below lands back in `run`, which then awaits the monitor.
+    async fn run_inner(&self) -> Result<()> {
         // Try to load account and tokens
         let account_opt = self
             .state_repo
