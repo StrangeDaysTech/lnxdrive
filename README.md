@@ -151,7 +151,7 @@ meson compile -C builddir
 
 ### Documentation trail
 
-This project uses [DevTrail](https://github.com/StrangeDaysTech/devtrail) to maintain a complete documentation trail of architectural decisions, AI-assisted changes, and technical debt. See `.devtrail/` for the full audit history.
+This project uses [StrayMark](https://github.com/StrangeDaysTech/straymark) to maintain a complete documentation trail of architectural decisions, AI-assisted changes, and technical debt. See `.straymark/` for the full audit history.
 
 ---
 

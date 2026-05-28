@@ -1,10 +1,10 @@
-# DevTrail - Guidelines for GitHub Copilot
+# StrayMark - Guidelines for GitHub Copilot
 
-> This file configures GitHub Copilot CLI under DevTrail.
+> This file configures GitHub Copilot CLI under StrayMark.
 
 ## Language Configuration
 
-Check `.devtrail/config.yml` for the project's language setting:
+Check `.straymark/config.yml` for the project's language setting:
 
 ```yaml
 language: en  # Options: en, es (default: en)
@@ -14,31 +14,31 @@ language: en  # Options: en, es (default: en)
 
 | Language | Template Path |
 |----------|---------------|
-| `en` (default) | `.devtrail/templates/TEMPLATE-*.md` |
-| `es` | `.devtrail/templates/i18n/es/TEMPLATE-*.md` |
+| `en` (default) | `.straymark/templates/TEMPLATE-*.md` |
+| `es` | `.straymark/templates/i18n/es/TEMPLATE-*.md` |
 
 If the config file doesn't exist or `language` is not set, use English (`en`) as default.
 
 ## Documentation Reporting
 
-At the end of each task, you MUST report your DevTrail documentation status:
+At the end of each task, you MUST report your StrayMark documentation status:
 
 **If you created documentation:**
 ```
-DevTrail: Created AILOG-2025-01-27-001-implement-auth.md
+StrayMark: Created AILOG-2025-01-27-001-implement-auth.md
 ```
 
 **If documentation was not needed:**
 ```
-DevTrail: No documentation required (minor change / <10 lines)
+StrayMark: No documentation required (minor change / <10 lines)
 ```
 
 **If you should have documented but didn't:**
 ```
-DevTrail: Documentation pending - review required
+StrayMark: Documentation pending - review required
 ```
 
-This transparency helps users verify compliance with DevTrail rules.
+This transparency helps users verify compliance with StrayMark rules.
 
 ## Fundamental Principle
 
@@ -104,10 +104,10 @@ risk_level: low | medium | high | critical
 | REQ | Propose → human validates |
 | TDE | Identify yes, prioritize no |
 
-## Documentation Map (DevTrail)
+## Documentation Map (StrayMark)
 
 ```
-.devtrail/
+.straymark/
 ├── 00-governance/          ← Policies (load if in doubt)
 │   ├── AGENT-RULES.md      # Detailed rules
 │   └── DOCUMENTATION-POLICY.md
@@ -127,24 +127,24 @@ risk_level: low | medium | high | critical
 
 | Need to | Load |
 |---------|------|
-| Create AILOG | `.devtrail/templates/TEMPLATE-AILOG.md` |
-| Create AIDEC | `.devtrail/templates/TEMPLATE-AIDEC.md` |
-| Create ADR | `.devtrail/templates/TEMPLATE-ADR.md` |
-| Naming questions | `.devtrail/00-governance/DOCUMENTATION-POLICY.md` |
-| Autonomy questions | `.devtrail/00-governance/AGENT-RULES.md` |
+| Create AILOG | `.straymark/templates/TEMPLATE-AILOG.md` |
+| Create AIDEC | `.straymark/templates/TEMPLATE-AIDEC.md` |
+| Create ADR | `.straymark/templates/TEMPLATE-ADR.md` |
+| Naming questions | `.straymark/00-governance/DOCUMENTATION-POLICY.md` |
+| Autonomy questions | `.straymark/00-governance/AGENT-RULES.md` |
 
 ## Quick Type Reference
 
 | Prefix | Name | Location |
 |--------|------|----------|
-| `AILOG` | AI Action Log | `.devtrail/07-ai-audit/agent-logs/` |
-| `AIDEC` | AI Decision | `.devtrail/07-ai-audit/decisions/` |
-| `ETH` | Ethical Review | `.devtrail/07-ai-audit/ethical-reviews/` |
-| `ADR` | Architecture Decision Record | `.devtrail/02-design/decisions/` |
-| `REQ` | Requirement | `.devtrail/01-requirements/` |
-| `TES` | Test Plan | `.devtrail/04-testing/` |
-| `INC` | Incident Post-mortem | `.devtrail/05-operations/incidents/` |
-| `TDE` | Technical Debt | `.devtrail/06-evolution/technical-debt/` |
+| `AILOG` | AI Action Log | `.straymark/07-ai-audit/agent-logs/` |
+| `AIDEC` | AI Decision | `.straymark/07-ai-audit/decisions/` |
+| `ETH` | Ethical Review | `.straymark/07-ai-audit/ethical-reviews/` |
+| `ADR` | Architecture Decision Record | `.straymark/02-design/decisions/` |
+| `REQ` | Requirement | `.straymark/01-requirements/` |
+| `TES` | Test Plan | `.straymark/04-testing/` |
+| `INC` | Incident Post-mortem | `.straymark/05-operations/incidents/` |
+| `TDE` | Technical Debt | `.straymark/06-evolution/technical-debt/` |
 
 ## Human Review Required
 
@@ -156,4 +156,4 @@ Mark `review_required: true` when:
 
 ---
 
-*DevTrail v1.0.0 | [Strange Days Tech](https://strangedays.tech)*
+*StrayMark v1.0.0 | [Strange Days Tech](https://strangedays.tech)*

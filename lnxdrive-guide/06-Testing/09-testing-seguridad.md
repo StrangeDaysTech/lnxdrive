@@ -325,7 +325,7 @@ lnxdrive_security_scan_last_run_timestamp 1738340400
 
 ## Referencias
 
-- [TRACE-risks-mitigations.md](../.devtrail/02-design/risk-analysis/TRACE-risks-mitigations.md) - Matriz de riesgos
-- [RISK-002-security-vulns.md](../.devtrail/02-design/risk-analysis/RISK-002-security-vulns.md) - Análisis de vulnerabilidades
+- [TRACE-risks-mitigations.md](../.straymark/02-design/risk-analysis/TRACE-risks-mitigations.md) - Matriz de riesgos
+- [RISK-002-security-vulns.md](../.straymark/02-design/risk-analysis/RISK-002-security-vulns.md) - Análisis de vulnerabilidades
 - [Configuración YAML](../05-Implementacion/05-configuracion-yaml.md) - Validación de configuración
 - [Comunicación DBus](../08-Distribucion/02-comunicacion-dbus.md) - Seguridad DBus

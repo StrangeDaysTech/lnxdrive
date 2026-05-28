@@ -110,19 +110,19 @@ MAJOR.MINOR.PATCH
 
 ---
 
-## Gobernanza Documentaria con DevTrail
+## Gobernanza Documentaria con StrayMark
 
-### Por Que DevTrail?
+### Por Que StrayMark?
 
-DevTrail es un sistema de gobernanza documentaria que permite:
+StrayMark es un sistema de gobernanza documentaria que permite:
 - Rastrear decisiones de diseno
 - Documentar cambios realizados por agentes de IA
 - Mantener un historial de la evolucion del proyecto
 
-### Estructura DevTrail en LNXDrive
+### Estructura StrayMark en LNXDrive
 
 ```
-.devtrail/
+.straymark/
 ├── logs/           # Logs de sesiones de trabajo
 ├── decisions/      # Decisiones de diseno (ADR)
 ├── ethics/         # Consideraciones eticas
@@ -183,7 +183,7 @@ DevTrail es un sistema de gobernanza documentaria que permite:
 | Commits por agente vs humano | Proporcion de contribuciones |
 | Decisiones revertidas | Calidad de decisiones de agentes |
 | Tiempo de revision | Eficiencia del proceso de review |
-| Cobertura de documentacion | Completitud de DevTrail |
+| Cobertura de documentacion | Completitud de StrayMark |
 
 ---
 

@@ -28,7 +28,7 @@ Implementar el nucleo de sincronizacion de LNXDrive: motor de sincronizacion bid
 | **I. Hexagonal Architecture** | ✅ PASS | `domain/` → `ports/` → `adapters/` → `application/` structure |
 | **II. Idiomatic Rust** | ✅ PASS | Newtype (SyncPath, FileHash), Builder (Config), Type-State (SyncItem), thiserror/anyhow |
 | **III. Testing by Layers** | ✅ PASS | Unit (core 80%), Integration (adapters 70%), E2E (systemd VM) |
-| **IV. DevTrail Documentation** | ✅ PASS | AILOG for changes >10 lines, AIDEC for tech decisions |
+| **IV. StrayMark Documentation** | ✅ PASS | AILOG for changes >10 lines, AIDEC for tech decisions |
 | **V. Design Guide Compliance** | ✅ PASS | Load `lnxdrive-guide/04-Componentes/07-motor-sincronizacion.md` before implementation |
 | **VI. Git Workflow** | ✅ PASS | Feature branch `001-core-cli`, conventional commits |
 | **VII. Security First** | ✅ PASS | Tokens in libsecret keyring, no secrets in logs, HTTPS only |

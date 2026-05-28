@@ -250,10 +250,10 @@ impl ConflictNamer {
 
 > [!NOTE]
 > Para la matriz completa de riesgos y simulaciones, ver:
-> - [TRACE-risks-mitigations.md](../.devtrail/02-design/risk-analysis/TRACE-risks-mitigations.md)
+> - [TRACE-risks-mitigations.md](../.straymark/02-design/risk-analysis/TRACE-risks-mitigations.md)
 >
 > Diagrama de secuencia relacionado:
-> - [SEQ-004-conflict-resolution.puml](../.devtrail/02-design/diagrams/SEQ-004-conflict-resolution.puml)
+> - [SEQ-004-conflict-resolution.puml](../.straymark/02-design/diagrams/SEQ-004-conflict-resolution.puml)
 
 ---
 

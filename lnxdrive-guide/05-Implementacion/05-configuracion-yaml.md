@@ -344,8 +344,8 @@ impl Migration for MigrateV1ToV2 {
 
 > [!NOTE]
 > Para la matriz completa de riesgos y simulaciones, ver:
-> - [TRACE-risks-mitigations.md](../.devtrail/02-design/risk-analysis/TRACE-risks-mitigations.md)
-> - [RISK-002-security-vulns.md](../.devtrail/02-design/risk-analysis/RISK-002-security-vulns.md)
+> - [TRACE-risks-mitigations.md](../.straymark/02-design/risk-analysis/TRACE-risks-mitigations.md)
+> - [RISK-002-security-vulns.md](../.straymark/02-design/risk-analysis/RISK-002-security-vulns.md)
 
 ---
 

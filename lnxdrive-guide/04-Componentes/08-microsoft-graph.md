@@ -227,11 +227,11 @@ impl DeltaSyncManager {
 
 > [!NOTE]
 > Para la matriz completa de riesgos y simulaciones, ver:
-> - [TRACE-risks-mitigations.md](../.devtrail/02-design/risk-analysis/TRACE-risks-mitigations.md)
-> - [RISK-001-critical-paths.md](../.devtrail/02-design/risk-analysis/RISK-001-critical-paths.md)
+> - [TRACE-risks-mitigations.md](../.straymark/02-design/risk-analysis/TRACE-risks-mitigations.md)
+> - [RISK-001-critical-paths.md](../.straymark/02-design/risk-analysis/RISK-001-critical-paths.md)
 >
 > Diagrama de secuencia relacionado:
-> - [SEQ-003-delta-token-expiry.puml](../.devtrail/02-design/diagrams/SEQ-003-delta-token-expiry.puml)
+> - [SEQ-003-delta-token-expiry.puml](../.straymark/02-design/diagrams/SEQ-003-delta-token-expiry.puml)
 
 ---
 

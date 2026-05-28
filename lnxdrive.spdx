@@ -15,7 +15,7 @@ PackageLicenseConcluded: MIT
 PackageLicenseDeclared: MIT
 PackageCopyrightText: Copyright (c) 2025 Strange Days Tech, S.A.S. and LNXDrive Contributors
 PackageSummary: Documentation governance framework for AI-assisted software development.
-PackageDescription: DevTrail provides a documentation governance system that ensures traceability for all significant changes in software projects, whether made by humans or AI agents. Includes templates, validation scripts, and multi-agent support.
+PackageDescription: StrayMark provides a documentation governance system that ensures traceability for all significant changes in software projects, whether made by humans or AI agents. Includes templates, validation scripts, and multi-agent support.
 
 LicenseID: LicenseRef-MIT
 ExtractedText: <text>
