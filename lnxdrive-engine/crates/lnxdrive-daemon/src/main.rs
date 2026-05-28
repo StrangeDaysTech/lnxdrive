@@ -22,6 +22,9 @@ use lnxdrive_graph::{
     auth::KeyringTokenStorage, client::GraphClient, provider::GraphCloudProvider,
 };
 use lnxdrive_ipc::service::{DaemonState, DaemonSyncState, DbusService, DBUS_NAME};
+
+mod goa_auth_backend;
+use goa_auth_backend::GoaAuthBackend;
 use lnxdrive_sync::{engine::SyncEngine, filesystem::LocalFileSystemAdapter};
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
@@ -103,8 +106,12 @@ impl DaemonService {
         // T231: Single instance lock via D-Bus name
         info!("Checking for existing daemon instance...");
 
-        // T224: Start D-Bus service (this also acquires the well-known name)
-        let dbus_service = DbusService::new(Arc::clone(&self.daemon_state));
+        // T224: Start D-Bus service (this also acquires the well-known name).
+        // RISK-002 mitigation: wire the GOA-backed AuthBackend so
+        // `Auth.CompleteAuthViaGOA` can persist tokens in the keyring without
+        // exposing them as D-Bus method arguments.
+        let dbus_service = DbusService::new(Arc::clone(&self.daemon_state))
+            .with_auth_backend(Arc::new(GoaAuthBackend::new()));
         let _dbus_connection = match dbus_service.start().await {
             Ok(conn) => {
                 info!("D-Bus service started, acquired name {}", DBUS_NAME);

@@ -1586,6 +1586,8 @@ name = "lnxdrive-daemon"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
+ "chrono",
  "dirs",
  "lnxdrive-cache",
  "lnxdrive-core",
@@ -1598,6 +1600,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "tracing-subscriber",
+ "zbus",
 ]
 
 [[package]]
@@ -1658,6 +1661,7 @@ name = "lnxdrive-ipc"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "lnxdrive-core",
  "serde",
  "serde_json",
