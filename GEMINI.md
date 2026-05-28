@@ -21,9 +21,9 @@ This is a monorepo containing all LNXDrive components:
 |-----------|-------------|------------|
 | `lnxdrive-engine/` | Core daemon + library crates | Rust 1.75+, Cargo workspace (12 crates), tokio, zbus, sqlx |
 | `lnxdrive-gnome/` | GNOME Shell/Nautilus/GOA integration | Meson + Rust (gtk4-rs), GJS (ES modules), C11 (Nautilus), Python |
-| `lnxdrive-gtk3/` | XFCE/MATE UI | Rust, Cargo, GTK3 |
-| `lnxdrive-plasma/` | KDE Plasma integration | C++, CMake, Qt/KDE |
-| `lnxdrive-cosmic/` | COSMIC desktop UI | Rust, Cargo |
+| `experimental/lnxdrive-gtk3/` | XFCE/MATE UI (archived for v0.1.0-alpha — reactivates in v1.0.0) | Rust, Cargo, GTK3 |
+| `experimental/lnxdrive-plasma/` | KDE Plasma integration (archived for v0.1.0-alpha — reactivates in v1.0.0) | C++, CMake, Qt/KDE |
+| `experimental/lnxdrive-cosmic/` | COSMIC desktop UI (archived for v0.1.0-alpha — reactivates in v1.0.0) | Rust, Cargo |
 | `lnxdrive-packaging/` | Distribution packages | Flatpak, AppImage, Debian, AUR |
 | `lnxdrive-guide/` | Design & development guide | Markdown (Spanish) |
 | `lnxdrive-testing/` | Container/VM test infrastructure | Podman, QEMU/libvirt, shell scripts |
@@ -49,9 +49,9 @@ AILOGs are organized **by component** under `.straymark/07-ai-audit/agent-logs/`
 | `daemon/` | Core daemon (`lnxdrive-engine/`) |
 | `gnome/` | GNOME integration (`lnxdrive-gnome/`) |
 | `guide/` | Documentation & design (`lnxdrive-guide/`) |
-| `gtk3/` | GTK3 UI (`lnxdrive-gtk3/`) — create when needed |
-| `plasma/` | KDE Plasma (`lnxdrive-plasma/`) — create when needed |
-| `cosmic/` | COSMIC UI (`lnxdrive-cosmic/`) — create when needed |
+| `gtk3/` | GTK3 UI (`experimental/lnxdrive-gtk3/`) — reactivates in v1.0.0 |
+| `plasma/` | KDE Plasma (`experimental/lnxdrive-plasma/`) — reactivates in v1.0.0 |
+| `cosmic/` | COSMIC UI (`experimental/lnxdrive-cosmic/`) — reactivates in v1.0.0 |
 | `packaging/` | Distribution (`lnxdrive-packaging/`) — create when needed |
 | `testing/` | Testing infra (`lnxdrive-testing/`) — create when needed |
 

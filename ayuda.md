@@ -8,9 +8,9 @@ Este es el monorepo de **LNXDrive**, un cliente de sincronización de archivos e
 |------------|-----------|------------------------|
 | Core daemon + CLI + crates | `lnxdrive-engine/` | Fase 1-2 |
 | Integración GNOME | `lnxdrive-gnome/` | Fase 3 |
-| UI GTK3 (XFCE/MATE) | `lnxdrive-gtk3/` | Fase 4 |
-| Integración KDE Plasma | `lnxdrive-plasma/` | Fase 5 |
-| UI COSMIC | `lnxdrive-cosmic/` | Fase 6 |
+| UI GTK3 (XFCE/MATE) | `experimental/lnxdrive-gtk3/` | Fase 4 — archivado para v0.1.0-alpha, reactiva en v1.0.0 |
+| Integración KDE Plasma | `experimental/lnxdrive-plasma/` | Fase 5 — archivado para v0.1.0-alpha, reactiva en v1.0.0 |
+| UI COSMIC | `experimental/lnxdrive-cosmic/` | Fase 6 — archivado para v0.1.0-alpha, reactiva en v1.0.0 |
 | Distribución/Packaging | `lnxdrive-packaging/` | Fase 7 |
 | Guía de diseño y desarrollo | `lnxdrive-guide/` | Transversal |
 | Infraestructura de testing | `lnxdrive-testing/` | Transversal |
@@ -51,7 +51,9 @@ Toda referencia a etapas de diseño/desarrollo **dentro** de un componente debe 
 - **Fase 3** (Integración GNOME): Implementado en `lnxdrive-gnome/`
 
 ### Pendientes
-- **Fase 4** (UI GTK3): `lnxdrive-gtk3/`
-- **Fase 5** (Integración KDE): `lnxdrive-plasma/`
-- **Fase 6** (UI COSMIC): `lnxdrive-cosmic/`
-- **Fase 7** (Distribución): `lnxdrive-packaging/`
+- **Fase 7** (Distribución): `lnxdrive-packaging/` — Flatpak para v0.1.0-alpha, resto en v0.2.0-beta
+- **Fase 4** (UI GTK3): `experimental/lnxdrive-gtk3/` — reactiva en v1.0.0
+- **Fase 5** (Integración KDE): `experimental/lnxdrive-plasma/` — reactiva en v1.0.0
+- **Fase 6** (UI COSMIC): `experimental/lnxdrive-cosmic/` — reactiva en v1.0.0
+
+> **Scope actual (Charter `CHARTER-01-road-to-v0-1-0-alpha-1`):** v0.1.0-alpha.1 cubre solo `lnxdrive-engine/` + `lnxdrive-gnome/` + Flatpak. Ver `.straymark/charters/01-road-to-v0-1-0-alpha-1.md`.
