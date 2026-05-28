@@ -58,7 +58,7 @@ impl ConfigCommand {
             formatter.success(&format!("Configuration ({})", config_path.display()));
             formatter.info("");
 
-            let yaml = serde_yaml::to_string(&config)
+            let yaml = serde_norway::to_string(&config)
                 .context("Failed to serialize configuration to YAML")?;
 
             for line in yaml.lines() {
@@ -122,7 +122,7 @@ impl ConfigCommand {
 
                 // Serialize and save
                 let yaml =
-                    serde_yaml::to_string(&config).context("Failed to serialize configuration")?;
+                    serde_norway::to_string(&config).context("Failed to serialize configuration")?;
                 std::fs::write(&config_path, &yaml)
                     .context("Failed to write configuration file")?;
 
