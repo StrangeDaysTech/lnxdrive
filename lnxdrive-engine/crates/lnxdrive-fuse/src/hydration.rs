@@ -216,8 +216,13 @@ struct ActiveHydration {
     request: Arc<HydrationRequest>,
     /// Cancellation token for the download task
     cancel_token: CancellationToken,
-    /// Join handle for the download task (for awaiting completion)
-    _task_handle: JoinHandle<()>,
+    /// Join handle for the download task (for awaiting completion).
+    /// Optional because the entry is inserted into the active map *before*
+    /// the task is spawned (RISK-003: the insert must happen under the
+    /// per-inode state_guard lock, before any `.await`, so concurrent
+    /// FUSE writes see `is_hydrating(ino) == true` as soon as the lock
+    /// is released).
+    _task_handle: Option<JoinHandle<()>>,
 }
 
 /// Manages concurrent file hydration (download) operations.
@@ -265,6 +270,10 @@ pub struct HydrationManager {
     provider: Arc<GraphCloudProvider>,
     /// Tokio runtime handle for spawning tasks
     rt_handle: Handle,
+    /// Inode table for acquiring per-inode `state_guard` (RISK-003).
+    /// Used by `hydrate()` to serialize active-map registration with FUSE
+    /// `write()`'s hydration check.
+    inode_table: Arc<crate::inode::InodeTable>,
 }
 
 impl HydrationManager {
@@ -283,6 +292,7 @@ impl HydrationManager {
         write_handle: WriteSerializerHandle,
         provider: Arc<GraphCloudProvider>,
         rt_handle: Handle,
+        inode_table: Arc<crate::inode::InodeTable>,
     ) -> Self {
         Self {
             active: Arc::new(DashMap::new()),
@@ -291,6 +301,7 @@ impl HydrationManager {
             write_handle,
             provider,
             rt_handle,
+            inode_table,
         }
     }
 }
@@ -354,6 +365,25 @@ impl HydrationManager {
         // Create cancellation token
         let cancel_token = CancellationToken::new();
 
+        // RISK-003: Register the inode in the active map BEFORE any await
+        // and BEFORE spawning the download task, under the per-inode
+        // state_guard lock. This guarantees that a concurrent FUSE write()
+        // (which acquires the same state_guard and then checks
+        // is_hydrating(ino)) will see this inode as hydrating from the moment
+        // it can re-acquire the lock.
+        {
+            let entry = self.inode_table.get(ino);
+            let _guard = entry.as_ref().map(|e| e.lock_state_guard());
+            self.active.insert(
+                ino,
+                ActiveHydration {
+                    request: Arc::clone(&request),
+                    cancel_token: cancel_token.clone(),
+                    _task_handle: None,
+                },
+            );
+        }
+
         // Clone values for the spawned task
         let semaphore = Arc::clone(&self.semaphore);
         let cache = Arc::clone(&self.cache);
@@ -363,10 +393,16 @@ impl HydrationManager {
         let cancel_token_clone = cancel_token.clone();
         let active_map = self.active.clone();
 
-        // Update item state to Hydrating
-        write_handle
+        // Update item state to Hydrating (DB only; the in-memory active map
+        // was already updated under the inode lock above).
+        if let Err(e) = write_handle
             .update_state(item_id, ItemState::Hydrating)
-            .await?;
+            .await
+        {
+            // Roll back the active-map registration on failure.
+            self.active.remove(&ino);
+            return Err(e);
+        }
 
         // Spawn the download task
         let task_handle = self.rt_handle.spawn(async move {
@@ -420,15 +456,11 @@ impl HydrationManager {
             active_map.remove(&ino);
         });
 
-        // Insert into active map
-        self.active.insert(
-            ino,
-            ActiveHydration {
-                request,
-                cancel_token,
-                _task_handle: task_handle,
-            },
-        );
+        // Fill in the task_handle on the active-map entry that was inserted
+        // before the spawn (see RISK-003 comment above).
+        if let Some(mut active) = self.active.get_mut(&ino) {
+            active._task_handle = Some(task_handle);
+        }
 
         Ok(progress_rx)
     }
@@ -835,6 +867,46 @@ impl HydrationManager {
         self.active.contains_key(&ino)
     }
 
+    /// Test-only: register an inode as actively hydrating without spawning a
+    /// real download task. Used by integration tests for RISK-003 (SIM-L2-002)
+    /// to exercise the write-during-hydration EBUSY path without standing up
+    /// a mocked GraphCloudProvider.
+    #[doc(hidden)]
+    pub fn test_register_active(
+        &self,
+        ino: u64,
+        item_id: UniqueId,
+        remote_id: RemoteId,
+        total_size: u64,
+    ) {
+        let cache_path = self.cache.cache_path(&remote_id);
+        let (request, _rx) = HydrationRequest::new(
+            ino,
+            item_id,
+            remote_id,
+            total_size,
+            cache_path,
+            HydrationPriority::UserOpen,
+        );
+        let entry = self.inode_table.get(ino);
+        let _guard = entry.as_ref().map(|e| e.lock_state_guard());
+        self.active.insert(
+            ino,
+            ActiveHydration {
+                request: Arc::new(request),
+                cancel_token: CancellationToken::new(),
+                _task_handle: None,
+            },
+        );
+    }
+
+    /// Test-only: deregister an inode previously marked active via
+    /// `test_register_active`.
+    #[doc(hidden)]
+    pub fn test_unregister_active(&self, ino: u64) {
+        self.active.remove(&ino);
+    }
+
     /// Gets the current progress of an active hydration.
     ///
     /// # Arguments
@@ -923,7 +995,13 @@ impl HydrationManager {
 
                 // Start hydration with PinRequest priority
                 let _progress_rx = self
-                    .hydrate(ino, item_id, remote_id, total_size, HydrationPriority::PinRequest)
+                    .hydrate(
+                        ino,
+                        item_id,
+                        remote_id,
+                        total_size,
+                        HydrationPriority::PinRequest,
+                    )
                     .await?;
 
                 // Wait for completion
@@ -1055,8 +1133,8 @@ impl HydrationManager {
 // ============================================================================
 
 use crate::inode::InodeTable;
-use std::pin::Pin;
 use std::future::Future;
+use std::pin::Pin;
 
 /// Type alias for the boxed future returned by recursive pin/unpin operations.
 type PinResultFuture<'a> =
@@ -1101,7 +1179,13 @@ impl HydrationManager {
                     // Pin the file
                     if let Some(remote_id) = child.remote_id() {
                         match self
-                            .pin(ino, item_id, remote_id.clone(), child.size(), current_state.clone())
+                            .pin(
+                                ino,
+                                item_id,
+                                remote_id.clone(),
+                                child.size(),
+                                current_state.clone(),
+                            )
                             .await
                         {
                             Ok(()) => {

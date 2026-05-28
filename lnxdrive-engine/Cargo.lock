@@ -1616,6 +1616,7 @@ dependencies = [
  "lnxdrive-cache",
  "lnxdrive-core",
  "lnxdrive-graph",
+ "parking_lot",
  "reqwest",
  "serde",
  "serde_json",

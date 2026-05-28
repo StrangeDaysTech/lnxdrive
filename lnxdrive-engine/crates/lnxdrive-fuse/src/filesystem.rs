@@ -1417,10 +1417,7 @@ impl Filesystem for LnxDriveFs {
                     // Ensure hydration is running (handles race with open())
                     if !hm.is_hydrating(ino) {
                         if let Some(remote_id) = entry.remote_id() {
-                            debug!(
-                                "read: inode {} not hydrating yet, starting hydration",
-                                ino
-                            );
+                            debug!("read: inode {} not hydrating yet, starting hydration", ino);
                             match self.rt_handle.block_on(hm.hydrate(
                                 ino,
                                 *entry.item_id(),
@@ -1450,10 +1447,11 @@ impl Filesystem for LnxDriveFs {
                         "read: waiting for hydration range ino={} offset={} size={}",
                         ino, offset, size
                     );
-                    match self
-                        .rt_handle
-                        .block_on(hm.wait_for_range(ino, offset as u64, size as u64))
-                    {
+                    match self.rt_handle.block_on(hm.wait_for_range(
+                        ino,
+                        offset as u64,
+                        size as u64,
+                    )) {
                         Ok(()) => {
                             // Hydration complete for this range - read from cache
                             let remote_id = match entry.remote_id() {
@@ -1561,20 +1559,22 @@ impl Filesystem for LnxDriveFs {
     /// # State Handling
     ///
     /// - `Online`: Returns EIO (file needs to be hydrated first)
-    /// - `Hydrating`: Returns EIO (hydration in progress)
+    /// - `Hydrating`: Returns EBUSY (hydration in progress, RISK-003)
     /// - `Hydrated`, `Pinned`, `Modified`: Writes to local cache, transitions to Modified
     ///   if not already in that state
     ///
-    /// # Write During Hydration (T099)
+    /// # Write During Hydration (RISK-003)
     ///
-    /// When a file is being hydrated (state = Hydrating), write operations return EIO.
-    /// This prevents data corruption that could occur if a write modified partial content.
-    /// The application should retry the write after hydration completes. In practice:
+    /// When a file is being hydrated, write operations return EBUSY. Primary check
+    /// is `HydrationManager::is_hydrating(ino)` (live `DashMap` lookup, always
+    /// fresh). Backed by `InodeEntry::lock_state_guard()` which serializes the
+    /// is_hydrating check + cache write with `HydrationManager::hydrate()`
+    /// start-of-hydration registration, preventing a hydration from starting
+    /// between the check and the cache write.
     ///
-    /// - Most applications will have opened the file with O_RDONLY for initial read
-    /// - If opened with O_RDWR and hydration is triggered by read, writes will fail
-    ///   until hydration completes
-    /// - This is consistent with how network filesystems handle similar scenarios
+    /// The application should retry the write after hydration completes. EBUSY
+    /// matches POSIX semantics for "resource temporarily occupied" and is the
+    /// contract verified by SIM-L2-002.
     ///
     /// # Performance
     ///
@@ -1606,6 +1606,37 @@ impl Filesystem for LnxDriveFs {
             }
         };
 
+        // RISK-003 primary guard: live check against HydrationManager's active set
+        // (DashMap lookup, always fresh — InodeEntry.state may be stale).
+        if let Some(ref hm) = self.hydration_manager {
+            if hm.is_hydrating(ino) {
+                debug!(
+                    "write: inode {} hydration in progress (pre-lock check), returning EBUSY",
+                    ino
+                );
+                reply.error(libc::EBUSY);
+                return;
+            }
+        }
+
+        // Acquire per-inode serialization lock. Held across the is_hydrating
+        // re-check and the cache write to prevent a hydration from starting
+        // between the check and the write (RISK-003 / SIM-L2-002).
+        let _state_guard = entry.lock_state_guard();
+
+        // Re-check under lock: a hydrate() call racing with us may have
+        // registered between the pre-lock check and the lock acquisition.
+        if let Some(ref hm) = self.hydration_manager {
+            if hm.is_hydrating(ino) {
+                debug!(
+                    "write: inode {} hydration in progress (locked re-check), returning EBUSY",
+                    ino
+                );
+                reply.error(libc::EBUSY);
+                return;
+            }
+        }
+
         // Handle based on state
         match entry.state() {
             lnxdrive_core::domain::sync_item::ItemState::Online => {
@@ -1617,12 +1648,13 @@ impl Filesystem for LnxDriveFs {
                 reply.error(libc::EIO);
             }
             lnxdrive_core::domain::sync_item::ItemState::Hydrating => {
-                // File is being hydrated - would need to wait for completion
+                // Stale state field reported Hydrating without a live hydration
+                // in the manager — treat as transient/busy.
                 debug!(
-                    "write: inode {} is Hydrating, would wait for completion before writing",
+                    "write: inode {} state is Hydrating (no live hydration), returning EBUSY",
                     ino
                 );
-                reply.error(libc::EIO);
+                reply.error(libc::EBUSY);
             }
             lnxdrive_core::domain::sync_item::ItemState::Hydrated
             | lnxdrive_core::domain::sync_item::ItemState::Pinned
@@ -1913,17 +1945,17 @@ impl Filesystem for LnxDriveFs {
         // Create InodeEntry for the new directory
         let entry = InodeEntry::new(
             new_ino,
-            UniqueId::new(),               // Generate a new unique ID
-            None,                          // No remote ID yet (will be assigned after cloud sync)
-            InodeNumber::new(parent),      // Parent inode
-            name_str.to_string(),          // Directory name
-            FileType::Directory,           // This is a directory
-            0,                             // Size is 0 for directories
-            perm,                          // Calculated permissions
-            now,                           // mtime
-            now,                           // ctime
-            now,                           // atime
-            2,                             // nlink=2 (. and parent link)
+            UniqueId::new(),          // Generate a new unique ID
+            None,                     // No remote ID yet (will be assigned after cloud sync)
+            InodeNumber::new(parent), // Parent inode
+            name_str.to_string(),     // Directory name
+            FileType::Directory,      // This is a directory
+            0,                        // Size is 0 for directories
+            perm,                     // Calculated permissions
+            now,                      // mtime
+            now,                      // ctime
+            now,                      // atime
+            2,                        // nlink=2 (. and parent link)
             lnxdrive_core::domain::sync_item::ItemState::Modified, // Needs to be synced
         );
 
@@ -2138,12 +2170,20 @@ impl Filesystem for LnxDriveFs {
 
         // T098: Validate filename lengths
         if name_str.len() > NAME_MAX {
-            debug!("rename: source name too long ({} > {})", name_str.len(), NAME_MAX);
+            debug!(
+                "rename: source name too long ({} > {})",
+                name_str.len(),
+                NAME_MAX
+            );
             reply.error(libc::ENAMETOOLONG);
             return;
         }
         if newname_str.len() > NAME_MAX {
-            debug!("rename: dest name too long ({} > {})", newname_str.len(), NAME_MAX);
+            debug!(
+                "rename: dest name too long ({} > {})",
+                newname_str.len(),
+                NAME_MAX
+            );
             reply.error(libc::ENAMETOOLONG);
             return;
         }
@@ -2157,10 +2197,7 @@ impl Filesystem for LnxDriveFs {
         let source_entry = match self.inode_table.lookup(parent, name_str) {
             Some(entry) => entry,
             None => {
-                debug!(
-                    "rename: source {} not found in parent {}",
-                    name_str, parent
-                );
+                debug!("rename: source {} not found in parent {}", name_str, parent);
                 reply.error(libc::ENOENT);
                 return;
             }
@@ -2345,7 +2382,10 @@ impl Filesystem for LnxDriveFs {
         }
 
         // Generate a new inode number
-        let new_ino = match self.rt_handle.block_on(self.write_handle.increment_inode_counter()) {
+        let new_ino = match self
+            .rt_handle
+            .block_on(self.write_handle.increment_inode_counter())
+        {
             Ok(ino) => InodeNumber::new(ino),
             Err(e) => {
                 warn!("create: failed to allocate inode: {}", e);
@@ -2398,7 +2438,10 @@ impl Filesystem for LnxDriveFs {
         let item_id = *sync_item.id();
 
         // Save the SyncItem to the database
-        if let Err(e) = self.rt_handle.block_on(self.write_handle.save_item(sync_item)) {
+        if let Err(e) = self
+            .rt_handle
+            .block_on(self.write_handle.save_item(sync_item))
+        {
             warn!("create: failed to save SyncItem: {}", e);
             reply.error(libc::EIO);
             return;
@@ -2417,12 +2460,12 @@ impl Filesystem for LnxDriveFs {
             InodeNumber::new(parent),
             name_str.to_string(),
             FileType::RegularFile,
-            0,    // Size is 0 for newly created files
+            0, // Size is 0 for newly created files
             perm,
-            now,  // mtime
-            now,  // ctime
-            now,  // atime
-            1,    // nlink
+            now, // mtime
+            now, // ctime
+            now, // atime
+            1,   // nlink
             ItemState::Modified,
         );
 
@@ -2608,7 +2651,10 @@ impl Filesystem for LnxDriveFs {
         let value = match xattr::get_xattr(&entry, name_str, hydration_progress) {
             Some(v) => v,
             None => {
-                debug!("getxattr: attribute {} not found for inode {}", name_str, ino);
+                debug!(
+                    "getxattr: attribute {} not found for inode {}",
+                    name_str, ino
+                );
                 reply.error(libc::ENODATA);
                 return;
             }
@@ -4469,7 +4515,10 @@ mod tests {
 
             // Verify the directory is empty
             let children = fs.inode_table().children(10);
-            assert!(children.is_empty(), "empty_dir has no children - rmdir can proceed");
+            assert!(
+                children.is_empty(),
+                "empty_dir has no children - rmdir can proceed"
+            );
         }
 
         #[tokio::test]
@@ -4794,7 +4843,12 @@ mod tests {
 
             fs.insert_entry(make_test_entry(1, 1, "", true));
             fs.insert_entry(make_entry_with_state(
-                10, 1, "file.txt", false, ItemState::Hydrated, 100,
+                10,
+                1,
+                "file.txt",
+                false,
+                ItemState::Hydrated,
+                100,
             ));
 
             // Get the "parent" which is a file
@@ -4819,7 +4873,12 @@ mod tests {
             // Insert root and a file
             fs.insert_entry(make_test_entry(1, 1, "", true));
             fs.insert_entry(make_entry_with_state(
-                10, 1, "to_delete.txt", false, ItemState::Hydrated, 100,
+                10,
+                1,
+                "to_delete.txt",
+                false,
+                ItemState::Hydrated,
+                100,
             ));
 
             assert_eq!(fs.inode_table().len(), 2);
@@ -4887,7 +4946,12 @@ mod tests {
 
             fs.insert_entry(make_test_entry(1, 1, "", true));
             fs.insert_entry(make_entry_with_state(
-                10, 1, "old_name.txt", false, ItemState::Hydrated, 100,
+                10,
+                1,
+                "old_name.txt",
+                false,
+                ItemState::Hydrated,
+                100,
             ));
 
             // Verify original name
@@ -4909,7 +4973,12 @@ mod tests {
             fs.insert_entry(make_test_entry(10, 1, "dir1", true));
             fs.insert_entry(make_test_entry(20, 1, "dir2", true));
             fs.insert_entry(make_entry_with_state(
-                100, 10, "file.txt", false, ItemState::Hydrated, 100,
+                100,
+                10,
+                "file.txt",
+                false,
+                ItemState::Hydrated,
+                100,
             ));
 
             // File is in dir1
@@ -4946,7 +5015,12 @@ mod tests {
 
             fs.insert_entry(make_test_entry(1, 1, "", true));
             fs.insert_entry(make_entry_with_state(
-                10, 1, "file.txt", false, ItemState::Hydrated, 100,
+                10,
+                1,
+                "file.txt",
+                false,
+                ItemState::Hydrated,
+                100,
             ));
 
             // Destination parent doesn't exist
@@ -4965,10 +5039,20 @@ mod tests {
 
             fs.insert_entry(make_test_entry(1, 1, "", true));
             fs.insert_entry(make_entry_with_state(
-                10, 1, "source.txt", false, ItemState::Hydrated, 100,
+                10,
+                1,
+                "source.txt",
+                false,
+                ItemState::Hydrated,
+                100,
             ));
             fs.insert_entry(make_entry_with_state(
-                20, 1, "target.txt", false, ItemState::Hydrated, 200,
+                20,
+                1,
+                "target.txt",
+                false,
+                ItemState::Hydrated,
+                200,
             ));
 
             // Both files exist
