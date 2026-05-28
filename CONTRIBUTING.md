@@ -149,9 +149,10 @@ lnxdrive/
 │       ├── lnxdrive-audit/      # Audit trail
 │       └── lnxdrive-telemetry/  # Metrics and observability
 ├── lnxdrive-gnome/        # GNOME Shell/Nautilus/GOA integration
-├── lnxdrive-gtk3/         # XFCE/MATE UI (GTK3)
-├── lnxdrive-plasma/       # KDE Plasma integration (Qt/C++)
-├── lnxdrive-cosmic/       # COSMIC desktop UI (Rust)
+├── experimental/          # UIs deferred past v0.1.0-alpha (see experimental/README.md):
+│   ├── lnxdrive-gtk3/     #   XFCE/MATE UI (GTK3) — reactivates in v1.0.0
+│   ├── lnxdrive-plasma/   #   KDE Plasma integration (Qt/C++) — reactivates in v1.0.0
+│   └── lnxdrive-cosmic/   #   COSMIC desktop UI (Rust) — reactivates in v1.0.0
 ├── lnxdrive-packaging/    # Flatpak, AppImage, Debian, AUR
 ├── lnxdrive-guide/        # Design and development guide
 ├── lnxdrive-testing/      # Container/VM test infrastructure

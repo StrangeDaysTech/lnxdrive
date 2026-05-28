@@ -106,9 +106,9 @@ This is a **monorepo** containing all LNXDrive components:
 |-----------|-------------|-------|
 | [`lnxdrive-engine/`](lnxdrive-engine/) | Core daemon and library crates | Rust 1.75+, tokio, zbus, sqlx |
 | [`lnxdrive-gnome/`](lnxdrive-gnome/) | GNOME Shell, Nautilus, and GOA integration | Meson + Rust (gtk4-rs), GJS, C |
-| [`lnxdrive-gtk3/`](lnxdrive-gtk3/) | XFCE/MATE desktop UI | Rust, GTK3 |
-| [`lnxdrive-plasma/`](lnxdrive-plasma/) | KDE Plasma integration | C++, CMake, Qt/KDE |
-| [`lnxdrive-cosmic/`](lnxdrive-cosmic/) | COSMIC desktop UI | Rust, libcosmic |
+| [`experimental/lnxdrive-gtk3/`](experimental/lnxdrive-gtk3/) | XFCE/MATE desktop UI — archived for v0.1.0-alpha (reactivates in v1.0.0) | Rust, GTK3 |
+| [`experimental/lnxdrive-plasma/`](experimental/lnxdrive-plasma/) | KDE Plasma integration — archived for v0.1.0-alpha (reactivates in v1.0.0) | C++, CMake, Qt/KDE |
+| [`experimental/lnxdrive-cosmic/`](experimental/lnxdrive-cosmic/) | COSMIC desktop UI — archived for v0.1.0-alpha (reactivates in v1.0.0) | Rust, libcosmic |
 | [`lnxdrive-packaging/`](lnxdrive-packaging/) | Distribution packages | Flatpak, AppImage, Debian, AUR |
 | [`lnxdrive-guide/`](lnxdrive-guide/) | Design and development guide | Markdown |
 | [`lnxdrive-testing/`](lnxdrive-testing/) | Container/VM test infrastructure | Podman, QEMU/libvirt |
