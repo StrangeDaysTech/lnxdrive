@@ -30,8 +30,10 @@
 //! # }
 //! ```
 
+pub mod auth_backend;
 pub mod service;
 
+pub use auth_backend::{AuthBackend, AuthBackendError, AuthBackendResult};
 pub use service::{
     AccountInterface, AuthInterface, ConflictsInterface, DaemonState, DaemonSyncState,
     DbusService, FilesInterface, ManagerInterface, SettingsInterface, StatusInterface,

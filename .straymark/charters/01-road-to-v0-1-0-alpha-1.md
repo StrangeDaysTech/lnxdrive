@@ -1,6 +1,7 @@
 ---
 charter_id: CHARTER-01-road-to-v0-1-0-alpha-1
-status: declared
+status: in-progress
+started_at: 2026-05-29
 effort_estimate: L
 trigger: "MVP audit on 2026-05-28 found engine ~70% / GNOME UI ~45% ready, four P0 risks unmitigated, zero release artifacts. Operator committed scope to v0.1.0 alpha (GNOME-only, P0 risks block release) on 2026-05-29."
 originating_ailogs: [AILOG-2026-05-29-001]
@@ -8,7 +9,7 @@ originating_ailogs: [AILOG-2026-05-29-001]
 
 # Charter: Road to v0.1.0-alpha.1
 
-> **Status (mirrored from frontmatter — source of truth is above):** declared. Effort: L (~5–7 calendar weeks).
+> **Status (mirrored from frontmatter — source of truth is above):** in-progress (started 2026-05-29). Effort: L (~5–7 calendar weeks).
 >
 > **Origin:** Follow-up of `AILOG-2026-05-29-001` — full diagnosis of the MVP state, the scope-narrowing decisions taken with the operator, and the phase outline that this Charter formalizes.
 

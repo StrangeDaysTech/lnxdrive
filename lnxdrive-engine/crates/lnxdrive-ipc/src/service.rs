@@ -22,6 +22,8 @@ use tokio::sync::Mutex;
 use tracing::{debug, info, warn};
 use zbus::zvariant::{OwnedValue, Value};
 
+use crate::auth_backend::AuthBackend;
+
 /// D-Bus well-known name for the LNXDrive daemon
 pub const DBUS_NAME: &str = "com.strangedaystech.LNXDrive";
 
@@ -782,11 +784,43 @@ impl StatusInterface {
 /// check authentication status, and log out.
 pub struct AuthInterface {
     state: Arc<Mutex<DaemonState>>,
+    /// Backend that completes authentication without exposing tokens over D-Bus.
+    ///
+    /// `None` when the interface is constructed for unit tests that do not
+    /// exercise the GOA path. Production code must use [`Self::with_backend`]
+    /// so that `complete_auth_via_goa` can actually fetch tokens and persist
+    /// them in the keyring. See [`crate::auth_backend::AuthBackend`] for the
+    /// expected contract.
+    backend: Option<Arc<dyn AuthBackend>>,
 }
 
 impl AuthInterface {
+    /// Constructs an `AuthInterface` without a backend.
+    ///
+    /// Calls to `complete_auth_via_goa` will return `false` until a backend
+    /// is wired with [`Self::with_backend`]. This constructor exists so the
+    /// existing unit tests that only exercise `start_auth` / `complete_auth`
+    /// / `logout` / `is_authenticated` continue to compile unchanged.
     pub fn new(state: Arc<Mutex<DaemonState>>) -> Self {
-        Self { state }
+        Self {
+            state,
+            backend: None,
+        }
+    }
+
+    /// Constructs an `AuthInterface` wired to an `AuthBackend`.
+    ///
+    /// This is the constructor that production code in `lnxdrive-daemon`
+    /// uses. The backend implementation owns the GOA D-Bus client and the
+    /// keyring storage; the interface itself never touches either.
+    pub fn with_backend(
+        state: Arc<Mutex<DaemonState>>,
+        backend: Arc<dyn AuthBackend>,
+    ) -> Self {
+        Self {
+            state,
+            backend: Some(backend),
+        }
     }
 }
 
@@ -840,38 +874,76 @@ impl AuthInterface {
         true
     }
 
-    /// Completes authentication using pre-obtained tokens (e.g. from GOA)
+    /// Completes authentication for a GNOME Online Accounts account.
+    ///
+    /// The caller passes only the **GOA account D-Bus path** (e.g.
+    /// `/org/gnome/OnlineAccounts/Accounts/1234`), which is a non-sensitive
+    /// identifier. The daemon then resolves the path to a Microsoft account
+    /// internally — fetching tokens from `org.gnome.OnlineAccounts.OAuth2Based`
+    /// and persisting them in the system keyring — without the tokens ever
+    /// crossing the D-Bus session bus as method arguments.
+    ///
+    /// This method replaces the historical `CompleteAuthWithTokens`, which
+    /// accepted raw `access_token` and `refresh_token` strings as D-Bus
+    /// parameters and was vulnerable to interception by any local process
+    /// listening on the session bus (RISK-002, CVSS 9.1). See the AILOG that
+    /// closes RISK-002 for the full rationale and the
+    /// `lnxdrive-testing/scripts/leak-test-dbus-tokens.sh` integration test
+    /// that guards against regressions.
     ///
     /// # Arguments
-    /// * `access_token` - The OAuth2 access token
-    /// * `refresh_token` - The OAuth2 refresh token
-    /// * `expires_at_unix` - Token expiration as Unix timestamp (seconds)
+    /// * `goa_account_path` - D-Bus object path of the GOA account.
     ///
     /// # Returns
-    /// `true` if tokens were accepted, `false` if rejected (empty tokens)
-    async fn complete_auth_with_tokens(
-        &self,
-        access_token: String,
-        refresh_token: String,
-        expires_at_unix: i64,
-    ) -> bool {
+    /// `true` if authentication completed and tokens were persisted in the
+    /// system keyring; `false` otherwise. The daemon never returns or logs
+    /// the tokens themselves; callers learn only of the boolean outcome.
+    async fn complete_auth_via_goa(&self, goa_account_path: String) -> bool {
+        info!(
+            "Auth.CompleteAuthViaGOA called (account_path={})",
+            goa_account_path
+        );
+
+        // Reject malformed paths early so the backend never sees them.
+        if !goa_account_path.starts_with("/org/gnome/OnlineAccounts/Accounts/") {
+            warn!(
+                "Auth.CompleteAuthViaGOA rejected: path does not look like a GOA account ({})",
+                goa_account_path
+            );
+            return false;
+        }
+
+        let backend = match &self.backend {
+            Some(b) => Arc::clone(b),
+            None => {
+                warn!(
+                    "Auth.CompleteAuthViaGOA called without a configured backend; rejecting"
+                );
+                return false;
+            }
+        };
+
+        let email = match backend.complete_auth_via_goa(&goa_account_path).await {
+            Ok(email) => email,
+            Err(err) => {
+                warn!(
+                    "Auth.CompleteAuthViaGOA backend failed: {} (account_path={})",
+                    err, goa_account_path
+                );
+                return false;
+            }
+        };
+
         let mut state = self.state.lock().await;
-
-        if access_token.is_empty() || refresh_token.is_empty() {
-            warn!("Auth.CompleteAuthWithTokens called with empty tokens");
-            return false;
-        }
-
-        if expires_at_unix <= 0 {
-            warn!("Auth.CompleteAuthWithTokens called with invalid expiry");
-            return false;
-        }
-
-        info!("Auth.CompleteAuthWithTokens called (expires_at={})", expires_at_unix);
         state.is_authenticated = true;
+        state.account_email = Some(email);
         state.auth_source = Some("goa".to_string());
         state.auth_url = None;
         state.auth_csrf_state = None;
+        info!(
+            "Auth.CompleteAuthViaGOA succeeded (account_path={})",
+            goa_account_path
+        );
         true
     }
 
@@ -1055,19 +1127,36 @@ impl ManagerInterface {
 /// well-known name `com.strangedaystech.LNXDrive`.
 pub struct DbusService {
     state: Arc<Mutex<DaemonState>>,
+    auth_backend: Option<Arc<dyn AuthBackend>>,
 }
 
 impl DbusService {
     /// Creates a new DbusService with the given shared state
     pub fn new(state: Arc<Mutex<DaemonState>>) -> Self {
-        Self { state }
+        Self {
+            state,
+            auth_backend: None,
+        }
     }
 
     /// Creates a new DbusService with default state
     pub fn with_default_state() -> Self {
         Self {
             state: Arc::new(Mutex::new(DaemonState::default())),
+            auth_backend: None,
         }
+    }
+
+    /// Attaches an [`AuthBackend`] so that `AuthInterface::complete_auth_via_goa`
+    /// can fetch tokens from GOA and persist them in the system keyring.
+    ///
+    /// Production callers (`lnxdrive-daemon`) MUST install a backend before
+    /// calling `start()`; otherwise the GOA path returns `false` at runtime
+    /// with a warning log (this is a deliberate safety net for tests).
+    #[must_use]
+    pub fn with_auth_backend(mut self, backend: Arc<dyn AuthBackend>) -> Self {
+        self.auth_backend = Some(backend);
+        self
     }
 
     /// Returns a reference to the shared daemon state
@@ -1095,7 +1184,18 @@ impl DbusService {
         let files_iface = FilesInterface::new(Arc::clone(&self.state));
         let sync_iface = SyncInterface::new(Arc::clone(&self.state));
         let status_iface = StatusInterface::new(Arc::clone(&self.state));
-        let auth_iface = AuthInterface::new(Arc::clone(&self.state));
+        let auth_iface = match &self.auth_backend {
+            Some(backend) => {
+                AuthInterface::with_backend(Arc::clone(&self.state), Arc::clone(backend))
+            }
+            None => {
+                warn!(
+                    "DbusService starting without an AuthBackend; \
+                     CompleteAuthViaGOA calls will be rejected at runtime"
+                );
+                AuthInterface::new(Arc::clone(&self.state))
+            }
+        };
         let settings_iface = SettingsInterface::new(Arc::clone(&self.state));
         let manager_iface = ManagerInterface::new(Arc::clone(&self.state));
 
@@ -1151,6 +1251,46 @@ impl DbusService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::auth_backend::{AuthBackend, AuthBackendError, AuthBackendResult};
+    use async_trait::async_trait;
+
+    /// In-process AuthBackend used by the AuthInterface tests below.
+    ///
+    /// It returns a configurable result without ever talking to GOA or the
+    /// keyring. Tests build it via the helpers `MockAuthBackend::ok(email)` /
+    /// `MockAuthBackend::err(error)`.
+    struct MockAuthBackend {
+        result: AuthBackendResult,
+        last_call: tokio::sync::Mutex<Option<String>>,
+    }
+
+    impl MockAuthBackend {
+        fn ok(email: &str) -> Arc<Self> {
+            Arc::new(Self {
+                result: Ok(email.to_string()),
+                last_call: tokio::sync::Mutex::new(None),
+            })
+        }
+
+        fn err(error: AuthBackendError) -> Arc<Self> {
+            Arc::new(Self {
+                result: Err(error),
+                last_call: tokio::sync::Mutex::new(None),
+            })
+        }
+
+        async fn last_call(&self) -> Option<String> {
+            self.last_call.lock().await.clone()
+        }
+    }
+
+    #[async_trait]
+    impl AuthBackend for MockAuthBackend {
+        async fn complete_auth_via_goa(&self, goa_account_path: &str) -> AuthBackendResult {
+            *self.last_call.lock().await = Some(goa_account_path.to_string());
+            self.result.clone()
+        }
+    }
 
     #[test]
     fn test_daemon_sync_state_display() {
@@ -1845,70 +1985,79 @@ mod tests {
         assert!(locked.auth_source.is_none());
     }
 
-    #[tokio::test]
-    async fn test_auth_complete_with_tokens_success() {
-        let state = Arc::new(Mutex::new(DaemonState::default()));
-        let auth = AuthInterface::new(Arc::clone(&state));
+    // -- CompleteAuthViaGOA tests (replace the deleted CompleteAuthWithTokens
+    //    tests after RISK-002 / CVSS 9.1 was mitigated; see
+    //    AILOG-2026-05-29-002 for the full rationale.)
 
-        let result = auth
-            .complete_auth_with_tokens(
-                "access-token-abc".to_string(),
-                "refresh-token-xyz".to_string(),
-                1742400000, // valid future timestamp
+    #[tokio::test]
+    async fn test_auth_complete_via_goa_succeeds_when_backend_returns_email() {
+        let state = Arc::new(Mutex::new(DaemonState::default()));
+        let backend = MockAuthBackend::ok("user@example.com");
+        let auth = AuthInterface::with_backend(Arc::clone(&state), Arc::clone(&backend) as _);
+
+        let ok = auth
+            .complete_auth_via_goa(
+                "/org/gnome/OnlineAccounts/Accounts/1234".to_string(),
             )
             .await;
-        assert!(result);
+        assert!(ok);
+        assert_eq!(
+            backend.last_call().await.as_deref(),
+            Some("/org/gnome/OnlineAccounts/Accounts/1234")
+        );
 
         let locked = state.lock().await;
         assert!(locked.is_authenticated);
         assert_eq!(locked.auth_source.as_deref(), Some("goa"));
+        assert_eq!(locked.account_email.as_deref(), Some("user@example.com"));
     }
 
     #[tokio::test]
-    async fn test_auth_complete_with_tokens_empty_access() {
+    async fn test_auth_complete_via_goa_rejects_invalid_path_before_calling_backend() {
         let state = Arc::new(Mutex::new(DaemonState::default()));
-        let auth = AuthInterface::new(Arc::clone(&state));
+        let backend = MockAuthBackend::ok("user@example.com");
+        let auth = AuthInterface::with_backend(Arc::clone(&state), Arc::clone(&backend) as _);
 
-        let result = auth
-            .complete_auth_with_tokens(
-                String::new(),
-                "refresh-token".to_string(),
-                1742400000,
-            )
+        let ok = auth
+            .complete_auth_via_goa("/wrong/prefix/Accounts/1234".to_string())
             .await;
-        assert!(!result);
+        assert!(!ok);
+        // Backend MUST NOT be invoked when the path is rejected up front.
+        assert!(backend.last_call().await.is_none());
         assert!(!state.lock().await.is_authenticated);
     }
 
     #[tokio::test]
-    async fn test_auth_complete_with_tokens_empty_refresh() {
+    async fn test_auth_complete_via_goa_without_backend_returns_false() {
         let state = Arc::new(Mutex::new(DaemonState::default()));
+        // `new` rather than `with_backend` — no backend configured.
         let auth = AuthInterface::new(Arc::clone(&state));
 
-        let result = auth
-            .complete_auth_with_tokens(
-                "access-token".to_string(),
-                String::new(),
-                1742400000,
+        let ok = auth
+            .complete_auth_via_goa(
+                "/org/gnome/OnlineAccounts/Accounts/1234".to_string(),
             )
             .await;
-        assert!(!result);
+        assert!(!ok);
         assert!(!state.lock().await.is_authenticated);
     }
 
     #[tokio::test]
-    async fn test_auth_complete_with_tokens_invalid_expiry() {
+    async fn test_auth_complete_via_goa_propagates_backend_failure() {
         let state = Arc::new(Mutex::new(DaemonState::default()));
-        let auth = AuthInterface::new(Arc::clone(&state));
+        let backend = MockAuthBackend::err(AuthBackendError::KeyringStoreFailed);
+        let auth = AuthInterface::with_backend(Arc::clone(&state), Arc::clone(&backend) as _);
 
-        let result = auth
-            .complete_auth_with_tokens(
-                "access-token".to_string(),
-                "refresh-token".to_string(),
-                0,
+        let ok = auth
+            .complete_auth_via_goa(
+                "/org/gnome/OnlineAccounts/Accounts/1234".to_string(),
             )
             .await;
-        assert!(!result);
+        assert!(!ok);
+        assert_eq!(
+            backend.last_call().await.as_deref(),
+            Some("/org/gnome/OnlineAccounts/Accounts/1234")
+        );
         assert!(!state.lock().await.is_authenticated);
     }
 
