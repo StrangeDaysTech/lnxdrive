@@ -217,7 +217,7 @@ Guía_LNXDrive/
 | **Depurar problema** | `06-Testing/07-logging-tracing.md`, `06-Testing/08-automatizacion-depuracion.md` |
 | **Decisiones de rendimiento** | `09-Referencia/01-analisis-rendimiento.md` o `Anexos/B-benchmarks-rust-vs-dotnet.md` |
 | **Ver roadmap** | `09-Referencia/02-hoja-de-ruta.md` |
-| **Revisar riesgos del componente** | Sección "⚠️ Riesgos y Mitigaciones" en cada archivo `04-Componentes/*.md`. Matriz completa: `.devtrail/02-design/risk-analysis/TRACE-risks-mitigations.md` |
+| **Revisar riesgos del componente** | Sección "⚠️ Riesgos y Mitigaciones" en cada archivo `04-Componentes/*.md`. Matriz completa: `.straymark/02-design/risk-analysis/TRACE-risks-mitigations.md` |
 | **Tests de seguridad** | `06-Testing/09-testing-seguridad.md` |
 | **Telemetría y reportes** | `04-Componentes/13-telemetria.md`, `06-Testing/07-logging-tracing.md` |
 

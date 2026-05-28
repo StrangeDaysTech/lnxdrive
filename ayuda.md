@@ -18,11 +18,11 @@ Este es el monorepo de **LNXDrive**, un cliente de sincronización de archivos e
 ### Recursos clave
 - **Guía de Diseño**: `lnxdrive-guide/Guía-de-diseño-y-desarrollo.md`
 - **Hoja de Ruta**: `lnxdrive-guide/09-Referencia/02-hoja-de-ruta.md`
-- **DevTrail** (documentación de proceso): `.devtrail/`
+- **StrayMark** (documentación de proceso): `.straymark/`
 - **Instrucciones para agentes IA**: `CLAUDE.md` / `GEMINI.md`
 
 ### Herramientas integradas
-- **DevTrail**: Documentación de trazabilidad de desarrollo (AILOGs, AIDECs, ADRs, etc.)
+- **StrayMark**: Documentación de trazabilidad de desarrollo (AILOGs, AIDECs, ADRs, etc.)
 - **SpecKit**: Skills para planificación e implementación (`/speckit.*`)
 - **Context7**: Investigación de APIs de librerías, frameworks y servicios (MCP server)
 

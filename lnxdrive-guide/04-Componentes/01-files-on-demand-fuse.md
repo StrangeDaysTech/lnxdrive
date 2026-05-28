@@ -287,11 +287,11 @@ impl DehydrationPolicy {
 
 > [!NOTE]
 > Para la matriz completa de riesgos y simulaciones, ver:
-> - [TRACE-risks-mitigations.md](../.devtrail/02-design/risk-analysis/TRACE-risks-mitigations.md)
-> - [RISK-001-critical-paths.md](../.devtrail/02-design/risk-analysis/RISK-001-critical-paths.md)
+> - [TRACE-risks-mitigations.md](../.straymark/02-design/risk-analysis/TRACE-risks-mitigations.md)
+> - [RISK-001-critical-paths.md](../.straymark/02-design/risk-analysis/RISK-001-critical-paths.md)
 >
 > Diagramas de secuencia relacionados:
-> - [SEQ-001-fuse-hydration-race.puml](../.devtrail/02-design/diagrams/SEQ-001-fuse-hydration-race.puml)
+> - [SEQ-001-fuse-hydration-race.puml](../.straymark/02-design/diagrams/SEQ-001-fuse-hydration-race.puml)
 
 ---
 

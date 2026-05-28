@@ -440,7 +440,7 @@ WantedBy=default.target
 
 > [!NOTE]
 > Para la matriz completa de riesgos, ver:
-> - [TRACE-risks-mitigations.md](../.devtrail/02-design/risk-analysis/TRACE-risks-mitigations.md)
+> - [TRACE-risks-mitigations.md](../.straymark/02-design/risk-analysis/TRACE-risks-mitigations.md)
 
 ---
 

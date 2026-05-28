@@ -7,7 +7,7 @@ Added sections:
   - I. Hexagonal Architecture
   - II. Idiomatic Rust
   - III. Testing by Layers (NON-NEGOTIABLE)
-  - IV. DevTrail Documentation
+  - IV. StrayMark Documentation
   - V. Design Guide Compliance
   - VI. Git Workflow
   - VII. Security First (NON-NEGOTIABLE)
@@ -72,20 +72,20 @@ Tests derived from risk analysis (P0/P1) are MANDATORY.
 
 **Reference:** `lnxdrive-guide/06-Testing/01-estrategia-testing.md`
 
-### IV. DevTrail Documentation
+### IV. StrayMark Documentation
 
 Every significant technical decision MUST be documented:
 
 | Type | When to Use | Location |
 |------|-------------|----------|
-| AILOG | Code changes >10 lines in business logic | `.devtrail/07-ai-audit/agent-logs/` |
-| AIDEC | Decisions between technical alternatives | `.devtrail/07-ai-audit/decisions/` |
-| ADR | Architectural decisions (requires human review) | `.devtrail/02-design/decisions/` |
-| ETH | Changes with ethical/privacy impact (requires approval) | `.devtrail/07-ai-audit/ethical-reviews/` |
+| AILOG | Code changes >10 lines in business logic | `.straymark/07-ai-audit/agent-logs/` |
+| AIDEC | Decisions between technical alternatives | `.straymark/07-ai-audit/decisions/` |
+| ADR | Architectural decisions (requires human review) | `.straymark/02-design/decisions/` |
+| ETH | Changes with ethical/privacy impact (requires approval) | `.straymark/07-ai-audit/ethical-reviews/` |
 
 **Naming:** `[TYPE]-[YYYY-MM-DD]-[NNN]-[description].md`
 
-**Reference:** `CLAUDE.md`, `.devtrail/00-governance/`
+**Reference:** `CLAUDE.md`, `.straymark/00-governance/`
 
 ### V. Design Guide Compliance
 
@@ -118,7 +118,7 @@ Before implementing any component, the Design Guide MUST be consulted:
 - Tests MUST pass
 - Documentation MUST be updated
 
-**Reference:** `.devtrail/00-governance/GIT-BRANCHING-STRATEGY.md`
+**Reference:** `.straymark/00-governance/GIT-BRANCHING-STRATEGY.md`
 
 ### VII. Security First (NON-NEGOTIABLE)
 

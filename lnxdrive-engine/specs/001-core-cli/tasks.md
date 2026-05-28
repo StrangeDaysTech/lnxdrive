@@ -556,4 +556,4 @@ T077-T080 - All unit tests for domain entities
 - Each user story independently completable and testable
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
-- Constitution requires: 80% test coverage for core, DevTrail AILOG for >10 line changes
+- Constitution requires: 80% test coverage for core, StrayMark AILOG for >10 line changes

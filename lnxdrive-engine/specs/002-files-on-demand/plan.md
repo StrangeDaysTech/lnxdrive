@@ -30,7 +30,7 @@ Implement a FUSE-based virtual filesystem (`lnxdrive-fuse` crate) that presents 
 | I. Hexagonal Architecture | PASS | FUSE layer is an adapter; domain types (`ItemState`, `SyncItem`) stay in `lnxdrive-core`; ports define contracts |
 | II. Idiomatic Rust | PASS | Newtype (`InodeNumber`), Builder (`FuseConfig`), RAII (mount handle), `thiserror` for library errors |
 | III. Testing by Layers | PASS | Unit: core state machine with mocks; Integration: FUSE ops in container with `/dev/fuse`; E2E: full mount+hydrate |
-| IV. DevTrail Documentation | PASS | AILOG for implementation, AIDEC for research decisions (R1-R9 already documented) |
+| IV. StrayMark Documentation | PASS | AILOG for implementation, AIDEC for research decisions (R1-R9 already documented) |
 | V. Design Guide Compliance | PASS | `04-Componentes/01-files-on-demand-fuse.md` consulted for architecture, risks, and patterns |
 | VI. Git Workflow | PASS | Feature branch `feat/002-files-on-demand`, conventional commits, PR required |
 | VII. Security First | PASS | No credential changes; cache files inherit user permissions; no path traversal via FUSE (paths validated against inode table) |

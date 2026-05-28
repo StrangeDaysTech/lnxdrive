@@ -1,7 +1,15 @@
 # LNXDrive Monorepo — Agent Instructions (Gemini)
 
-> **This file is automatically loaded by Gemini CLI.**
-> It contains project navigation, DevTrail rules, and tool integration guidelines.
+<!-- straymark:begin -->
+> **Read and follow the rules in [STRAYMARK.md](STRAYMARK.md).**
+> That file contains all StrayMark documentation governance rules for this project.
+<!-- straymark:end -->
+
+> This file is automatically loaded by Gemini CLI.
+> It contains **monorepo-specific** navigation and conventions that complement
+> the StrayMark governance rules. For documentation rules, templates, autonomy
+> limits and the pre-commit checklist, see [STRAYMARK.md](STRAYMARK.md) and
+> `.straymark/00-governance/`.
 
 ---
 
@@ -22,114 +30,47 @@ This is a monorepo containing all LNXDrive components:
 
 ### Key Paths
 - **Design guide index**: `lnxdrive-guide/Guía-de-diseño-y-desarrollo.md`
-- **DevTrail root**: `.devtrail/` (single instance for entire monorepo)
+- **StrayMark root**: `.straymark/` (single instance for entire monorepo)
 - **D-Bus name**: `com.strangedaystech.LNXDrive` on `/com/strangedaystech/LNXDrive`
 
 ---
 
-## 2. DevTrail — Documentation Guidelines
+## 2. StrayMark in this monorepo
 
-### Fundamental Principle
-
-> **"No significant change without a documented trace."**
-
-### Your Identity as an Agent
-
-- **Identify yourself** as: `gemini-cli-v1.0` (or your version)
-- **Declare** your confidence level: `high | medium | low`
-- **Record** identification in the `agent:` field of metadata
-
-### Documentation Reporting
-
-At the end of each task, report DevTrail status:
-
-```
-DevTrail: Created AILOG-2026-03-04-001-implement-feature.md
-DevTrail: No documentation required (minor change / <10 lines)
-DevTrail: Documentation pending - review required
-```
-
-### When to Document
-
-| Situation | Action |
-|-----------|--------|
-| >10 lines of code in business logic | Create AILOG |
-| Decision between technical alternatives | Create AIDEC |
-| Changes in security/authentication | Create AILOG + mark `risk_level: high` |
-| Personal data (GDPR/PII) | Create AILOG + request ETH |
-| Integration with external service | Create AILOG |
-| Change in public API or DB schema | Create AILOG |
-
-**DO NOT DOCUMENT:** Trivial changes (whitespace, typos, formatting), sensitive information.
+The canonical governance rules live in [STRAYMARK.md](STRAYMARK.md) (auto-managed
+by `straymark` CLI). The notes below cover **only** what is specific to this monorepo.
 
 ### Agent-Logs Organization (Monorepo)
 
-AILOGs are organized by component in `.devtrail/07-ai-audit/agent-logs/`:
+AILOGs are organized **by component** under `.straymark/07-ai-audit/agent-logs/`:
 
 | Subdirectory | Component |
 |--------------|-----------|
-| `daemon/` | Core daemon (lnxdrive-engine/) |
-| `gnome/` | GNOME integration (lnxdrive-gnome/) |
-| `guide/` | Documentation & design (lnxdrive-guide/) |
-| `gtk3/` | GTK3 UI (lnxdrive-gtk3/) — create when needed |
-| `plasma/` | KDE Plasma (lnxdrive-plasma/) — create when needed |
-| `cosmic/` | COSMIC UI (lnxdrive-cosmic/) — create when needed |
-| `packaging/` | Distribution (lnxdrive-packaging/) — create when needed |
-| `testing/` | Testing infra (lnxdrive-testing/) — create when needed |
+| `daemon/` | Core daemon (`lnxdrive-engine/`) |
+| `gnome/` | GNOME integration (`lnxdrive-gnome/`) |
+| `guide/` | Documentation & design (`lnxdrive-guide/`) |
+| `gtk3/` | GTK3 UI (`lnxdrive-gtk3/`) — create when needed |
+| `plasma/` | KDE Plasma (`lnxdrive-plasma/`) — create when needed |
+| `cosmic/` | COSMIC UI (`lnxdrive-cosmic/`) — create when needed |
+| `packaging/` | Distribution (`lnxdrive-packaging/`) — create when needed |
+| `testing/` | Testing infra (`lnxdrive-testing/`) — create when needed |
 
-### File Naming
+**When creating an AILOG**, place it in the subdirectory matching the component you worked on.
+Use `straymark new ailog` to scaffold; pass `--path .straymark/07-ai-audit/agent-logs/<component>/`
+if the CLI prompts for a location.
 
-```
-[TYPE]-[YYYY-MM-DD]-[NNN]-[description].md
-```
+### Tooling
 
-### Minimum Metadata
-
-```yaml
----
-id: AILOG-2026-03-04-001
-title: Brief description
-status: accepted
-created: 2026-03-04
-agent: gemini-cli-v1.0
-confidence: high | medium | low
-review_required: true | false
-risk_level: low | medium | high | critical
----
-```
-
-### Autonomy Limits
-
-| Type | I can do | Requires human |
-|------|----------|----------------|
-| **AILOG** | Create freely | - |
-| **AIDEC** | Create freely | - |
-| **ETH** | Create draft | Approval |
-| **ADR** | Create draft | Review |
-| **REQ** | Propose | Validation |
-| **INC** | Contribute analysis | Conclusions |
-| **TDE** | Identify | Prioritize |
-
-### Quick Type Reference
-
-| Prefix | Name | Location |
-|--------|------|----------|
-| `AILOG` | AI Action Log | `.devtrail/07-ai-audit/agent-logs/<component>/` |
-| `AIDEC` | AI Decision | `.devtrail/07-ai-audit/decisions/` |
-| `ETH` | Ethical Review | `.devtrail/07-ai-audit/ethical-reviews/` |
-| `ADR` | Architecture Decision Record | `.devtrail/02-design/decisions/` |
-| `REQ` | Requirement | `.devtrail/01-requirements/` |
-| `TES` | Test Plan | `.devtrail/04-testing/` |
-| `INC` | Incident Post-mortem | `.devtrail/05-operations/incidents/` |
-| `TDE` | Technical Debt | `.devtrail/06-evolution/technical-debt/` |
+- `straymark status` — current docs counters and structure check
+- `straymark validate` — schema/frontmatter validation
+- `straymark new <type>` — scaffold a new doc (AILOG, AIDEC, ADR, ETH, …)
+- `straymark analyze <files>` — cognitive/cyclomatic complexity (used by the pre-commit checklist in `STRAYMARK.md`)
 
 ---
 
 ## 3. Git Operations
 
-> **CRITICAL: Never commit directly to `main` branch.**
-
-All changes must go through feature/fix branches and Pull Requests.
+> **CRITICAL: Never commit directly to `main`.** All changes go through feature/fix branches and Pull Requests.
 
 | Branch Prefix | Purpose |
 |---------------|---------|
@@ -139,8 +80,11 @@ All changes must go through feature/fix branches and Pull Requests.
 | `docs/` | Documentation only |
 | `refactor/` | Code refactoring |
 | `test/` | Test changes |
+| `chore/` | Maintenance, tooling, framework upgrades |
 
-**Conventional Commits:** `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`
+**Conventional Commits:** `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `test:`.
+
+> **Full details:** `.straymark/00-governance/GIT-BRANCHING-STRATEGY.md`
 
 ---
 
@@ -148,13 +92,20 @@ All changes must go through feature/fix branches and Pull Requests.
 
 > Comprehensive design and development guide at: `lnxdrive-guide/`
 
+### Navigation by Task Type
+
 | Task | Documents to Load |
 |------|-------------------|
 | **Understand the project** | `lnxdrive-guide/01-Vision/01-resumen-ejecutivo.md` |
 | **Architecture** | `lnxdrive-guide/03-Arquitectura/01-arquitectura-hexagonal.md` |
 | **Implement Core/Daemon** | `lnxdrive-guide/04-Componentes/07-motor-sincronizacion.md` |
+| **Implement FUSE** | `lnxdrive-guide/04-Componentes/01-files-on-demand-fuse.md` |
 | **Implement GNOME UI** | `lnxdrive-guide/04-Componentes/02-ui-gnome.md` |
 | **Implement KDE UI** | `lnxdrive-guide/04-Componentes/03-ui-kde-plasma.md` |
+| **Implement GTK3 UI** | `lnxdrive-guide/04-Componentes/04-ui-gtk3.md` |
+| **Implement COSMIC UI** | `lnxdrive-guide/04-Componentes/05-ui-cosmic.md` |
+| **Implement CLI** | `lnxdrive-guide/04-Componentes/06-cli.md` |
+| **Add cloud provider** | `lnxdrive-guide/07-Extensibilidad/02-puerto-icloudprovider.md` |
 | **Write tests** | `lnxdrive-guide/06-Testing/01-estrategia-testing.md` |
 | **Check roadmap** | `lnxdrive-guide/09-Referencia/02-hoja-de-ruta.md` |
 
@@ -162,15 +113,23 @@ All changes must go through feature/fix branches and Pull Requests.
 
 ---
 
-## 5. Human Review Required
+## 5. Context7 — Up-to-date Documentation Lookup
 
-Mark `review_required: true` when:
-- `confidence: low`
-- `risk_level: high | critical`
-- Security decisions
-- Irreversible changes
+This project has access to the **Context7 MCP server** for real-time documentation.
+
+| Situation | Action |
+|-----------|--------|
+| Implementing with a library | Query Context7 for current API and examples |
+| Integrating an external API | Query Context7 for latest endpoints |
+| Upgrading a dependency | Query Context7 for breaking changes |
+
+**How to Use:**
+1. `resolve-library-id` with the library name
+2. `query-docs` with the resolved ID and specific question
+
+> Prefer Context7 documentation over training data for fast-moving libraries.
 
 ---
 
-*DevTrail v1.0.0 | LNXDrive Monorepo*
+*StrayMark | LNXDrive Monorepo*
 *[Strange Days Tech](https://strangedays.tech) — Because every change tells a story.*

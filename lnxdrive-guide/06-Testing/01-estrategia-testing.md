@@ -61,7 +61,7 @@ LNXDrive involucra tres categorias de componentes que interactuan profundamente 
 
 ## 3. Tests Derivados del Análisis de Riesgos
 
-El [análisis de riesgos](../.devtrail/02-design/risk-analysis/TRACE-risks-mitigations.md) identificó casos de prueba específicos para mitigar cada riesgo. La matriz completa de mitigación a test se encuentra en ese documento.
+El [análisis de riesgos](../.straymark/02-design/risk-analysis/TRACE-risks-mitigations.md) identificó casos de prueba específicos para mitigar cada riesgo. La matriz completa de mitigación a test se encuentra en ese documento.
 
 ### Resumen de Cobertura por Prioridad
 

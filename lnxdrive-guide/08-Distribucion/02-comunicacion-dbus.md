@@ -436,11 +436,11 @@ impl DbusService {
 
 > [!NOTE]  
 > Para la matriz completa de riesgos y simulaciones, ver:
-> - [TRACE-risks-mitigations.md](../.devtrail/02-design/risk-analysis/TRACE-risks-mitigations.md)
-> - [RISK-002-security-vulns.md](../.devtrail/02-design/risk-analysis/RISK-002-security-vulns.md)
+> - [TRACE-risks-mitigations.md](../.straymark/02-design/risk-analysis/TRACE-risks-mitigations.md)
+> - [RISK-002-security-vulns.md](../.straymark/02-design/risk-analysis/RISK-002-security-vulns.md)
 >
 > Diagrama de secuencia relacionado:
-> - [SEQ-002-dbus-recovery.puml](../.devtrail/02-design/diagrams/SEQ-002-dbus-recovery.puml)
+> - [SEQ-002-dbus-recovery.puml](../.straymark/02-design/diagrams/SEQ-002-dbus-recovery.puml)
 
 ---
 

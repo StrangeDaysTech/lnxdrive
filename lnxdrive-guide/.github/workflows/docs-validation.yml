@@ -1,5 +1,5 @@
 # =============================================================================
-# DevTrail - Documentation Validation Workflow
+# StrayMark - Documentation Validation Workflow
 # =============================================================================
 #
 # This workflow validates documentation on each Pull Request and push to main.
@@ -20,12 +20,12 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - '.devtrail/**'
+      - '.straymark/**'
       - '.github/workflows/docs-validation.yml'
   pull_request:
     branches: [main, develop]
     paths:
-      - '.devtrail/**'
+      - '.straymark/**'
 
 jobs:
   validate-docs:
@@ -60,7 +60,7 @@ jobs:
         uses: tj-actions/changed-files@v44
         with:
           files: |
-            .devtrail/**/*.md
+            .straymark/**/*.md
 
       # =========================================================================
       # Validate file naming convention
@@ -260,7 +260,7 @@ jobs:
         run: |
           echo "📚 Generating documentation index..."
 
-          cat > .devtrail/INDEX.md << 'EOF'
+          cat > .straymark/INDEX.md << 'EOF'
           # Documentation Index
 
           *Automatically generated on $(date -u +"%Y-%m-%d %H:%M UTC")*
@@ -269,31 +269,31 @@ jobs:
           EOF
 
           # List documents by folder
-          for folder in .devtrail/*/; do
+          for folder in .straymark/*/; do
             folder_name=$(basename "$folder")
-            echo "" >> .devtrail/INDEX.md
-            echo "## ${folder_name}" >> .devtrail/INDEX.md
-            echo "" >> .devtrail/INDEX.md
+            echo "" >> .straymark/INDEX.md
+            echo "## ${folder_name}" >> .straymark/INDEX.md
+            echo "" >> .straymark/INDEX.md
 
             find "$folder" -name "*.md" -type f | sort | while read file; do
               filename=$(basename "$file")
               # Extract title from front-matter or use filename
               title=$(grep "^title:" "$file" 2>/dev/null | sed 's/title: *//' | head -1 || echo "$filename")
-              echo "- [$title]($file)" >> .devtrail/INDEX.md
+              echo "- [$title]($file)" >> .straymark/INDEX.md
             done
           done
 
-          echo "✅ Index generated: .devtrail/INDEX.md"
+          echo "✅ Index generated: .straymark/INDEX.md"
 
       - name: Commit index if changed
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
 
-          if git diff --quiet .devtrail/INDEX.md; then
+          if git diff --quiet .straymark/INDEX.md; then
             echo "No changes to index"
           else
-            git add .devtrail/INDEX.md
+            git add .straymark/INDEX.md
             git commit -m "docs: update documentation index [skip ci]"
             git push
           fi

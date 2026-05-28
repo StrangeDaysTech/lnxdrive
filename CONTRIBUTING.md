@@ -155,7 +155,7 @@ lnxdrive/
 ├── lnxdrive-packaging/    # Flatpak, AppImage, Debian, AUR
 ├── lnxdrive-guide/        # Design and development guide
 ├── lnxdrive-testing/      # Container/VM test infrastructure
-└── .devtrail/             # Project documentation trail
+└── .straymark/             # Project documentation trail
 ```
 
 For a deep understanding of the architecture and design decisions, refer to the [Design Guide](lnxdrive-guide/).
