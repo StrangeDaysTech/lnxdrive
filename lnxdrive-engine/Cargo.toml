@@ -38,6 +38,7 @@ async-trait = "0.1"
 
 # Concurrent data structures
 dashmap = "6.0"
+parking_lot = "0.12"
 
 # Cryptography (for cache path hashing)
 sha2 = "0.10"

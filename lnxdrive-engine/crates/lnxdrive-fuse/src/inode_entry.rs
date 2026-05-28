@@ -9,6 +9,7 @@ use std::{
 };
 
 use lnxdrive_core::domain::{ItemState, RemoteId, UniqueId};
+use parking_lot::{Mutex, MutexGuard};
 
 /// A newtype wrapper for FUSE inode numbers.
 ///
@@ -119,6 +120,16 @@ pub struct InodeEntry {
 
     /// Current sync/hydration state
     pub state: ItemState,
+
+    /// Per-inode serialization lock for write-during-hydration mitigation (RISK-003).
+    ///
+    /// Held briefly by `FuseHandler::write()` to make the
+    /// "check `HydrationManager::is_hydrating(ino)` → write to cache" sequence
+    /// atomic with `HydrationManager::hydrate()` marking the inode as active.
+    /// Prevents a hydration from starting (and corrupting subsequent download
+    /// chunks with the application's bytes) between the FUSE write's hydration
+    /// check and the cache write.
+    state_guard: Mutex<()>,
 }
 
 impl InodeEntry {
@@ -171,7 +182,17 @@ impl InodeEntry {
             lookup_count: AtomicU64::new(0),
             open_handles: AtomicU64::new(0),
             state,
+            state_guard: Mutex::new(()),
         }
+    }
+
+    /// Acquires the per-inode serialization lock (RISK-003).
+    ///
+    /// Used by `FuseHandler::write()` to serialize cache writes with
+    /// `HydrationManager::hydrate()` start-of-hydration registration.
+    /// Returns a guard whose lifetime defines the critical section.
+    pub fn lock_state_guard(&self) -> MutexGuard<'_, ()> {
+        self.state_guard.lock()
     }
 
     /// Converts this inode entry to a FUSE FileAttr structure.
