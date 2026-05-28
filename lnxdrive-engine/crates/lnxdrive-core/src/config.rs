@@ -122,7 +122,7 @@ impl Config {
 
     /// Platform-appropriate default path for the configuration file.
     ///
-    /// Typically `$XDG_CONFIG_HOME/lnxdrive-engine/config.yaml` on Linux.
+    /// Typically `$XDG_CONFIG_HOME/lnxdrive/config.yaml` on Linux.
     pub fn default_path() -> PathBuf {
         dirs::config_dir()
             .unwrap_or_else(|| PathBuf::from("~/.config"))
@@ -992,7 +992,7 @@ fuse:
     #[test]
     fn default_path_ends_with_config_yaml() {
         let p = Config::default_path();
-        assert!(p.ends_with("lnxdrive-engine/config.yaml"));
+        assert!(p.ends_with("lnxdrive/config.yaml"));
     }
 
     // -- ValidationError Display --
