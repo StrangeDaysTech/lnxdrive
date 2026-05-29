@@ -63,7 +63,7 @@ const VALID_HASH_2: &str = "BBBBBBBBBBBBBBBBBBBBBBBBBBB=";
 /// Create a hydrated test sync item (for FUSE tests)
 fn create_hydrated_sync_item(path: &str) -> SyncItem {
     let local_path = SyncPath::new(PathBuf::from(path)).unwrap();
-    let remote_path = RemotePath::new(format!("/{}", path.split('/').last().unwrap())).unwrap();
+    let remote_path = RemotePath::new(format!("/{}", path.split('/').next_back().unwrap())).unwrap();
     let mut item = SyncItem::new_file(
         local_path,
         remote_path,
@@ -73,7 +73,7 @@ fn create_hydrated_sync_item(path: &str) -> SyncItem {
     .unwrap();
 
     // Set remote ID (use a valid format without dots or special chars) and mark as hydrated
-    let filename = path.split('/').last().unwrap().replace(".", "_");
+    let filename = path.split('/').next_back().unwrap().replace(".", "_");
     let remote_id = RemoteId::new(format!("remote_{}", filename)).unwrap();
     item.set_remote_id(remote_id);
 

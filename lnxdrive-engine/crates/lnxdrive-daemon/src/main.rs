@@ -60,10 +60,26 @@ impl DaemonService {
     ///
     /// Loads configuration, opens the database, and initializes shared state.
     async fn new(shutdown: CancellationToken) -> Result<Self> {
-        // Load configuration
+        // Load configuration.
+        // Use load() (not load_or_default) so a present-but-malformed config —
+        // e.g. a rejected billion-laughs bomb or an over-cap file (ISSUE-002) —
+        // is surfaced in the log instead of being silently masked by defaults.
+        // A genuinely missing file still falls back to defaults (first run).
         let config_path = Config::default_path();
-        let config = Config::load_or_default(&config_path);
-        info!(config_path = %config_path.display(), "Loaded configuration");
+        let config = match Config::load(&config_path) {
+            Ok(c) => {
+                info!(config_path = %config_path.display(), "Loaded configuration");
+                c
+            }
+            Err(e) => {
+                warn!(
+                    config_path = %config_path.display(),
+                    error = %format!("{e:#}"),
+                    "Failed to load configuration; falling back to defaults"
+                );
+                Config::default()
+            }
+        };
 
         // Open database
         let db_path = dirs::data_dir()

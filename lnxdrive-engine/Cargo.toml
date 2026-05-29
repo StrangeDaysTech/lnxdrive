@@ -87,7 +87,10 @@ governor = "0.6"
 # Observability
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
-prometheus = "0.13"
+# default-features disabled drops the `protobuf` feature (pulls the unmaintained
+# protobuf 2.x — RUSTSEC-2024-0436/0437). Telemetry only uses the text format /
+# registry, not the protobuf push gateway. (ISSUE: CI hardening, Charter-01)
+prometheus = { version = "0.13", default-features = false }
 
 # Error handling
 thiserror = "1.0"
