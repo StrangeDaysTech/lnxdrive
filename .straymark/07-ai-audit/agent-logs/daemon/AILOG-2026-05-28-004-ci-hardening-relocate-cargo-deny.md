@@ -99,6 +99,15 @@ the open Fase-1 PRs (#35, #36).
   `assert!(x)` / `assert!(!x)`.
 - `crates/lnxdrive-cache/tests/repository_tests.rs` — 2× `.split('/').last()` →
   `.next_back()`.
+- `crates/lnxdrive-fuse/src/hydration.rs` — `manual_checked_ops`: a
+  `total_size == 0` guard followed by `/ total_size` rewritten to
+  `(range_end * 100).checked_div(total_size).map_or(100, …)`. Surfaced only by
+  the first real CI run: GitHub's stable clippy was **1.96.0** while the local
+  pinned-`stable` toolchain was **1.93.0**, and `manual_checked_ops` did not
+  exist in 1.93. Fixing it keeps both versions green. The underlying fragility —
+  a floating `stable` toolchain with `-D warnings` re-breaks on any new clippy
+  release — is flagged to the operator; pinning `rust-toolchain.toml` to an
+  exact version is a project-policy decision left to them.
 
 ## Verification
 
