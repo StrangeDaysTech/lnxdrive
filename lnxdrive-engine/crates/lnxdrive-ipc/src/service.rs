@@ -99,6 +99,11 @@ pub struct DaemonState {
 
     /// Network connection status: "online", "offline", "reconnecting"
     pub connection_status: String,
+    /// D-Bus session-bus transport health: "online", "reconnecting", "lost".
+    ///
+    /// Distinct from `connection_status` (which tracks the cloud/OneDrive
+    /// network link). Updated by the daemon's D-Bus health monitor (RISK-001).
+    pub dbus_health: String,
     /// Storage quota used in bytes
     pub quota_used: u64,
     /// Storage quota total in bytes
@@ -150,6 +155,7 @@ impl Default for DaemonState {
             last_sync_time: 0,
             pending_changes: 0,
             connection_status: "online".to_string(),
+            dbus_health: "online".to_string(),
             quota_used: 0,
             quota_total: 0,
             is_authenticated: false,
@@ -756,6 +762,16 @@ impl StatusInterface {
     async fn connection_status(&self) -> String {
         let state = self.state.lock().await;
         state.connection_status.clone()
+    }
+
+    /// D-Bus session-bus health: "online", "reconnecting", "lost".
+    ///
+    /// Lets the UI distinguish a session-bus outage (this daemon reconnecting)
+    /// from a cloud/network outage. Set by the daemon's health monitor.
+    #[zbus(property)]
+    async fn dbus_health(&self) -> String {
+        let state = self.state.lock().await;
+        state.dbus_health.clone()
     }
 
     /// Emitted when storage quota changes
