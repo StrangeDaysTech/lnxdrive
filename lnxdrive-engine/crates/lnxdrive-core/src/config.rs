@@ -108,10 +108,37 @@ pub struct FuseConfig {
 // ---------------------------------------------------------------------------
 
 impl Config {
+    /// Maximum size (bytes) accepted for a configuration file.
+    ///
+    /// ISSUE-002 defense-in-depth: a hard input cap bounds the work the YAML
+    /// parser can be asked to do. The default config is ~1.4 KB, so 1 MiB
+    /// leaves generous headroom for hand-edited configs while rejecting absurd
+    /// inputs before parsing. Alias-expansion ("billion-laughs") bombs are
+    /// additionally stopped by `serde_norway`'s built-in recursion-depth and
+    /// alias-repetition limits.
+    const MAX_CONFIG_BYTES: usize = 1 << 20; // 1 MiB
+
     /// Load configuration from a YAML file at `path`.
     pub fn load(path: &Path) -> anyhow::Result<Self> {
         let content = std::fs::read_to_string(path)?;
-        let config: Config = serde_yaml::from_str(&content)?;
+        Self::from_yaml_str(&content)
+    }
+
+    /// Parse configuration from an in-memory YAML string.
+    ///
+    /// Enforces [`Config::MAX_CONFIG_BYTES`] before parsing, then defers to
+    /// `serde_norway`, whose recursion-depth and alias-repetition caps reject
+    /// billion-laughs alias bombs (ISSUE-002). Separated from [`Config::load`]
+    /// so the hardening can be exercised by tests without touching the disk.
+    pub fn from_yaml_str(content: &str) -> anyhow::Result<Self> {
+        if content.len() > Self::MAX_CONFIG_BYTES {
+            anyhow::bail!(
+                "configuration exceeds maximum size of {} bytes (got {} bytes)",
+                Self::MAX_CONFIG_BYTES,
+                content.len()
+            );
+        }
+        let config: Config = serde_norway::from_str(content)?;
         Ok(config)
     }
 
@@ -604,6 +631,68 @@ mod tests {
 
     use super::*;
 
+    // -- ISSUE-002: YAML hardening (billion-laughs + size cap) --
+
+    /// Malicious alias-expansion bomb, loaded verbatim from the workspace-level
+    /// security fixture (Charter-01 path).
+    const BILLION_LAUGHS: &str = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../tests/security/billion_laughs.yaml"
+    ));
+
+    /// The shipped default config — used to prove hardening did not break valid
+    /// input.
+    const DEFAULT_CONFIG_YAML: &str = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../config/default-config.yaml"
+    ));
+
+    #[test]
+    fn test_billion_laughs_rejected() {
+        // The production loader path must reject the bomb — and return fast. If
+        // this test ever hangs instead of failing, the alias-expansion cap has
+        // regressed.
+        let result = Config::from_yaml_str(BILLION_LAUGHS);
+        assert!(
+            result.is_err(),
+            "billion-laughs YAML must be rejected by Config::from_yaml_str"
+        );
+    }
+
+    #[test]
+    fn test_billion_laughs_trips_dos_limit() {
+        // Deserializing the same bomb to an untyped Value forces full alias
+        // expansion, proving the rejection comes from serde_norway's DoS limit
+        // (recursion / alias-repetition) rather than typed-struct short-circuit.
+        let result: Result<serde_norway::Value, _> = serde_norway::from_str(BILLION_LAUGHS);
+        let err = result.expect_err("billion-laughs must trip the parser's DoS limit");
+        let msg = err.to_string().to_lowercase();
+        assert!(
+            msg.contains("limit") || msg.contains("recursion") || msg.contains("repetition"),
+            "error should indicate a DoS limit was hit, got: {msg}"
+        );
+    }
+
+    #[test]
+    fn test_oversized_config_rejected() {
+        // A config larger than MAX_CONFIG_BYTES is rejected before parsing.
+        let huge = format!("# pad\n{}", "#".repeat(Config::MAX_CONFIG_BYTES));
+        let result = Config::from_yaml_str(&huge);
+        let err = result.expect_err("config over the size cap must be rejected");
+        assert!(
+            err.to_string().contains("maximum size"),
+            "oversized config should fail with the size-cap error, got: {err}"
+        );
+    }
+
+    #[test]
+    fn test_default_config_still_parses() {
+        // Hardening must not break the shipped default config.
+        let config = Config::from_yaml_str(DEFAULT_CONFIG_YAML)
+            .expect("default config must still parse after ISSUE-002 hardening");
+        assert!(config.sync.poll_interval > 0);
+    }
+
     // -- Defaults --
 
     #[test]
@@ -1036,7 +1125,7 @@ dehydration_max_age_days: 45
 dehydration_interval_minutes: 90
 hydration_concurrency: 12
 "#;
-        let fuse: FuseConfig = serde_yaml::from_str(yaml).expect("deserialize FuseConfig");
+        let fuse: FuseConfig = serde_norway::from_str(yaml).expect("deserialize FuseConfig");
         assert_eq!(fuse.mount_point, "/mnt/onedrive");
         assert_eq!(fuse.auto_mount, false);
         assert_eq!(fuse.cache_dir, "/var/cache/lnxdrive");

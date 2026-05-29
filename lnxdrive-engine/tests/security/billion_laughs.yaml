@@ -1,0 +1,18 @@
+# Billion-laughs alias-expansion bomb — ISSUE-002 regression fixture.
+#
+# Nine nested anchor levels, each referencing the previous one ten times. A
+# naive YAML parser expands this to ~10^9 nodes, exhausting memory and CPU.
+# `serde_norway`'s built-in recursion-depth and alias-repetition limits MUST
+# reject it (the config loader, `Config::from_yaml_str`, relies on them).
+#
+# DO NOT "fix", shrink, or reformat this file — it is a malicious input under
+# test. The test `config::tests::test_billion_laughs_rejected` loads it verbatim.
+lol1: &lol1 "lol"
+lol2: &lol2 [*lol1, *lol1, *lol1, *lol1, *lol1, *lol1, *lol1, *lol1, *lol1, *lol1]
+lol3: &lol3 [*lol2, *lol2, *lol2, *lol2, *lol2, *lol2, *lol2, *lol2, *lol2, *lol2]
+lol4: &lol4 [*lol3, *lol3, *lol3, *lol3, *lol3, *lol3, *lol3, *lol3, *lol3, *lol3]
+lol5: &lol5 [*lol4, *lol4, *lol4, *lol4, *lol4, *lol4, *lol4, *lol4, *lol4, *lol4]
+lol6: &lol6 [*lol5, *lol5, *lol5, *lol5, *lol5, *lol5, *lol5, *lol5, *lol5, *lol5]
+lol7: &lol7 [*lol6, *lol6, *lol6, *lol6, *lol6, *lol6, *lol6, *lol6, *lol6, *lol6]
+lol8: &lol8 [*lol7, *lol7, *lol7, *lol7, *lol7, *lol7, *lol7, *lol7, *lol7, *lol7]
+lol9: &lol9 [*lol8, *lol8, *lol8, *lol8, *lol8, *lol8, *lol8, *lol8, *lol8, *lol8]

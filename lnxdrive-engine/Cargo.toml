@@ -29,7 +29,10 @@ tokio = { version = "1.35", features = ["full"] }
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-serde_yaml = "0.9"
+# serde_norway: maintained serde-yaml fork (RUSTSEC-recommended replacement for
+# the deprecated serde_yaml). Built-in DoS limits (recursion depth + alias
+# repetition cap) mitigate billion-laughs by default — see ISSUE-002 / AIDEC.
+serde_norway = "0.9"
 
 # Common utilities
 uuid = { version = "1.6", features = ["v4", "serde"] }
