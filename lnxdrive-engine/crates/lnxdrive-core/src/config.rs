@@ -1104,7 +1104,7 @@ fuse:
     fn fuse_config_default_returns_expected_values() {
         let fuse = FuseConfig::default();
         assert_eq!(fuse.mount_point, "~/OneDrive");
-        assert_eq!(fuse.auto_mount, true);
+        assert!(fuse.auto_mount);
         assert_eq!(fuse.cache_dir, "~/.local/share/lnxdrive/cache");
         assert_eq!(fuse.cache_max_size_gb, 10);
         assert_eq!(fuse.dehydration_threshold_percent, 80);
@@ -1127,7 +1127,7 @@ hydration_concurrency: 12
 "#;
         let fuse: FuseConfig = serde_norway::from_str(yaml).expect("deserialize FuseConfig");
         assert_eq!(fuse.mount_point, "/mnt/onedrive");
-        assert_eq!(fuse.auto_mount, false);
+        assert!(!fuse.auto_mount);
         assert_eq!(fuse.cache_dir, "/var/cache/lnxdrive");
         assert_eq!(fuse.cache_max_size_gb, 25);
         assert_eq!(fuse.dehydration_threshold_percent, 75);
@@ -1178,7 +1178,7 @@ fuse:
 
         let cfg = Config::load(tmp.path()).expect("load config with fuse section");
         assert_eq!(cfg.fuse.mount_point, "~/OneDrive");
-        assert_eq!(cfg.fuse.auto_mount, true);
+        assert!(cfg.fuse.auto_mount);
         assert_eq!(cfg.fuse.cache_dir, "~/.local/share/lnxdrive/cache");
         assert_eq!(cfg.fuse.cache_max_size_gb, 15);
         assert_eq!(cfg.fuse.dehydration_threshold_percent, 85);
