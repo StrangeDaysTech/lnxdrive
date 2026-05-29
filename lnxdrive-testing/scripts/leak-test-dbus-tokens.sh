@@ -157,8 +157,9 @@ gdbus call \
     "/org/gnome/OnlineAccounts/Accounts/9999-does-not-exist" \
     >/dev/null 2>&1 || true
 
-# Give dbus-monitor a moment to flush the captured traffic.
-sleep 2
+# Observe the bus for the configured capture window so any post-auth traffic
+# (and the monitor's flush) is captured before teardown. Honors --capture-seconds.
+sleep "$CAPTURE_SECONDS"
 
 # Tear down.
 kill -TERM "$DAEMON_PID" 2>/dev/null || true
