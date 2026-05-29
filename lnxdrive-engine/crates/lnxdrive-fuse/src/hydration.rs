@@ -750,13 +750,12 @@ impl HydrationManager {
 
         // For sequential downloads, we need to wait until downloaded bytes >= range_end
         // Progress is percentage, so we calculate required progress
-        let required_progress = if total_size == 0 {
-            100u8
-        } else {
-            // Calculate minimum progress needed for the range to be available
-            // We need at least (range_end / total_size * 100) progress
-            ((range_end * 100) / total_size).min(100) as u8
-        };
+        // Minimum progress (percentage) needed for the range to be available.
+        // `checked_div` yields None when total_size == 0, in which case the file
+        // is fully available (100%). Otherwise clamp to 100.
+        let required_progress = (range_end * 100)
+            .checked_div(total_size)
+            .map_or(100u8, |progress| progress.min(100) as u8);
 
         tracing::debug!(
             ino,

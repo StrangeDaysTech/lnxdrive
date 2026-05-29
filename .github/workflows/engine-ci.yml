@@ -1,0 +1,81 @@
+name: Engine CI
+
+# NOTE: GitHub Actions only executes workflows under the repository-root
+# `.github/workflows/`. The engine's CI previously lived at
+# `lnxdrive-engine/.github/workflows/ci.yml`, a path GitHub ignores, so it never
+# ran. This workflow relocates it to the root with a `working-directory` and a
+# path filter scoped to the engine. (Charter-01 / Fase 1 CI hardening.)
+
+on:
+  push:
+    branches: [main, "feat/*", "fix/*"]
+    paths:
+      - "lnxdrive-engine/**"
+      - ".github/workflows/engine-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "lnxdrive-engine/**"
+      - ".github/workflows/engine-ci.yml"
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+defaults:
+  run:
+    working-directory: lnxdrive-engine
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: lnxdrive-engine
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsqlite3-dev libdbus-1-dev libsecret-1-dev libfuse3-dev pkg-config
+
+      # Formatting is NOT yet enforced: the tree carries pre-existing rustfmt
+      # debt (~48 files) that predates this workflow ever running. Surfaced as a
+      # non-blocking annotation here; the bulk reformat is tracked in
+      # TDE-2026-05-28-001 and lands in a dedicated chore PR after the Fase-1
+      # PRs merge (to avoid conflicts). Flip to blocking once that PR lands.
+      - name: Check formatting (non-blocking)
+        continue-on-error: true
+        run: cargo +nightly fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Build
+        run: cargo build --workspace
+
+      - name: Test
+        run: cargo test --workspace
+
+  deny:
+    name: cargo-deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # cargo-deny subsumes cargo-audit: its `advisories` check uses the same
+      # RustSec database (with documented ignores in deny.toml), and it adds
+      # license, bans, and source policy. Replaces the old rustsec/audit-check
+      # job to avoid maintaining two overlapping advisory ignore-lists.
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: lnxdrive-engine/Cargo.toml
+          command: check
+          arguments: --all-features

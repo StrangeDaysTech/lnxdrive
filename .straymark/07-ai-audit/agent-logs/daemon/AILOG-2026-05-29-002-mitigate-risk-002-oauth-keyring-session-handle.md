@@ -195,6 +195,28 @@ and is wired into CI in a follow-up PR alongside `cargo test --workspace`
   identifier per Anthropic's guidance; alignment with the template is
   cosmetic.
 
+## Drift
+
+> Added 2026-05-28 during the Fase-1 external audit (two auditors independently
+> flagged the scope-vs-implementation gap). Recorded here explicitly and the
+> Charter `## Files to modify` RISK-002 row backported in the same change.
+
+- **`SessionHandle` (scoped) → `CompleteAuthViaGOA` + internal keyring (built).**
+  The Charter §Scope and its `## Files to modify` table specified that the D-Bus
+  interface would expose "opaque `SessionHandle` IDs" via a new
+  `lnxdrive-daemon/src/dbus_iface.rs`. The shipped design does **not** issue a
+  handle: `Auth.CompleteAuthViaGOA(goa_account_path)` returns a `bool`, and the
+  token is fetched from GOA and stored in the keyring by `GoaAuthBackend`
+  (`goa_auth_backend.rs`) — the interface lives in the existing
+  `lnxdrive-ipc/src/service.rs`, not a new `dbus_iface.rs`. This is
+  **security-equivalent** to the SessionHandle design for the stated threat
+  (tokens never cross the D-Bus surface) and was the deliberate minimum-viable
+  choice recorded in the Context section above. No `SessionHandle` type exists
+  in the codebase. The compile-time `TokenSource` hardening is deferred to
+  TDE-2026-05-29-001. The Charter table row was not updated atomically at the
+  time (the omission the audit caught); it is corrected in the audit-remediation
+  change that adds this note.
+
 ## Risks
 
 - **R1 — Breaking the public D-Bus contract.** Probability low,

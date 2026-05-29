@@ -1,0 +1,59 @@
+# cargo-deny configuration — supply-chain policy for the LNXDrive engine.
+# Charter-01 / Fase 1 CI hardening. Checked in CI via `cargo deny check`.
+
+[graph]
+# Only the targets we actually ship for.
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-linux-gnu",
+]
+
+[advisories]
+version = 2
+# RUSTSEC advisories not yet fixable without an out-of-scope change. Each entry
+# MUST carry a justification and be revisited when the fix becomes affordable.
+# Tracked for remediation in the dependency-upgrade technical debt entry.
+ignore = [
+    # sqlx 0.7.4 — binary protocol misinterpretation. The fix is sqlx 0.8.1+,
+    # a breaking major bump that ripples through lnxdrive-cache; out of scope
+    # for the v0.1.0-alpha CI-hardening slice. The advisory states SQLite (our
+    # only backend) "does not appear to be exploitable". Tracked as tech debt.
+    "RUSTSEC-2024-0363",
+    # paste 1.x — unmaintained (no known vulnerability). A ubiquitous, stable
+    # proc-macro helper pulled transitively by many crates; not directly
+    # removable. Low risk; revisit if a vulnerability is filed. Tracked as debt.
+    "RUSTSEC-2024-0436",
+]
+
+[licenses]
+version = 2
+# LNXDrive itself is GPL-3.0-or-later; its own crates carry that license.
+# The remaining entries are the permissive licenses of third-party deps.
+allow = [
+    "GPL-3.0-or-later",
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "MPL-2.0",
+    "CC0-1.0",
+    "CDLA-Permissive-2.0",
+]
+confidence-threshold = 0.8
+
+[bans]
+# Duplicate versions are common in large trees and are not a release blocker for
+# an alpha; surface them as warnings rather than failing the build.
+multiple-versions = "warn"
+wildcards = "allow"
+
+[sources]
+# Only crates.io; no unknown registries or git sources.
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
