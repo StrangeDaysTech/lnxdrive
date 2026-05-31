@@ -84,17 +84,19 @@ impl ConfirmPage {
             .clone()
             .unwrap_or_else(|| gettext("Not selected"));
 
+        // `ActionRow::icon_name` is deprecated since libadwaita 1.3; add the icon
+        // as a prefix widget instead.
         let email_row = adw::ActionRow::builder()
             .title(&gettext("Account"))
             .subtitle(&account_email)
-            .icon_name("avatar-default-symbolic")
             .build();
+        email_row.add_prefix(&gtk4::Image::from_icon_name("avatar-default-symbolic"));
 
         let folder_row = adw::ActionRow::builder()
             .title(&gettext("Sync Folder"))
             .subtitle(&sync_folder)
-            .icon_name("folder-symbolic")
             .build();
+        folder_row.add_prefix(&gtk4::Image::from_icon_name("folder-symbolic"));
 
         let summary_group = adw::PreferencesGroup::new();
         summary_group.add(&email_row);

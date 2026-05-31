@@ -10,6 +10,7 @@
 
 use std::cell::RefCell;
 
+use gettextrs::gettext;
 use gtk4::gio;
 use gtk4::glib;
 use gtk4::prelude::*;
@@ -202,8 +203,7 @@ impl FolderTree {
         }
 
         tree.build_ui();
-        tree.load_remote_tree();
-        tree.load_selected_folders();
+        tree.load_tree_and_selections();
 
         tree
     }
@@ -357,8 +357,14 @@ impl FolderTree {
         self.append(&scrolled);
     }
 
-    /// Fetch the remote folder tree JSON from the daemon and populate the root store.
-    fn load_remote_tree(&self) {
+    /// Load the selected folders and the remote tree in one ordered task.
+    ///
+    /// Selections are fetched *first* so `populate_from_json` can mark nodes with
+    /// the correct checked state as it builds them. Doing these as two
+    /// independent `spawn_local` tasks (as before) raced: selections could be
+    /// applied to a still-empty tree, or the tree populated before selections
+    /// arrived, leaving nothing checked.
+    fn load_tree_and_selections(&self) {
         let client = match self.imp().dbus_client.borrow().clone() {
             Some(c) => c,
             None => return,
@@ -366,36 +372,21 @@ impl FolderTree {
 
         let tree = self.clone();
         glib::MainContext::default().spawn_local(async move {
-            match client.get_remote_folder_tree().await {
-                Ok(json) => {
-                    tree.populate_from_json(&json);
-                }
-                Err(e) => {
-                    eprintln!("Could not load remote folder tree: {}", e);
-                }
-            }
-        });
-    }
-
-    /// Load the currently selected folders from the daemon so we can mark
-    /// them as checked.
-    fn load_selected_folders(&self) {
-        let client = match self.imp().dbus_client.borrow().clone() {
-            Some(c) => c,
-            None => return,
-        };
-
-        let tree = self.clone();
-        glib::MainContext::default().spawn_local(async move {
+            // 1. Selections first.
             match client.get_selected_folders().await {
-                Ok(folders) => {
-                    *tree.imp().selected_folders.borrow_mut() = folders;
-                    // Re-apply selections after the tree has been populated.
-                    tree.apply_selections();
-                }
-                Err(e) => {
-                    eprintln!("Could not load selected folders: {}", e);
-                }
+                Ok(folders) => *tree.imp().selected_folders.borrow_mut() = folders,
+                Err(e) => tree.show_error(&format!(
+                    "{}: {e}",
+                    gettext("Could not load selected folders")
+                )),
+            }
+            // 2. Then the tree, which reads the selections set above.
+            match client.get_remote_folder_tree().await {
+                Ok(json) => tree.populate_from_json(&json),
+                Err(e) => tree.show_error(&format!(
+                    "{}: {e}",
+                    gettext("Could not load the folder list")
+                )),
             }
         });
     }
@@ -409,17 +400,28 @@ impl FolderTree {
             None => return,
         };
 
-        root_store.remove_all();
-
-        // The JSON may be a single root object or an array of roots.
+        // The JSON may be a single root object or an array of roots. A parse
+        // failure is surfaced as an error rather than silently rendering an
+        // empty tree (which is indistinguishable from "no folders").
         let nodes: Vec<FolderNodeJson> = if json.trim_start().starts_with('[') {
-            serde_json::from_str(json).unwrap_or_default()
+            match serde_json::from_str(json) {
+                Ok(n) => n,
+                Err(e) => {
+                    self.show_error(&format!("{}: {e}", gettext("Invalid folder list")));
+                    return;
+                }
+            }
         } else {
             match serde_json::from_str::<FolderNodeJson>(json) {
                 Ok(root) => root.children,
-                Err(_) => Vec::new(),
+                Err(e) => {
+                    self.show_error(&format!("{}: {e}", gettext("Invalid folder list")));
+                    return;
+                }
             }
         };
+
+        root_store.remove_all();
 
         let selected = imp.selected_folders.borrow().clone();
         for node in &nodes {
@@ -430,23 +432,16 @@ impl FolderTree {
         }
     }
 
-    /// Walk the root store and mark nodes whose path is in the selected list.
-    fn apply_selections(&self) {
-        let imp = self.imp();
-        let store = match imp.root_store.borrow().clone() {
-            Some(s) => s,
-            None => return,
-        };
-        let selected = imp.selected_folders.borrow().clone();
-
-        for i in 0..store.n_items() {
-            if let Some(item) = store.item(i) {
-                if let Some(node) = item.downcast_ref::<FolderNode>() {
-                    let is_selected = selected.iter().any(|p| p == &node.path());
-                    node.set_selected(is_selected);
-                }
-            }
-        }
+    /// Show a load/parse error inline at the top of the widget, instead of
+    /// failing silently to stderr (which left the tree looking empty).
+    fn show_error(&self, message: &str) {
+        let label = gtk4::Label::builder()
+            .label(message)
+            .wrap(true)
+            .xalign(0.0)
+            .css_classes(["error"])
+            .build();
+        self.prepend(&label);
     }
 
     /// Called whenever a checkbox is toggled. Propagates the selection to

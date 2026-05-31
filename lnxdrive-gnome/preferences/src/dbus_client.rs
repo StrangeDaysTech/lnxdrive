@@ -84,13 +84,11 @@ pub trait LnxdriveAuth {
     /// Finish an auth flow with an explicit code + state (manual/CLI/GOA).
     async fn complete_auth(&self, code: &str, state: &str) -> zbus::Result<bool>;
 
-    /// Complete auth using pre-obtained tokens (e.g. from GNOME Online Accounts).
-    async fn complete_auth_with_tokens(
-        &self,
-        access_token: &str,
-        refresh_token: &str,
-        expires_at_unix: i64,
-    ) -> zbus::Result<bool>;
+    /// Complete auth using an existing GNOME Online Accounts account. The daemon
+    /// fetches the tokens from GOA and persists them in the keyring itself, so
+    /// tokens never cross the D-Bus surface (RISK-002). `goa_account_path` is the
+    /// GOA account object path (e.g. `/org/gnome/OnlineAccounts/Accounts/...`).
+    async fn complete_auth_via_goa(&self, goa_account_path: &str) -> zbus::Result<bool>;
 
     /// Log out the current user and revoke tokens.
     async fn logout(&self) -> zbus::Result<()>;
@@ -231,17 +229,12 @@ impl DbusClient {
         Ok(proxy.complete_auth(code, state).await?)
     }
 
-    /// Complete auth with pre-obtained tokens from GNOME Online Accounts.
-    pub async fn complete_auth_with_tokens(
-        &self,
-        access_token: &str,
-        refresh_token: &str,
-        expires_at_unix: i64,
-    ) -> Result<bool, DbusError> {
+    /// Complete auth via an existing GNOME Online Accounts account. The daemon
+    /// fetches the tokens from GOA and persists them in the keyring; tokens never
+    /// cross the D-Bus surface (RISK-002). Pass the GOA account object path.
+    pub async fn complete_auth_via_goa(&self, goa_account_path: &str) -> Result<bool, DbusError> {
         let proxy = LnxdriveAuthProxy::new(&self.connection).await?;
-        Ok(proxy
-            .complete_auth_with_tokens(access_token, refresh_token, expires_at_unix)
-            .await?)
+        Ok(proxy.complete_auth_via_goa(goa_account_path).await?)
     }
 
     /// Log out the current user.

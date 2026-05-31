@@ -19,47 +19,16 @@ pub async fn has_lnxdrive_goa_account() -> bool {
     }
 }
 
-/// Retrieves OAuth2 tokens from the existing GOA account.
+/// Returns the D-Bus object path of the existing "lnxdrive_microsoft" GOA
+/// account, if any.
 ///
-/// Returns (access_token, refresh_token, expires_at_unix) on success.
-pub async fn get_goa_tokens() -> Result<(String, String, i64), String> {
-    let path = find_goa_account_path()
+/// Post-RISK-002 the client no longer fetches tokens itself: it hands this path
+/// to the daemon via `Auth.CompleteAuthViaGOA`, and the daemon reads the tokens
+/// from GOA and stores them in the keyring, so tokens never cross D-Bus.
+pub async fn lnxdrive_goa_account_path() -> Result<Option<String>, String> {
+    find_goa_account_path()
         .await
-        .map_err(|e| format!("D-Bus error: {e}"))?
-        .ok_or_else(|| "No LNXDrive GOA account found".to_string())?;
-
-    let conn = Connection::session()
-        .await
-        .map_err(|e| format!("Session bus: {e}"))?;
-
-    // Call GetAccessToken on the OAuth2Based interface
-    let msg = conn
-        .call_method(
-            Some(GOA_BUS_NAME.into()),
-            &path,
-            Some("org.gnome.OnlineAccounts.OAuth2Based".into()),
-            "GetAccessToken",
-            &(),
-        )
-        .await
-        .map_err(|e| format!("GetAccessToken: {e}"))?;
-
-    let (access_token, expires_in): (String, i32) = msg
-        .body()
-        .deserialize()
-        .map_err(|e| format!("Deserialize: {e}"))?;
-
-    // GOA doesn't expose refresh_token via D-Bus; the GOA daemon manages it.
-    // For daemon-side refresh, we pass a sentinel and rely on GOA-aware refresh.
-    let refresh_token = "__goa_managed__".to_string();
-
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs() as i64;
-    let expires_at = now + expires_in as i64;
-
-    Ok((access_token, refresh_token, expires_at))
+        .map_err(|e| format!("D-Bus error: {e}"))
 }
 
 /// Finds the D-Bus object path of the first GOA account with provider
@@ -70,9 +39,9 @@ async fn find_goa_account_path() -> Result<Option<String>, zbus::Error> {
     // Use the ObjectManager to enumerate all GOA accounts
     let msg = conn
         .call_method(
-            Some(GOA_BUS_NAME.into()),
+            Some(GOA_BUS_NAME),
             GOA_MANAGER_PATH,
-            Some("org.freedesktop.DBus.ObjectManager".into()),
+            Some("org.freedesktop.DBus.ObjectManager"),
             "GetManagedObjects",
             &(),
         )
