@@ -544,13 +544,20 @@ impl Filesystem for LnxDriveFs {
             "LnxDrive FUSE filesystem initialized"
         );
 
-        // T086: Start the periodic dehydration sweep task
+        // T086: Start the periodic dehydration sweep task.
+        //
+        // `init()` runs on fuser's own OS thread, which has no Tokio runtime in
+        // its thread-local context, so `start_periodic()`'s `tokio::spawn` would
+        // panic with "there is no reactor running". Enter the runtime we already
+        // hold in `self.rt_handle` (the same one used for `block_on` above) for
+        // the duration of the spawn so the sweep task is registered correctly.
         if let Some(manager) = &self.dehydration_manager {
             let interval = manager.policy().interval_minutes;
             tracing::info!(
                 interval_minutes = interval,
                 "Starting periodic dehydration sweep"
             );
+            let _guard = self.rt_handle.enter();
             let task = manager.clone().start_periodic();
             self.dehydration_task = Some(task);
         }
@@ -1106,9 +1113,16 @@ impl Filesystem for LnxDriveFs {
 
         debug!("opendir: opened directory ino={} with fh={}", ino, fh);
 
-        // Reply with the file handle and FOPEN_KEEP_CACHE flag
-        // FOPEN_KEEP_CACHE tells the kernel to keep cached directory data
-        reply.opened(fh, FOPEN_KEEP_CACHE);
+        // Reply with the file handle and NO cache flags.
+        //
+        // `FOPEN_KEEP_CACHE` on a directory tells the kernel its cached listing
+        // is still valid, so after the first open the kernel serves the cached
+        // page and stops issuing `readdir` calls. Because the listing is
+        // populated lazily by `readdir`, the very first open caches an *empty*
+        // directory and the kernel then never calls `readdir` at all — `ls`
+        // shows nothing. The contents are also dynamic (the sync engine adds and
+        // removes entries), so the kernel must re-issue `readdir` on each open.
+        reply.opened(fh, 0);
     }
 
     /// Releases (closes) an open directory.

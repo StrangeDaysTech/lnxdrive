@@ -1026,3 +1026,30 @@ async fn test_get_items_for_dehydration_excludes_pinned_and_modified() {
     assert_eq!(candidates[0].id(), item_hydrated.id());
     assert!(matches!(candidates[0].state(), ItemState::Hydrated));
 }
+
+/// Regression: the FUSE inode must round-trip through the DB and survive a
+/// re-save. Previously `save_item`'s INSERT OR REPLACE omitted the `inode`
+/// column (resetting it to NULL on every re-save) and `sync_item_from_row`
+/// never read it back, so the filesystem re-allocated inodes on every mount.
+#[tokio::test]
+async fn test_save_item_preserves_and_reads_back_inode() {
+    let repo = setup().await;
+    let _account = create_test_account(&repo).await;
+    let item = create_test_sync_item();
+    let id = *item.id();
+
+    repo.save_item(&item).await.unwrap();
+    // A freshly saved item has no inode yet.
+    let loaded = repo.get_item(&id).await.unwrap().unwrap();
+    assert_eq!(loaded.inode(), None);
+
+    // The FUSE layer assigns one out-of-band.
+    repo.update_inode(&id, 42).await.unwrap();
+    let with_inode = repo.get_item(&id).await.unwrap().unwrap();
+    assert_eq!(with_inode.inode(), Some(42), "inode must be read back from the row");
+
+    // Re-saving the item must NOT wipe the inode.
+    repo.save_item(&with_inode).await.unwrap();
+    let after = repo.get_item(&id).await.unwrap().unwrap();
+    assert_eq!(after.inode(), Some(42), "re-saving must preserve the inode");
+}
