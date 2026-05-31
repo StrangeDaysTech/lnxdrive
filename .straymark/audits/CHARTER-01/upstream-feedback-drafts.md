@@ -10,7 +10,8 @@
 > |---|---|---|---|
 > | 2a | `charter drift` rejects the range its Charter template ships | CLI/format friction (ad-hoc) | ✅ filed — [straymark#207](https://github.com/StrangeDaysTech/straymark/issues/207) |
 > | 2b | `charter audit --prepare` default range under-covers phase audits | Documentation gap (ad-hoc) | ✅ filed — [straymark#208](https://github.com/StrangeDaysTech/straymark/issues/208) |
-> | 1 | "declared but not wired" transfers to N=2 (crate/D-Bus surface) | Pattern candidate | 🕓 draft below — file at Charter close |
+> | 1 | "declared but not wired" — now N=3 (cross-component regression of a shipped mitigation, found in Fase 3) | Pattern candidate | ✅ filed — [straymark#209](https://github.com/StrangeDaysTech/straymark/issues/209) (advanced from Charter-close cadence: the Fase-3 panel audit produced the N=3 data point) |
+> | 4 | Charter scope declared against assumed (un-read) code → code-reconnaissance gate at creation | Process / methodology gap | ✅ filed — [straymark#210](https://github.com/StrangeDaysTech/straymark/issues/210) |
 > | 3 | External-audit calibration results (dual-model + calibrator-hunts-missed) | External audit results / pattern | 🕓 draft below — file at Charter close |
 >
 > The cadence committed in #205 is **per Charter close** for telemetry + audit
