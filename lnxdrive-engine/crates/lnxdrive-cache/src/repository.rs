@@ -264,9 +264,17 @@ fn sync_item_from_row(row: &SqliteRow) -> Result<SyncItem, CacheError> {
         "error_info": error_info_val,
     });
 
-    let item: SyncItem = serde_json::from_value(item_json).map_err(|e| {
+    let mut item: SyncItem = serde_json::from_value(item_json).map_err(|e| {
         CacheError::SerializationError(format!("Failed to reconstruct SyncItem from row: {}", e))
     })?;
+
+    // The FUSE inode is stored as its own (nullable) column rather than inside
+    // the serialized item, so it must be applied after deserialization.
+    // Without this the item always loads with inode = None and the filesystem
+    // re-allocates a fresh inode on every mount instead of reusing the stable
+    // one persisted by `update_inode`.
+    let inode: Option<i64> = row.get("inode");
+    item.set_inode(inode.map(|i| i as u64));
 
     Ok(item)
 }
@@ -596,12 +604,28 @@ impl IStateRepository for SqliteStateRepository {
             }
         };
 
+        // Preserve the FUSE inode across the UPSERT. `INSERT OR REPLACE` rewrites
+        // the whole row, so omitting `inode` would reset it to NULL on every
+        // re-save (e.g. after a sync state change), detaching the item from the
+        // inode the kernel already handed out. Use the item's own inode if it
+        // carries one, otherwise keep whatever is already stored.
+        let inode_to_store: Option<i64> = match item.inode() {
+            Some(i) => Some(i as i64),
+            None => sqlx::query_scalar::<_, Option<i64>>(
+                "SELECT inode FROM sync_items WHERE id = ?",
+            )
+            .bind(&id)
+            .fetch_optional(&self.pool)
+            .await?
+            .flatten(),
+        };
+
         sqlx::query(
             "INSERT OR REPLACE INTO sync_items \
              (id, account_id, local_path, remote_id, remote_path, state, \
               content_hash, local_hash, size_bytes, last_sync, \
-              last_modified_local, last_modified_remote, metadata, error_info) \
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              last_modified_local, last_modified_remote, metadata, error_info, inode) \
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(&id)
         .bind(&account_id)
@@ -617,6 +641,7 @@ impl IStateRepository for SqliteStateRepository {
         .bind(&last_modified_remote)
         .bind(&metadata)
         .bind(&error_info)
+        .bind(inode_to_store)
         .execute(&self.pool)
         .await?;
 

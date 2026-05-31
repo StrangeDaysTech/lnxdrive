@@ -63,13 +63,30 @@ impl InodeTable {
 
     /// Retrieve all child entries of a parent inode.
     ///
-    /// Returns a vector of all entries whose parent_ino matches the given value.
+    /// Returns all entries whose parent_ino matches the given value, sorted by
+    /// inode number. The sort is required for correctness, not just tidiness:
+    /// `readdir` paginates by positional offset and the kernel may fetch a
+    /// directory across several `readdir` calls. `DashMap` iteration order is
+    /// not stable between calls, so an unsorted result would reshuffle between
+    /// pages and the offset-based paging would skip or duplicate entries
+    /// (a large `ls` would non-deterministically lose files). Sorting by the
+    /// stable inode number gives a consistent order across pages.
     pub fn children(&self, parent_ino: u64) -> Vec<Arc<InodeEntry>> {
-        self.by_inode
+        let mut children: Vec<Arc<InodeEntry>> = self
+            .by_inode
             .iter()
-            .filter(|r| r.value().parent_ino().get() == parent_ino)
+            // Match entries whose parent is `parent_ino`, but never the entry
+            // itself: the root is its own parent (ino == parent_ino == 1) so it
+            // would otherwise list itself as a child — and with an empty name,
+            // which stalls `readdir` after `.`/`..`.
+            .filter(|r| {
+                let e = r.value();
+                e.parent_ino().get() == parent_ino && e.ino().get() != parent_ino
+            })
             .map(|r| Arc::clone(r.value()))
-            .collect()
+            .collect();
+        children.sort_by_key(|entry| entry.ino().get());
+        children
     }
 
     /// Look up a child entry by parent inode and name.
@@ -237,6 +254,46 @@ mod tests {
         // Test non-existent parent
         let no_children = table.children(999);
         assert_eq!(no_children.len(), 0);
+    }
+
+    /// Regression: `children()` must not return the entry that is its own parent
+    /// (the root, where ino == parent_ino == 1). Otherwise the root lists itself
+    /// — with an empty name — and `readdir` stalls after `.`/`..`, so `ls` of the
+    /// mount point shows nothing.
+    #[test]
+    fn test_children_excludes_self_referential_root() {
+        let table = InodeTable::new();
+
+        // Root: its own parent, empty name (as built in LnxDriveFs::init).
+        table.insert(make_test_entry(1, 1, "", true));
+        table.insert(make_test_entry(2, 1, "a.txt", false));
+        table.insert(make_test_entry(3, 1, "b.txt", false));
+
+        let children = table.children(1);
+        assert_eq!(children.len(), 2, "root must not list itself as a child");
+        assert!(children.iter().all(|e| e.ino().get() != 1));
+        let names: Vec<&str> = children.iter().map(|e| e.name()).collect();
+        assert_eq!(names, vec!["a.txt", "b.txt"]);
+    }
+
+    /// Regression: `children()` must return a stable order across calls.
+    /// `readdir` paginates by positional offset across multiple kernel calls;
+    /// an unstable order (raw `DashMap` iteration) would skip or duplicate
+    /// entries between pages. Sorting by inode gives a deterministic order.
+    #[test]
+    fn test_children_stable_sorted_order() {
+        let table = InodeTable::new();
+        table.insert(make_test_entry(1, 1, "", true));
+        // Insert out of inode order.
+        for ino in [7, 3, 9, 2, 5] {
+            table.insert(make_test_entry(ino, 1, &format!("f{ino}.txt"), false));
+        }
+
+        let inos: Vec<u64> = table.children(1).iter().map(|e| e.ino().get()).collect();
+        assert_eq!(inos, vec![2, 3, 5, 7, 9], "children must be sorted by inode");
+        // Repeated calls return the same order.
+        let inos2: Vec<u64> = table.children(1).iter().map(|e| e.ino().get()).collect();
+        assert_eq!(inos, inos2);
     }
 
     #[test]
