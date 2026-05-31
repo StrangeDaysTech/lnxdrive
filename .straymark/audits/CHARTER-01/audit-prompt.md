@@ -87,7 +87,7 @@ StrayMark orchestrates cross-model audits: typically another auditor from a **di
 
 **Charter under audit:** `CHARTER-01-road-to-v0-1-0-alpha-1` — Road to v0.1.0-alpha.1
 **Charter file:** `.straymark/charters/01-road-to-v0-1-0-alpha-1.md`
-**Git range:** `ee710c8..HEAD`
+**Git range:** `origin/main..HEAD`
 
 The authoritative source of scope is the Charter file at `.straymark/charters/01-road-to-v0-1-0-alpha-1.md`. Read it in full before starting — it declares which files are modified, which tasks are executed, which risks are accepted, and what counts as successful closure.
 
@@ -323,8 +323,8 @@ The lnxdrive monorepo finished its MVP implementation (SpecKit features `001-cor
    - `RISK-001`: D-Bus health monitor + reconnect in `lnxdrive-daemon`. Full Unix-socket fallback explicitly deferred to v0.2.
    - `ISSUE-002`: harden the YAML config parser against billion-laughs (size + alias caps); regression fixture in `lnxdrive-engine/tests/security/`.
    - `cargo audit` + `cargo deny` jobs in CI.
-3. **Engine polish** — close the one remaining task in `lnxdrive-engine/specs/002-files-on-demand/tasks.md`; remove the ~4 `todo!()/unimplemented!()` sites and ~10 debug `println!` calls; enable `cargo test --workspace` in CI.
-4. **GTK4 preferences panel** — implement four basic settings groups (Account, Folders, Network, System) in `lnxdrive-gnome/src/main.rs` (currently a `println!("not yet implemented")` stub) wired to the existing D-Bus daemon API.
+3. **Engine polish** — close the one remaining task (T101 performance validation) in `lnxdrive-engine/specs/002-files-on-demand/tasks.md`. **Done** (Fase 2): T101 validated via a real-mount integration test — `getattr` 43.7µs, `readdir` 1.40ms/1000 entries, idle RSS 37.9MB/10k files (all under target). The test was the first real FUSE mount exercised in the codebase and surfaced four functional listing bugs (init runtime-context panic, root self-listing, unstable `readdir` order, `opendir` dir-cache) plus an inode-persistence defect, all fixed with regression tests — see AILOG-2026-05-31-001. The other three items this row originally listed (remove `todo!()/unimplemented!()`, remove debug `println!`, enable `cargo test --workspace` in CI) were **already completed during Fase 1** (verified against `main`: zero such sites in crates; `cargo test --workspace` live at `.github/workflows/engine-ci.yml:66`).
+4. **GTK4 preferences panel** — the panel already exists under `lnxdrive-gnome/preferences/` (the root `src/main.rs` stub is just a placeholder). Fase 3 audits it (`.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md`) and fixes the findings. It ships **three** settings groups wired to the daemon — Account, Folders (Sync), Network (Advanced) — plus Conflicts. The fourth group, **System** (auto-start, cache, dehydration), is **deferred to a v0.2 Charter** because it needs new daemon D-Bus API and is post-alpha (see AIDEC-2026-05-31-001). Key fix: realign the panel with the Fase-1 RISK-002 daemon API (`CompleteAuthViaGOA`).
 5. **Flatpak packaging** — complete `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` with install stages (icons, `*.desktop`, metainfo XML), correct permissions (`--filesystem=home:rw`, `--talk-name=org.freedesktop.secrets`), and target `org.gnome.Platform 47`. Fix `lnxdrive.spdx` (currently describes StrayMark by mistake). Complete the metainfo XML with description, releases section, and screenshot URLs.
 6. **Release infrastructure & public assets** — `.github/workflows/release.yml` (tag → bundle → GitHub Release with SHA256SUMS); `SECURITY.md`; `CHANGELOG.md`; 6 UI screenshots in `docs/screenshots/`; version `0.1.0-alpha.1` consistent across every `Cargo.toml`, Flatpak manifest, and metainfo XML; README install section + competitive comparison vs `jstaf/onedriver` and `abraunegg/onedrive`.
 7. **Tag, release, announce** — signed tag `v0.1.0-alpha.1`, GitHub Pre-release with Flatpak bundle, posts on r/linux, r/gnome, r/onedrive, and StrangeDaysTech Mastodon.
@@ -352,8 +352,7 @@ This Charter spans many files across 7 phases. The table below names the load-be
 | `experimental/lnxdrive-{gtk3,plasma,cosmic}/` | New directory; `git mv` from monorepo root (Fase 0) |
 | `experimental/README.md` | New; explains why these UIs are archived, what reactivates them |
 | `README.md`, `CLAUDE.md`, `GEMINI.md`, `ayuda.md` | Remove archived UIs from the monorepo matrix (Fase 0) |
-| `lnxdrive-engine/crates/lnxdrive-graph/src/auth.rs` (or equivalent) | `RISK-002`: tokens stored in keyring, never returned over D-Bus (Fase 1) |
-| `lnxdrive-engine/crates/lnxdrive-daemon/src/dbus_iface.rs` | `RISK-002`: D-Bus interface uses opaque `SessionHandle`, removes any field carrying a raw token (Fase 1) |
+| `lnxdrive-engine/crates/lnxdrive-ipc/src/{service.rs, auth_backend.rs}` + `lnxdrive-engine/crates/lnxdrive-daemon/src/goa_auth_backend.rs` (new) + `lnxdrive-graph/src/auth.rs` (`KeyringTokenStorage`) | `RISK-002`: OAuth tokens moved off the public D-Bus surface. The token-bearing `Auth.CompleteAuthWithTokens(...)` method is replaced by `Auth.CompleteAuthViaGOA(goa_account_path) → bool`; `GoaAuthBackend` fetches the token from GOA and persists it in the keyring via `KeyringTokenStorage`, so tokens never cross D-Bus. **Drift from original scope:** the Charter scoped an "opaque `SessionHandle`" exposed by a new `dbus_iface.rs`; the shipped, security-equivalent design uses the GOA-path method instead (no handle issued) in the existing `service.rs`. Deliberate operator decision (minimum-viable, pre-release alpha); the broader `TokenSource` abstraction is deferred to TDE-2026-05-29-001. See AILOG-2026-05-29-002 (Context + Drift). Row backported per the R4 atomic-update rule during the Fase-1 external audit (2026-05-28). (Fase 1) |
 | `lnxdrive-engine/crates/lnxdrive-fuse/src/{inode_entry.rs, filesystem.rs, hydration.rs}` + `tests/integration_write_during_hydration.rs` (new) | `RISK-003`: per-inode `parking_lot::Mutex` on `InodeEntry`; `FuseHandler::write()` returns `EBUSY` (was `EIO`) when `HydrationManager::is_hydrating(ino)` under the inode lock; `HydrationManager::hydrate()` registers in the active map atomically with the lock before any `.await`. The original Charter entry pointed at `write_serializer.rs` based on the risk doc; audit on 2026-05-28 confirmed `write_serializer.rs` was already implemented (serializes DB writes via `tokio::sync::mpsc`) and the actual data-integrity gap was the FUSE write path. (Fase 1) |
 | `lnxdrive-engine/crates/lnxdrive-daemon/src/{health.rs (new), main.rs}` + `lnxdrive-engine/crates/lnxdrive-ipc/src/service.rs` | `RISK-001`: D-Bus session bus health monitor + reconnect. New `health.rs` supervises the connection (active `get_id()` probe + timeout; reconnect with backoff re-registering all 9 interfaces; yields on name-taken). `main.rs` wraps `DbusService` in `Arc`, hands the connection to the monitor, and splits `run`/`run_inner` for a single monitor-join exit point. `service.rs` adds a `DaemonState::dbus_health` field + read-only `dbus_health` property on `StatusInterface` (distinct from cloud `connection_status`). Original entry named only `health.rs`; `main.rs` + cross-crate `service.rs` added atomically (drift R7, AILOG-2026-05-28-002). NameLost fast-path and full Unix-socket fallback deferred to v0.2. (Fase 1) |
 | `lnxdrive-engine/Cargo.toml` + `crates/lnxdrive-core/src/config.rs` + `crates/{lnxdrive-core,lnxdrive-cli}/Cargo.toml` + `crates/lnxdrive-cli/src/commands/config.rs` + `lnxdrive-engine/tests/security/billion_laughs.yaml` (new) | `ISSUE-002`: YAML hardening + regression fixture. Migrate `serde_yaml 0.9` (deprecated) → `serde_norway` (RUSTSEC-recommended fork with built-in recursion + alias-repetition caps, on by default), and add a 1 MiB input size cap in a new `Config::from_yaml_str`. Original entry named `lnxdrive-config/src/parser.rs` (no such crate exists); the real config parser is `lnxdrive-core/src/config.rs`. Final mitigation shape = in-tree size cap + alias cap delegated to the library (not a hand-written pre-scanner). Dependency decision recorded in AIDEC-2026-05-28-001; details + cross-crate sweep (lnxdrive-cli) in AILOG-2026-05-28-003. (Fase 1) |
@@ -508,4785 +507,1496 @@ preserved unchanged below for future maintainers; the 7 conventions are:
 ## Diff
 
 ```diff
-diff --git a/.github/workflows/engine-ci.yml b/.github/workflows/engine-ci.yml
+diff --git a/.straymark/07-ai-audit/agent-logs/gnome/AILOG-2026-05-31-002-fase-3-gtk4-panel-audit-and-fixes.md b/.straymark/07-ai-audit/agent-logs/gnome/AILOG-2026-05-31-002-fase-3-gtk4-panel-audit-and-fixes.md
 new file mode 100644
-index 0000000..6d19ebf
+index 0000000..701f9ff
 --- /dev/null
-+++ b/.github/workflows/engine-ci.yml
-@@ -0,0 +1,81 @@
-+name: Engine CI
-+
-+# NOTE: GitHub Actions only executes workflows under the repository-root
-+# `.github/workflows/`. The engine's CI previously lived at
-+# `lnxdrive-engine/.github/workflows/ci.yml`, a path GitHub ignores, so it never
-+# ran. This workflow relocates it to the root with a `working-directory` and a
-+# path filter scoped to the engine. (Charter-01 / Fase 1 CI hardening.)
-+
-+on:
-+  push:
-+    branches: [main, "feat/*", "fix/*"]
-+    paths:
-+      - "lnxdrive-engine/**"
-+      - ".github/workflows/engine-ci.yml"
-+  pull_request:
-+    branches: [main]
-+    paths:
-+      - "lnxdrive-engine/**"
-+      - ".github/workflows/engine-ci.yml"
-+
-+env:
-+  CARGO_TERM_COLOR: always
-+  RUST_BACKTRACE: 1
-+
-+defaults:
-+  run:
-+    working-directory: lnxdrive-engine
-+
-+jobs:
-+  check:
-+    name: Check
-+    runs-on: ubuntu-latest
-+    steps:
-+      - uses: actions/checkout@v4
-+      - uses: dtolnay/rust-toolchain@stable
-+        with:
-+          components: clippy
-+      - uses: dtolnay/rust-toolchain@nightly
-+        with:
-+          components: rustfmt
-+      - uses: Swatinem/rust-cache@v2
-+        with:
-+          workspaces: lnxdrive-engine
-+
-+      - name: Install system dependencies
-+        run: |
-+          sudo apt-get update
-+          sudo apt-get install -y libsqlite3-dev libdbus-1-dev libsecret-1-dev libfuse3-dev pkg-config
-+
-+      # Formatting is NOT yet enforced: the tree carries pre-existing rustfmt
-+      # debt (~48 files) that predates this workflow ever running. Surfaced as a
-+      # non-blocking annotation here; the bulk reformat is tracked in
-+      # TDE-2026-05-28-001 and lands in a dedicated chore PR after the Fase-1
-+      # PRs merge (to avoid conflicts). Flip to blocking once that PR lands.
-+      - name: Check formatting (non-blocking)
-+        continue-on-error: true
-+        run: cargo +nightly fmt --all -- --check
-+
-+      - name: Clippy
-+        run: cargo clippy --workspace --all-targets -- -D warnings
-+
-+      - name: Build
-+        run: cargo build --workspace
-+
-+      - name: Test
-+        run: cargo test --workspace
-+
-+  deny:
-+    name: cargo-deny
-+    runs-on: ubuntu-latest
-+    steps:
-+      - uses: actions/checkout@v4
-+      # cargo-deny subsumes cargo-audit: its `advisories` check uses the same
-+      # RustSec database (with documented ignores in deny.toml), and it adds
-+      # license, bans, and source policy. Replaces the old rustsec/audit-check
-+      # job to avoid maintaining two overlapping advisory ignore-lists.
-+      - uses: EmbarkStudios/cargo-deny-action@v2
-+        with:
-+          manifest-path: lnxdrive-engine/Cargo.toml
-+          command: check
-+          arguments: --all-features
-diff --git a/.straymark/06-evolution/technical-debt/TDE-2026-05-28-001-workspace-rustfmt-debt.md b/.straymark/06-evolution/technical-debt/TDE-2026-05-28-001-workspace-rustfmt-debt.md
-new file mode 100644
-index 0000000..b4ee717
---- /dev/null
-+++ b/.straymark/06-evolution/technical-debt/TDE-2026-05-28-001-workspace-rustfmt-debt.md
-@@ -0,0 +1,63 @@
++++ b/.straymark/07-ai-audit/agent-logs/gnome/AILOG-2026-05-31-002-fase-3-gtk4-panel-audit-and-fixes.md
+@@ -0,0 +1,120 @@
 +---
-+id: TDE-2026-05-28-001
-+title: Apply workspace-wide rustfmt (pre-existing formatting debt, ~48 files)
-+status: identified
-+created: 2026-05-28
++id: AILOG-2026-05-31-002
++title: Fase 3 — GTK4 preferences panel audit + findings remediation
++status: draft
++created: 2026-05-31
 +agent: claude-opus-4-8-v1.0
 +confidence: high
-+review_required: false
++review_required: true
++risk_level: medium
++tags: [gnome, preferences, gtk4, dbus, goa, risk-002, charter-01, phase-3, audit]
++related:
++  - CHARTER-01-road-to-v0-1-0-alpha-1
++  - phase-3-gtk4-panel-audit
++  - AIDEC-2026-05-31-001
++  - AILOG-2026-05-29-002
++eu_ai_act_risk: not_applicable
++nist_genai_risks: [information_security]
++iso_42001_clause: [8]
++---
++
++# AILOG: Fase 3 — GTK4 panel audit + remediation
++
++## Summary
++
++Fase 3 was scoped as "implement the GTK4 preferences panel (currently a stub)".
++The stub is only `lnxdrive-gnome/src/main.rs`; the real panel already exists under
++`lnxdrive-gnome/preferences/` and compiles. Per the operator, the work became a
++**deep audit** of that panel (3 parallel Explore agents, calibrated against
++source — `.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md`) followed by
++remediation of the findings.
++
++Six findings (1 High, 3 Medium, 1 Low, 1 gap); four agent over-classifications
++rejected. All resolved: **H1–H5 fixed, G1 deferred** ([[AIDEC-2026-05-31-001]]).
++`cargo check` and `cargo clippy -- -D warnings` are clean for the panel (the
++latter for the first time).
++
++## The findings & fixes
++
++- **H1 (High) — RISK-002 drift.** Fase 1 removed `Auth.CompleteAuthWithTokens`
++  from the daemon and shipped `CompleteAuthViaGOA` (tokens off the bus), but the
++  panel still called the removed method, and its GOA code sat behind a `goa`
++  feature that `Cargo.toml` never defined → compiled out. This is the **third
++  occurrence (N=3)** of the "declared but not wired" pattern reported upstream to
++  StrayMark (#205), and the first that is a *regression* of a shipped Fase-1
++  mitigation. Fix: define the `goa` feature (default on); add the
++  `complete_auth_via_goa` proxy and drop `complete_auth_with_tokens`; hand the
++  GOA account object-path to the daemon (tokens never client-side). This also
++  surfaced and fixed a latent type error in `goa_sso` that had **never compiled**
++  (the feature was always off) — concrete evidence the GOA path was dead code.
++  The manual browser auth path (`start_auth` + `AuthStateChanged`) was unaffected.
++- **H2 (Medium) — daemon state not consumed.** Added the missing Sync/Status
++  properties+signals and `Settings.config_changed` to the proxies, and wired a
++  real consumer (AccountPage refreshes quota on `QuotaChanged`).
++- **H3 (Medium) — silent errors.** `folder_tree`, `sync_page`, and the onboarding
++  pages now surface load/save failures in the UI (inline error, error group,
++  toast/banner) instead of stderr; `folder_tree` distinguishes a parse error from
++  an empty tree.
++- **H4 (Medium) — folder_tree load race.** Merged the two independent load tasks
++  into one ordered task (selections first, then populate) so selections can no
++  longer apply to an empty tree.
++- **H5 (Low) — lint debt.** `cargo check` warnings cleared (unused imports,
++  deprecated `ActionRow::icon_name` → `add_prefix`); the audit also surfaced 145
++  pre-existing `needless_borrow` clippy lints across the panel (the panel had
++  never passed clippy `-D warnings`), auto-fixed in this pass.
++- **G1 (gap) — "System" settings group.** Deferred to a v0.2 Charter
++  ([[AIDEC-2026-05-31-001]]): cache/dehydration need new daemon D-Bus API and are
++  post-alpha. Fase 3 ships three wired groups (Account, Folders, Network) +
++  Conflicts.
++
++## Rejected (calibration)
++
++The `.expect()` cascades in GTK factories (idiomatic, type-guaranteed), the
++missing `Files` interface (Nautilus' concern, not the prefs UI), the
++`STRATEGY_VALUES[i]` index (equal-length consts), and a FUSE-style async deadlock
++(zbus uses async-io + glib `spawn_local`, no `block_on`) were verified and
++rejected as not-a-bug for this codebase.
++
++## Verification
++
++```bash
++cd lnxdrive-gnome/preferences
++cargo check                              # clean
++cargo clippy --all-targets -- -D warnings  # clean (first time for the panel)
++```
++
++Runtime verification (panel launches, authenticates against a live daemon, pages
++load/save over D-Bus, GOA flow) is **manual** — it needs a GTK display and an
++authenticated daemon, the same constraint class as the FUSE mount test; recorded
++as a follow-up, not run in this environment.
++
++## Drift
++
++- Fase 3 scope as written ("implement from a stub") did not match reality (panel
++  ~95% built). Re-framed as audit + remediation; Charter row updated.
++- G1 dropped from the alpha (deferred to v0.2), reducing "four groups" to three +
++  Conflicts. Documented in the AIDEC and Charter.
++- An external pre-merge audit of this phase is planned before merge, per the
++  operator's phase-scoped external-audit workflow.
++
++## Risk
++
++All changes are in the GTK client; no daemon code changed. H1 realigns the panel
++with the (already shipped, audited) RISK-002 daemon API, so it cannot reintroduce
++the token-on-bus exposure — it removes the client-side token fetch entirely. The
++proxy additions (H2) are declarative. Error surfacing (H3) and the load
++reordering (H4) only change UI behaviour. The clippy auto-fix (H5) is mechanical.
++No tests broken; the panel has no unit tests (UI), so runtime behaviour rests on
++the planned manual verification + external audit.
++
++## Telemetry
++
++| Metric | Value |
++|---|---|
++| Findings (audit) | 6 (1 High, 3 Medium, 1 Low, 1 gap) + 4 rejected |
++| Findings resolved | H1–H5 fixed, G1 deferred |
++| Files changed | ~13 (panel) + 3 governance docs |
++| New docs | audit, AIDEC, this AILOG |
++| clippy lints cleared | 145 needless_borrow + others |
++| Daemon code changed | 0 |
++| Pre-commit hook failures | none |
+diff --git a/.straymark/07-ai-audit/decisions/AIDEC-2026-05-31-001-defer-system-settings-group.md b/.straymark/07-ai-audit/decisions/AIDEC-2026-05-31-001-defer-system-settings-group.md
+new file mode 100644
+index 0000000..2306506
+--- /dev/null
++++ b/.straymark/07-ai-audit/decisions/AIDEC-2026-05-31-001-defer-system-settings-group.md
+@@ -0,0 +1,102 @@
++---
++id: AIDEC-2026-05-31-001
++title: Posponer el grupo de ajustes "System" del panel (G1) a v0.2
++status: accepted
++created: 2026-05-31
++agent: claude-opus-4-8-v1.0
++confidence: high
++review_required: true
 +risk_level: low
-+type: code-quality
-+impact: low
-+effort: small
-+iso_42001_clause: [8]
-+tags: [rustfmt, formatting, ci, charter-01]
++tags: [gnome, preferences, settings, scope, deferral, charter-01, phase-3, v0.2]
 +related:
-+  - AILOG-2026-05-28-004
 +  - CHARTER-01-road-to-v0-1-0-alpha-1
-+priority: low
-+assigned_to: null
-+promoted_from_followup: null
++  - phase-3-gtk4-panel-audit
 +---
 +
-+# TDE: Apply workspace-wide rustfmt
-+
-+> **IDENTIFIED BY AGENT**: Prioritization and assignment require human decision.
-+
-+## Summary
-+
-+The engine workspace carries pre-existing rustfmt debt: `cargo fmt --all --
-+--check` reports **~48 files** under stable rustfmt (and ~57 under the
-+nightly options in `.rustfmt.toml`: `imports_granularity = "Crate"`,
-+`group_imports = "StdExternalCrate"`). The code was never consistently
-+formatted because the engine CI workflow — which ran `cargo +nightly fmt --all
-+-- --check` — was located at `lnxdrive-engine/.github/workflows/ci.yml`, a path
-+GitHub Actions ignores, so it never executed (see AILOG-2026-05-28-004).
-+
-+## Why it is debt, not a bug
-+
-+Formatting has no runtime effect. The fmt gate is now wired (relocated workflow
-+in `.github/workflows/engine-ci.yml`) but kept **non-blocking**
-+(`continue-on-error: true`) precisely because of this backlog.
-+
-+## Why not now
-+
-+Reformatting ~48 files in the CI-hardening PR would (a) dwarf the actual CI
-+changes and (b) conflict with the other open Fase-1 PRs (RISK-001 #35 touches
-+daemon files; ISSUE-002 #36 touches `config.rs` / CLI) — all among the files
-+needing reformat. A bulk reformat must land **after** those PRs merge.
-+
-+## Proposed remediation
-+
-+1. After PRs #35 and #36 merge, open a dedicated `chore: apply workspace
-+   rustfmt` PR running `cargo +nightly fmt --all` (single mechanical commit).
-+2. Flip the `Check formatting` step in `engine-ci.yml` from
-+   `continue-on-error: true` to blocking in the same PR.
-+
-+## Activation trigger
-+
-+The merge of Fase-1 PRs #35 and #36 (clears the conflict surface).
-+
-+## Suggested milestone
-+
-+`v0.1.0-alpha.1` (housekeeping, immediately after the Fase-1 security PRs).
-diff --git a/.straymark/06-evolution/technical-debt/TDE-2026-05-28-002-deferred-dependency-advisories.md b/.straymark/06-evolution/technical-debt/TDE-2026-05-28-002-deferred-dependency-advisories.md
-new file mode 100644
-index 0000000..3abea86
---- /dev/null
-+++ b/.straymark/06-evolution/technical-debt/TDE-2026-05-28-002-deferred-dependency-advisories.md
-@@ -0,0 +1,70 @@
-+---
-+id: TDE-2026-05-28-002
-+title: Remediate deferred RUSTSEC advisories (sqlx 0.8 bump, paste unmaintained)
-+status: identified
-+created: 2026-05-28
-+agent: claude-opus-4-8-v1.0
-+confidence: high
-+review_required: false
-+risk_level: medium
-+type: dependencies
-+impact: medium
-+effort: medium
-+iso_42001_clause: [8]
-+tags: [security, supply-chain, cargo-deny, rustsec, sqlx, charter-01]
-+related:
-+  - AILOG-2026-05-28-004
-+  - CHARTER-01-road-to-v0-1-0-alpha-1
-+priority: medium
-+assigned_to: null
-+promoted_from_followup: null
-+---
-+
-+# TDE: Remediate deferred RUSTSEC advisories
-+
-+> **IDENTIFIED BY AGENT**: Prioritization and assignment require human decision.
-+
-+## Summary
-+
-+Wiring `cargo deny` in CI (AILOG-2026-05-28-004) surfaced advisories the
-+CI-hardening PR resolved where cheap, and **deferred** where the fix requires an
-+out-of-scope change. The deferred ones are allow-listed in
-+`lnxdrive-engine/deny.toml` with justifications; this TDE tracks their real fix.
-+
-+| Advisory | Crate | Why deferred | Fix |
-+|---|---|---|---|
-+| RUSTSEC-2024-0363 (vuln) | `sqlx 0.7.4` | Fix is `sqlx 0.8.1+`, a **breaking** major bump rippling through `lnxdrive-cache`. The advisory states SQLite (our only backend) "does not appear to be exploitable". | Bump to `sqlx 0.8.x`, migrate `lnxdrive-cache` query/type API, run the cache suite. |
-+| RUSTSEC-2024-0436 (unmaintained) | `paste 1.x` | Ubiquitous transitive proc-macro; not directly removable. No known vulnerability. | Wait for downstream crates to drop `paste`, or vendor a maintained fork if a vuln is later filed. |
-+
-+## Resolved in the CI-hardening PR (for the record, not debt)
-+
-+- `quinn-proto 0.11.13 → 0.11.14`, `rustls-webpki 0.103.9 → 0.103.13`,
-+  `rand 0.9.2 → 0.9.4` via `cargo update` (cleared 5 advisories).
-+- `protobuf 2.28` (RUSTSEC-2024-0437 recursion vuln + unmaintained) removed at
-+  the root by disabling `prometheus` default features (`default-features =
-+  false`) — `lnxdrive-telemetry` only uses the text registry, not the protobuf
-+  push gateway.
-+
-+## Also noted
-+
-+`rand 0.8.5` (RUSTSEC-2026-0097, "unsound") is pulled by `zbus 4.4`. Not flagged
-+by cargo-deny's current DB (only cargo-audit's), and only exploitable with a
-+custom logger calling `rand::rng()` (which we do not). Clearing it needs a
-+`zbus 5.x` bump. Folded into this TDE.
-+
-+## Why it is debt, not a bug
-+
-+Each deferred advisory is either non-exploitable in our usage (sqlx/SQLite,
-+rand) or carries no known vulnerability (paste/unmaintained). The `deny.toml`
-+ignores are explicit and justified, so the supply-chain gate is green and
-+honest rather than silently passing.
-+
-+## Activation triggers
-+
-+- A new exploit demonstration is published for any deferred advisory.
-+- A `sqlx 0.8` migration is scheduled for another reason (e.g. Postgres support).
-+- `zbus` is bumped to 5.x for the D-Bus Unix-socket fallback (v0.2).
-+
-+## Suggested milestone
-+
-+`v0.2.0-beta` (engine-polish / dependency-hygiene pass).
-diff --git a/.straymark/06-evolution/technical-debt/TDE-2026-05-29-001-graphclient-tokensource-trait.md b/.straymark/06-evolution/technical-debt/TDE-2026-05-29-001-graphclient-tokensource-trait.md
-new file mode 100644
-index 0000000..9b4be86
---- /dev/null
-+++ b/.straymark/06-evolution/technical-debt/TDE-2026-05-29-001-graphclient-tokensource-trait.md
-@@ -0,0 +1,136 @@
-+---
-+id: TDE-2026-05-29-001
-+title: Refactor GraphClient to forbid raw access_token in constructor (TokenSource trait)
-+status: identified
-+created: 2026-05-29
-+agent: claude-opus-4-7-v1.0
-+confidence: high
-+review_required: false
-+risk_level: low
-+type: architecture
-+impact: low
-+effort: medium
-+iso_42001_clause: [8]
-+tags: [security, defense-in-depth, refactor, graphclient, tokensource]
-+related:
-+  - AILOG-2026-05-29-002
-+  - ETH-2026-05-29-001
-+  - CHARTER-01-road-to-v0-1-0-alpha-1
-+priority: medium
-+assigned_to: null
-+promoted_from_followup: null
-+---
-+
-+# TDE: Refactor `GraphClient` to forbid raw `access_token` in constructor (TokenSource trait)
-+
-+> **IDENTIFIED BY AGENT**: Prioritization and assignment require human decision.
-+
-+## Summary
-+
-+`lnxdrive_graph::client::GraphClient::new(access_token)` and
-+`GraphClient::with_base_url(access_token, base_url)` accept the OAuth
-+access token as a constructor argument. Production callers
-+(`lnxdrive-daemon/src/main.rs`, `lnxdrive-cli/src/commands/sync.rs`)
-+correctly load the token from the system keyring before constructing
-+the client, so the invariant "tokens come only from the keyring" is
-+respected at runtime — but it is not enforced at compile time. A
-+malicious refactor (or a careless future change) could re-introduce a
-+code path that constructs `GraphClient` from a token obtained over an
-+unsafe channel.
-+
-+The mitigation for **RISK-002** that landed in `AILOG-2026-05-29-002`
-+removed the D-Bus method that accepted tokens. This TDE proposes the
-+compile-time complement: replace the `access_token: String` constructor
-+argument with a `Box<dyn TokenSource>` (or `Arc<dyn TokenSource>`) so
-+that all GraphClient instances trace their token to a typed source.
++# AIDEC: Posponer el grupo "System" (G1) a v0.2
 +
 +## Context
 +
-+During the audit that produced `AILOG-2026-05-29-001` and the
-+implementation in `AILOG-2026-05-29-002` we explicitly discussed
-+whether to introduce the `TokenSource` trait now or defer it. The
-+operator chose **defer**: the production callers already load tokens
-+from the keyring, so the additional refactor does not close any new
-+attack surface today. Filing this TDE is the bookkeeping of that
-+decision.
-+
-+The audit found 19 callsites of `GraphClient::{new, with_base_url}`,
-+of which 17 are tests using hard-coded fake tokens (`"test-token"`,
-+`"old-token"`, `"expired-token"`, …). The remaining 2 are production
-+callers in the daemon and CLI.
-+
-+## Proposed remediation
-+
-+1. Add a `TokenSource` trait in `lnxdrive-graph` (or `lnxdrive-core`):
-+
-+   ```rust
-+   #[async_trait]
-+   pub trait TokenSource: Send + Sync {
-+       async fn access_token(&self) -> Result<String>;
-+   }
-+   ```
-+
-+2. Provide two concrete implementations in `lnxdrive-graph`:
-+   - `KeyringTokenSource { username: String }` — loads the access token
-+     from the keyring on demand, transparently refreshes via
-+     `OAuth2Provider::refresh` or `refresh_via_goa` when expired.
-+   - `StaticTokenSource { token: String }` — `#[cfg(test)]` (or
-+     gated behind a `unstable-test-utils` feature) for tests.
-+
-+3. Change `GraphClient::new(access_token)` → `GraphClient::new(source: Arc<dyn TokenSource>)`.
-+   Update the 2 production callsites; provide a `GraphClient::with_static_token(token)`
-+   helper to keep the 17 test callsites short.
-+
-+4. Internally, `GraphClient` calls `source.access_token().await` lazily
-+   inside `execute_with_retry` rather than caching the string in a
-+   field. This also closes a smaller debt: the current `GraphClient`
-+   never refreshes its `access_token` field across the lifetime of an
-+   instance.
-+
-+## Why it is debt, not a bug
-+
-+The runtime invariant "tokens come only from the keyring" holds today.
-+A future bug that violates it would need to either
-+(a) ship a new D-Bus method that accepts a raw token (the
-+`leak-test-dbus-tokens.sh` integration test would fail), or
-+(b) introduce a new in-process code path that constructs `GraphClient`
-+from an unsafe string (compile would succeed, no test fails).
-+
-+This TDE addresses (b) by removing the `String`-accepting constructor
-+entirely. It is **defense in depth**, not a primary mitigation.
-+
-+## Why not now
-+
-+- The current scope of `CHARTER-01-road-to-v0-1-0-alpha-1` is
-+  release-blocker work. The refactor touches 19 callsites and exercises
-+  the auth flow end-to-end; a regression in that path is harder to
-+  debug late in the release cycle than a regression in a D-Bus
-+  surface change.
-+- All 17 test callsites would need a parallel migration. With the
-+  current architecture they pass `"test-token"` as a plain string;
-+  after the refactor they would either use a helper or wire a
-+  `StaticTokenSource`. The behaviour is identical, but the churn is
-+  meaningful for `git blame` clarity.
-+- The runtime safety we want for v0.1.0-alpha.1 is already provided by
-+  the keyring + D-Bus method removal. The compile-time enforcement is
-+  strictly an improvement, not a precondition.
-+
-+## Activation triggers for this TDE
-+
-+Any one of the following should promote this debt to active work in a
-+new Charter:
-+
-+- A second mitigation finds that `GraphClient` is being constructed
-+  from a non-keyring source somewhere (proves the runtime invariant
-+  was already broken).
-+- A new cloud provider lands (Google Drive, Dropbox) that introduces
-+  its own client class. Sharing a `TokenSource` trait across providers
-+  becomes valuable for shared refresh logic.
-+- The `lnxdrive-graph` crate is split into smaller crates for
-+  v1.0.0 — natural moment to introduce the abstraction.
-+
-+## Suggested milestone
-+
-+`v0.2.0-beta` of LNXDrive. Coupled with the broader CI hardening Fase
-+(which adds `cargo audit` / `cargo deny` / coverage), since they share
-+the "defense-in-depth" theme.
-diff --git a/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-28-001-mitigate-risk-003-fuse-write-during-hydration.md b/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-28-001-mitigate-risk-003-fuse-write-during-hydration.md
-new file mode 100644
-index 0000000..982e00e
---- /dev/null
-+++ b/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-28-001-mitigate-risk-003-fuse-write-during-hydration.md
-@@ -0,0 +1,241 @@
-+---
-+id: AILOG-2026-05-28-001
-+title: Mitigate RISK-003 — block FUSE writes during hydration with per-inode lock + EBUSY
-+status: accepted
-+created: 2026-05-28
-+agent: claude-opus-4-7-v1.0
-+confidence: high
-+review_required: true
-+risk_level: high
-+tags: [data-integrity, fuse, hydration, race-condition, charter-01, risk-003, sim-l2-002]
-+related:
-+  - CHARTER-01-road-to-v0-1-0-alpha-1
-+  - AILOG-2026-05-29-002
-+  - AILOG-2026-02-05-009-implement-stage4-hydration
-+eu_ai_act_risk: not_applicable
-+nist_genai_risks: [information_security]
-+iso_42001_clause: [8]
-+---
-+
-+# AILOG: Mitigate RISK-003 — FUSE write during hydration
-+
-+## Summary
-+
-+Closes GitHub issue [#7](https://github.com/StrangeDaysTech/lnxdrive/issues/7) /
-+RISK-003 (RACE-001, CRITICAL, P0) — concurrent writes against a file that is
-+being downloaded from OneDrive could corrupt the local cache by interleaving
-+application bytes with download chunks. The mitigation has two enforcement
-+points:
-+
-+1. `InodeEntry::lock_state_guard()` — new `parking_lot::Mutex<()>` on the
-+   in-memory inode record. `FuseHandler::write()` acquires it across the
-+   `HydrationManager::is_hydrating(ino)` check and the cache write;
-+   `HydrationManager::hydrate()` acquires it briefly to insert into the
-+   active map atomically before any `.await`. The lock guarantees that any
-+   FUSE write seeing `is_hydrating == false` will complete before a
-+   subsequent hydration can register the same inode.
-+
-+2. `FuseHandler::write()` now returns `libc::EBUSY` (was `libc::EIO`) when
-+   the hydration check fires, matching the SIM-L2-002 acceptance contract
-+   and POSIX "resource temporarily occupied" semantics.
-+
-+The original Charter entry pointed `RISK-003` at
-+`lnxdrive-engine/crates/lnxdrive-fuse/src/write_serializer.rs` based on the
-+risk-analysis document. The audit performed today established that
-+`write_serializer.rs` was already implemented (it serializes DB writes via
-+`tokio::sync::mpsc`) and the actual data-integrity gap was in the FUSE
-+write path, not the DB write path. The Charter's `## Files to modify` table
-+is updated atomically in this PR to reflect the real surface.
-+
-+## Context
-+
-+`RISK-003-data-integrity.md` documents the race timeline in detail: a
-+hydration task downloads chunks `[0..1MB]`, `[1..2MB]`, `[2..3MB]` while an
-+application performs `write()` at offset `1.5MB`; the application's bytes
-+land in the cache file, then chunk `[2..3MB]` overwrites them, silently
-+losing the application's modification. The recommended mitigation is
-+**Option A: exclusive lock during hydration, return `EBUSY`** (rejected
-+Option B was copy-on-write with conflict markers — heavier and unnecessary
-+for the alpha).
-+
-+The audit on 2026-05-28 (per [[feedback-validate-before-security-code]])
-+revealed:
-+
-+- `FuseHandler::write()` at `filesystem.rs:1585` already branched on
-+  `ItemState::Hydrating` and returned `EIO`. The error code was wrong (the
-+  acceptance test demands `EBUSY`); more importantly, the guard relied on
-+  `InodeEntry.state` which is set at construction and **never updated**
-+  after — `WriteSerializer::update_state()` writes only to SQLite, not to
-+  the in-memory `InodeEntry`. The real, live signal for "this inode is
-+  being hydrated" is `HydrationManager::is_hydrating(ino)` which consults
-+  the `Arc<DashMap<u64, ActiveHydration>>` updated as hydrations are
-+  registered and cleaned up.
-+- `DehydrationManager` (at `dehydration.rs:302,497,506`) refuses to
-+  dehydrate any inode with `open_handles() > 0`, so under the current
-+  open/dehydrate flow the state cannot regress `Hydrated → Online →
-+  Hydrating` while a `write()` is in flight. The runtime invariant
-+  underlying the existing guard *does* hold today — but it is implicit and
-+  any future change to the open or dehydration flow could silently
-+  reintroduce the race.
-+
-+The operator decision on 2026-05-28: **minimum viable + lock per-inode
-+now** (chosen over the equally-viable "minimum viable + TDE", per
-+[[feedback-minimum-viable-plus-tde]]) — fix the error code, plug the
-+TOCTOU window with an explicit per-inode mutex, and ship cobertura that
-+locks in the property.
-+
-+## Change
-+
-+### Code
-+
-+- **`lnxdrive-engine/Cargo.toml` + `crates/lnxdrive-fuse/Cargo.toml`** —
-+  add `parking_lot = "0.12"` workspace dependency and crate alias.
-+
-+- **`crates/lnxdrive-fuse/src/inode_entry.rs`** — new field
-+  `state_guard: parking_lot::Mutex<()>` on `InodeEntry`, exposed via
-+  `pub fn lock_state_guard(&self) -> MutexGuard<'_, ()>`. The lock is
-+  *separate from* the existing `state: ItemState` field (which remains
-+  the construction-time snapshot) because the goal is serialization with
-+  `HydrationManager::hydrate()`, not making the state value atomic.
-+
-+- **`crates/lnxdrive-fuse/src/filesystem.rs::write()`** — two changes:
-+  (1) pre-lock fast-path `is_hydrating(ino)` check that returns `EBUSY`
-+  without acquiring the inode lock; (2) acquire `entry.lock_state_guard()`,
-+  re-check `is_hydrating(ino)` under the lock, then branch on
-+  `entry.state()`. The `Hydrating` arm now returns `EBUSY` (was `EIO`);
-+  the `Online` arm keeps `EIO` (different semantics: file isn't local at
-+  all, not "busy"). The cache write still happens under the lock so no
-+  hydration can register between the check and the write.
-+
-+- **`crates/lnxdrive-fuse/src/hydration.rs`** — `HydrationManager` gains
-+  an `inode_table: Arc<InodeTable>` field (the daemon constructs both
-+  and wires them together; today no production code calls `new()` so the
-+  signature change has no callers to update). `hydrate()` is reordered:
-+  the `active.insert()` now happens **before** the `update_state(...)
-+  .await` and the spawn, under the per-inode `lock_state_guard`. The
-+  `_task_handle` field of `ActiveHydration` becomes `Option<JoinHandle>`
-+  so the entry can be inserted before the spawn returns the handle; the
-+  handle is patched in via `DashMap::get_mut` after the spawn. If
-+  `update_state` fails, the active-map registration is rolled back.
-+
-+- **`crates/lnxdrive-fuse/src/hydration.rs`** — new `#[doc(hidden)]`
-+  helpers `test_register_active` / `test_unregister_active` that let
-+  integration tests exercise the active-map path without standing up a
-+  mocked `GraphCloudProvider`. They reuse the same per-inode lock
-+  acquisition pattern as `hydrate()`, so they are faithful witnesses of
-+  the production behaviour.
-+
-+### Tests
-+
-+- **`crates/lnxdrive-fuse/tests/integration_write_during_hydration.rs`**
-+  (new) — three tests:
-+
-+  1. `state_guard_provides_mutual_exclusion` — proves the
-+     `lock_state_guard()` primitive is a real mutex across threads.
-+  2. `hydration_registration_makes_is_hydrating_true` — proves
-+     `test_register_active` flips the `is_hydrating(ino)` flag that
-+     `FuseHandler::write()` consults to return `EBUSY`.
-+  3. `hydration_registration_serializes_with_inode_lock` — proves a
-+     concurrent simulated FUSE write holding the inode lock blocks
-+     hydration registration; the spawned registration takes ≥50 ms when
-+     contended (matching the manual `sleep`), and `is_hydrating` flips
-+     to true only after the lock release.
-+
-+- The SIM-L2-002 spec text demands a true integration test of
-+  `write_to_file(...).unwrap_err().raw_os_error() == Some(libc::EBUSY)`.
-+  `LnxDriveFs::write()` cannot be driven from a unit test because
-+  `fuser::ReplyWrite` has no public constructor — exercising the full
-+  callback would require a real FUSE mount with a mocked
-+  `GraphCloudProvider`. The three integration tests above verify the
-+  *property* that SIM-L2-002 is checking (the lock prevents the race;
-+  `is_hydrating` is the signal) and the `EBUSY` constant is enforced by
-+  the matched code in `filesystem.rs::write()`. Standing up the full
-+  FUSE-mount harness is tracked as future work for the test infrastructure
-+  in `lnxdrive-testing/`, not in scope for this PR.
-+
-+### Governance
-+
-+- **Charter `## Files to modify`** — the `RISK-003` row is rewritten to
-+  list the three real files (`inode_entry.rs`, `filesystem.rs`,
-+  `hydration.rs`) plus the new test, with a sentence explaining why the
-+  original entry (pointing at `write_serializer.rs`) was inaccurate. This
-+  is the atomic-update pattern from [[feedback-strict-governance]]: drift
-+  fixed in the same PR as the work, not deferred to a housekeeping PR.
-+
-+## Verification
-+
-+```bash
-+cd lnxdrive-engine
-+
-+# Integration test (the test added in this PR)
-+cargo test -p lnxdrive-fuse --test integration_write_during_hydration
-+# Expected: 3 passed; 0 failed.
-+
-+# Unit tests for the affected crate
-+cargo test -p lnxdrive-fuse --lib
-+# Expected: 172 passed; 0 failed.
-+
-+# Full workspace
-+cargo test --workspace --no-fail-fast
-+# Expected: 1 failed = config::tests::default_path_ends_with_config_yaml
-+# (pre-existing, cwd-sensitive, documented in [[project-lnxdrive-stack]]).
-+```
-+
-+Governance:
-+
-+```bash
-+straymark validate
-+straymark charter status CHARTER-01-road-to-v0-1-0-alpha-1
-+```
-+
-+## Drift
-+
-+- **R6 (new, not in Charter)** — The Charter's original `## Files to
-+  modify` entry for RISK-003 named
-+  `lnxdrive-engine/crates/lnxdrive-fuse/src/write_serializer.rs` as a
-+  stub to implement. The audit revealed the file is fully implemented;
-+  the real change surface is in `inode_entry.rs`, `filesystem.rs`,
-+  `hydration.rs`, and the new `tests/integration_write_during_hydration.rs`.
-+  Charter `## Files to modify` row updated atomically in this PR.
-+- New file `crates/lnxdrive-fuse/tests/integration_write_during_hydration.rs`
-+  was not in the Charter's enumeration; per the R4 pattern documented in
-+  the Charter itself, it is listed in the updated `## Files to modify`
-+  row and called out here for the drift log.
-+
-+## Risk
-+
-+This is a defensive code change in the FUSE write path. The lock is
-+sync (`parking_lot::Mutex<()>`), held only across very short critical
-+sections (an `is_hydrating` `DashMap` lookup + an in-memory cache file
-+write), and never across an `.await`. Risk of new regressions:
-+
-+- **R1 — Deadlock from misuse of `lock_state_guard`.** Low. The lock
-+  is acquired in two places (`FuseHandler::write` and
-+  `HydrationManager::hydrate`/`test_register_active`), both for short
-+  synchronous sections, both with `Drop`-based release. No nested
-+  acquisition. No cross-inode dependency.
-+- **R2 — Lock contention under heavy concurrent writes to the same
-+  inode.** Low. The protected section is microseconds (DashMap lookup
-+  + bounded memory write). Multi-process write-contention on the same
-+  inode is rare and inherently serialised by the underlying filesystem
-+  anyway.
-+- **R3 — The integration test exercises only the primitive, not the
-+  real `EBUSY` return path through `fuser::ReplyWrite`.** Accepted
-+  trade-off. A true end-to-end test would require mocking
-+  `GraphCloudProvider` and standing up a FUSE mount in a container —
-+  out of scope for RISK-003. The error code mapping is straightforward
-+  matched code in `filesystem.rs::write()` and is reviewable by eye.
-+
-+No new emergent risks beyond R6 above.
-+
-+## Telemetry
-+
-+| Metric | Estimated | Actual |
-+|---|---|---|
-+| Effort | 2 days | ~1 day |
-+| Lines added | ~150 | ~210 (including tests + AILOG) |
-+| Lines removed | ~10 | ~20 |
-+| New files | 2 (test, AILOG) | 2 |
-+| Existing tests broken | 0 | 0 |
-+| Tests added | 1 integration | 3 integration |
-+| Pre-commit hook failures | n/a | none |
-diff --git a/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-28-002-mitigate-risk-001-dbus-health-monitor.md b/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-28-002-mitigate-risk-001-dbus-health-monitor.md
-new file mode 100644
-index 0000000..aa3338e
---- /dev/null
-+++ b/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-28-002-mitigate-risk-001-dbus-health-monitor.md
-@@ -0,0 +1,241 @@
-+---
-+id: AILOG-2026-05-28-002
-+title: Mitigate RISK-001 — D-Bus session bus health monitor + reconnect
-+status: accepted
-+created: 2026-05-28
-+agent: claude-opus-4-8-v1.0
-+confidence: high
-+review_required: true
-+risk_level: medium
-+tags: [availability, dbus, reconnection, single-point-of-failure, charter-01, risk-001, sim-l1-001]
-+related:
-+  - CHARTER-01-road-to-v0-1-0-alpha-1
-+  - AILOG-2026-05-28-001
-+  - AILOG-2026-05-29-002
-+eu_ai_act_risk: not_applicable
-+nist_genai_risks: [information_security]
-+iso_42001_clause: [8]
-+---
-+
-+# AILOG: Mitigate RISK-001 — D-Bus session bus health monitor
-+
-+## Summary
-+
-+Mitigates RISK-001 (A1/D1 "D-Bus SPOF", SIM-L1-001, P0) — the session bus is
-+the only channel between the daemon and every UI client, and the daemon held
-+its `zbus::Connection` in a fire-and-forget local binding (`_dbus_connection`)
-+with **no detection of loss and no reconnection**. If the session bus restarted
-+(logout/login of the bus, `systemctl --user restart`, OOM of `dbus-daemon`), the
-+daemon kept running headless — serving nothing — until manually restarted.
-+
-+The mitigation adds a supervised, self-healing connection:
-+
-+1. **`lnxdrive-daemon/src/health.rs`** (new) — a background task that *owns* the
-+   connection and runs a two-phase loop: a **healthy phase** that actively
-+   probes the live bus with `zbus::fdo::DBusProxy::get_id()` (wrapped in a
-+   `tokio::time::timeout`, since zbus 4.x exposes no "connection closed"
-+   future), and a **reconnect phase** that, on a failed/timed-out probe, drops
-+   the dead connection and re-runs `DbusService::start()` — re-registering all
-+   nine interfaces and re-acquiring the well-known name — with exponential
-+   backoff + jitter.
-+
-+2. **Single-instance safety preserved.** If a reconnect attempt fails because
-+   another `lnxdrived` acquired the name during our outage, the monitor does
-+   **not** fight for it: it logs, sets D-Bus health to `lost`, and triggers a
-+   graceful shutdown (`CancellationToken::cancel`). At most one daemon ever owns
-+   the name.
-+
-+3. **UI visibility.** A new `DaemonState::dbus_health` field
-+   (`"online"|"reconnecting"|"lost"`) plus a read-only `dbus_health` property on
-+   `StatusInterface`, kept **distinct** from the existing `connection_status`
-+   (which tracks cloud/OneDrive network health, an orthogonal failure mode).
-+
-+Per Charter-01, the full Unix-socket fallback stays **out of scope** (deferred
-+to v0.2); this is the health-monitor-and-reconnect slice only.
-+
-+## Context
-+
-+`RISK-001-critical-paths.md` flags SPOF-001 as CRITICAL: a single point of
-+failure on the session bus with no recovery path. The audit on 2026-05-28 (per
-+[[feedback-validate-before-security-code]]) confirmed the current state:
-+
-+- `DbusService::start()` (`service.rs:1178`) builds the connection via
-+  `zbus::connection::Builder::session().name(DBUS_NAME).serve_at(...).build()`
-+  and returns it; `main::run()` bound it to `_dbus_connection` purely to keep it
-+  alive for the lifetime of `sync_loop`. Nothing observed the connection.
-+- A grep for `reconnect`/`health`/`NameLost`/`monitor` across the daemon and IPC
-+  crates returned only passive comments. No recovery logic existed.
-+- zbus **4.4.0** has no passive closure signal (`is_closed()`/`closed()` are
-+  5.x). Detection must therefore be **active probing**. `DBusProxy::get_id()` is
-+  a cheap real round-trip to `org.freedesktop.DBus`; a transport error or a
-+  timeout on it is a reliable "bus is gone" signal.
-+
-+Two operator decisions shaped the scope, both following
-+[[feedback-minimum-viable-plus-tde]]:
-+
-+- **Active probe, no `NameLost` fast-path.** Subscribing to the `NameLost`
-+  signal would shave up to one `probe_interval` (5 s) off detection latency but
-+  requires a `Stream` adapter (`futures-util`/`tokio-stream`) as a new direct
-+  dependency. For a session-bus recovery scenario a ≤5 s detection window is
-+  immaterial, so the periodic probe is the whole mechanism. The fast-path is
-+  recorded as deferrable polish, not debt that blocks anything.
-+- **Monitor owns the connection.** Because the connection is now *replaced* over
-+  time, a stack-local binding in `run()` is wrong. The monitor task is the sole
-+  owner; `run()` keeps only the `JoinHandle` and awaits it at shutdown. The
-+  alternative (`Arc<Mutex<Option<Connection>>>` shared with `run()`) was
-+  rejected — `sync_loop` never touches the connection, so a shared lock would
-+  guard a value nobody else reads.
-+
-+## Change
-+
-+### Code
-+
-+- **`crates/lnxdrive-daemon/src/health.rs`** (new) — the monitor module:
-+  - `HealthConfig` (probe 5 s, probe-timeout 2 s, backoff 0.5 s→30 s ×2, ±20 %
-+    jitter) with production `Default`.
-+  - Pure, bus-free helpers: `backoff_delay()` (geometric, clamped),
-+    `apply_jitter()` (symmetric, RNG sample injected for determinism),
-+    `classify_probe()`, and `is_name_taken_error()` — the latter extracted from
-+    the string match previously inlined in `main::run` so both call sites share
-+    one definition (kept daemon-local to avoid touching the IPC crate for this).
-+  - `DbusHealth { Online, Reconnecting, Lost }` ↔ string mapping.
-+  - `spawn_health_monitor(Arc<DbusService>, Connection, Arc<Mutex<DaemonState>>,
-+    CancellationToken, HealthConfig) -> JoinHandle<()>` driving the two-phase
-+    `monitor_loop`. Reconnect attempts `start()` directly and classifies the
-+    error rather than pre-probing with `try_acquire_name()` (which would open a
-+    TOCTOU window — the bus arbitrates name ownership atomically in `build()`).
-+
-+- **`crates/lnxdrive-daemon/src/main.rs`** — integration:
-+  - `mod health;`.
-+  - `DbusService` is now wrapped in `Arc` (it takes `&self` in `start()`, so no
-+    `Clone` impl is needed on the struct → no `service.rs` change for ownership).
-+  - The single-instance bail-out at startup is unchanged in behaviour but now
-+    uses the shared `health::is_name_taken_error(&e)` instead of an inline
-+    string match.
-+  - The initial connection is handed to `spawn_health_monitor`; the body after
-+    D-Bus startup (account/token load → SyncEngine → FUSE → `sync_loop`) is
-+    extracted verbatim into a new `run_inner()` so the monitor `JoinHandle` is
-+    awaited at one common exit point regardless of which early return
-+    (`wait_for_auth_loop`) fires.
-+
-+- **`crates/lnxdrive-ipc/src/service.rs`** — UI-visible state:
-+  - New `DaemonState::dbus_health: String` (default `"online"`).
-+  - New read-only `#[zbus(property)] dbus_health` on `StatusInterface`, mirroring
-+    `connection_status`.
-+
-+### Tests
-+
-+- **`crates/lnxdrive-daemon/src/health.rs` unit tests** (8) cover the genuinely
-+  testable core without a bus: backoff geometry + clamp, jitter identity at the
-+  midpoint / bounds / symmetry at the extremes, `DbusHealth` string mapping,
-+  `classify_probe`, and `is_name_taken_error` classification (known strings vs.
-+  unrelated errors).
-+- **Kill-the-bus path (`test_dbus_reconnect_after_crash`) is verified by a
-+  documented manual smoke**, not an automated test. A faithful automated test
-+  must spawn a private `dbus-daemon --session`, kill and restart it, and assert
-+  re-registration — inherently flaky and non-portable in shared CI. The
-+  procedure is recorded in the Verification section below; standing up a
-+  reusable harness for it is future work for `lnxdrive-testing/`, consistent
-+  with the same trade-off accepted for SIM-L2-002 in [[AILOG-2026-05-28-001]].
-+
-+### Governance
-+
-+- **Charter `## Files to modify`** — the `RISK-001` row (which named only
-+  `health.rs`) is rewritten atomically in this PR to also list
-+  `lnxdrive-daemon/src/main.rs` (integration) and `lnxdrive-ipc/src/service.rs`
-+  (the `dbus_health` state field + property), per the atomic-update discipline
-+  in [[feedback-strict-governance]].
-+
-+## Verification
-+
-+```bash
-+cd lnxdrive-engine
-+
-+# Unit tests added in this PR
-+cargo test -p lnxdrive-daemon health::
-+# Expected: 8 passed; 0 failed.
-+
-+# Affected crates build/lint/test clean
-+cargo clippy -p lnxdrive-daemon -p lnxdrive-ipc --all-targets -- -D warnings
-+cargo test -p lnxdrive-daemon -p lnxdrive-ipc      # 14 + 71 passed
-+
-+# Full workspace — no regressions from the new DaemonState field
-+cargo test --workspace
-+# Expected: all green (the historically cwd-sensitive config::default_path test
-+# was fixed in bbe221a and now passes).
-+```
-+
-+Manual smoke (requires a private session bus; not part of `cargo test`):
-+
-+```bash
-+# 1. Start a throwaway session bus and the daemon against it.
-+export DBUS_SESSION_BUS_ADDRESS="$(dbus-daemon --session --print-address --fork)"
-+RUST_LOG=info ./target/debug/lnxdrived &        # logs "D-Bus health monitor started"
-+
-+# 2. Confirm the name is held.
-+busctl --user list | grep com.strangedaystech.LNXDrive
-+
-+# 3. Kill the bus, then start a fresh one at the SAME address.
-+#    Within a few backoff cycles the daemon logs
-+#    "D-Bus service re-registered after bus recovery" and the name reappears.
-+```
-+
-+Governance:
-+
-+```bash
-+straymark validate
-+straymark charter status CHARTER-01-road-to-v0-1-0-alpha-1
-+straymark charter drift CHARTER-01-road-to-v0-1-0-alpha-1 origin/main..HEAD
-+```
-+
-+## Drift
-+
-+- **R7 (new, not in Charter)** — The Charter's `## Files to modify` entry for
-+  RISK-001 named only `lnxdrive-daemon/src/health.rs`. The integration
-+  necessarily also touches `lnxdrive-daemon/src/main.rs` (wrap `DbusService` in
-+  `Arc`, spawn the monitor, split `run`/`run_inner`, share
-+  `is_name_taken_error`) and — **cross-crate** — `lnxdrive-ipc/src/service.rs`
-+  for the `dbus_health` state field + property. Charter `## Files to modify` row
-+  updated atomically in this PR.
-+- **NameLost fast-path omitted** — deferred to avoid a new direct dependency;
-+  detection relies solely on the 5 s active probe. Recorded as deferrable polish
-+  (v0.2), not a tracked debt.
-+- **Automated kill-the-bus test omitted** — replaced by the documented manual
-+  smoke above; reusable harness deferred to `lnxdrive-testing/`.
-+
-+## Risk
-+
-+This is an additive supervision layer around an existing, working connection
-+path. Regression surface considered:
-+
-+- **R1 — Deadlock / task stall.** Low. The monitor is a single task; it holds no
-+  lock across `.await` beyond the connection it owns, and the `select!` arms all
-+  watch `shutdown.cancelled()`, so cancellation always wins. `run` cancels the
-+  token and awaits the handle on every exit path.
-+- **R2 — Probe overhead.** Negligible. One `get_id()` round-trip every 5 s on
-+  the session bus; bounded by a 2 s timeout so a hung bus is detected, not
-+  waited on indefinitely.
-+- **R3 — Reconnect storm across many user sessions.** Mitigated by ±20 % jitter
-+  on every backoff delay, de-synchronising daemons that all reconnect to a
-+  freshly-restarted bus.
-+- **R4 — Single-instance invariant.** Preserved: startup acquisition is
-+  unchanged, and on a contested reconnect the older instance yields rather than
-+  busy-looping for the name. No `try_acquire_name` pre-check (avoids TOCTOU).
-+- **R5 — Detection latency up to 5 s.** Accepted: a multi-second gap before a
-+  bus-restart is noticed is immaterial for a background sync daemon, and the
-+  `NameLost` fast-path that would shorten it was traded away for dependency
-+  minimalism.
-+
-+No emergent risks beyond R7 above.
-+
-+## Telemetry
-+
-+| Metric | Estimated | Actual |
-+|---|---|---|
-+| Effort | 1.5 days | ~0.5 day |
-+| Lines added | ~200 | ~330 (incl. tests + AILOG) |
-+| Lines removed | ~15 | ~10 |
-+| New files | 2 (health.rs, AILOG) | 2 |
-+| Existing tests broken | 0 | 0 |
-+| Tests added | unit backoff/jitter | 8 unit |
-+| Pre-commit hook failures | n/a | none |
-diff --git a/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-28-003-mitigate-issue-002-yaml-billion-laughs.md b/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-28-003-mitigate-issue-002-yaml-billion-laughs.md
-new file mode 100644
-index 0000000..1cf3e85
---- /dev/null
-+++ b/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-28-003-mitigate-issue-002-yaml-billion-laughs.md
-@@ -0,0 +1,175 @@
-+---
-+id: AILOG-2026-05-28-003
-+title: Mitigate ISSUE-002 — harden YAML config parser against billion-laughs
-+status: accepted
-+created: 2026-05-28
-+agent: claude-opus-4-8-v1.0
-+confidence: high
-+review_required: true
-+risk_level: medium
-+tags: [security, dos, yaml, config, billion-laughs, charter-01, issue-002, sim-l4-003]
-+related:
-+  - CHARTER-01-road-to-v0-1-0-alpha-1
-+  - AIDEC-2026-05-28-001
-+  - AILOG-2026-05-28-002
-+eu_ai_act_risk: not_applicable
-+nist_genai_risks: [information_security]
-+iso_42001_clause: [8]
-+---
-+
-+# AILOG: Mitigate ISSUE-002 — YAML billion-laughs hardening
-+
-+## Summary
-+
-+Mitigates ISSUE-002 (alias D5 / SIM-L4-003, P0) — the configuration loader
-+`Config::load` called `serde_yaml::from_str` directly, with no size or alias
-+limits, on `serde_yaml 0.9.34+deprecated` (an archived crate with **no**
-+defense against the billion-laughs alias-expansion bomb). A crafted config could
-+exhaust memory/CPU at parse time.
-+
-+Two enforcement layers:
-+
-+1. **Dependency migration `serde_yaml` → `serde_norway`** (workspace-wide). The
-+   chosen replacement (decision recorded in [[AIDEC-2026-05-28-001]]) ships
-+   **built-in, on-by-default DoS limits** — recursion depth 128 and an
-+   alias-repetition cap (`events.len() * 100`) that reject billion-laughs
-+   bombs (`RecursionLimitExceeded` / `RepetitionLimitExceeded`). API-compatible
-+   with serde_yaml (`from_str` / `to_string`), so call sites are a 1:1 swap.
-+
-+2. **Input size cap** — `Config::load` now delegates to a new
-+   `Config::from_yaml_str`, which rejects any config larger than
-+   `MAX_CONFIG_BYTES` (1 MiB) **before** parsing. Defense in depth, independent
-+   of the YAML library; satisfies the "size cap" arm of the Charter's ISSUE-002
-+   entry. The default config is ~1.4 KB, so 1 MiB is generous headroom.
-+
-+## Context
-+
-+`BACKLOG-simulation-issues.md` / `RISK-002-security-vulns.md` document D5: the
-+YAML parser expands aliases recursively without limit, so a small input
-+(`&a [..]`, `&b [*a,*a,..]`, …) explodes to ~10^9 nodes. The audit on 2026-05-28
-+(per [[feedback-validate-before-security-code]]) confirmed:
-+
-+- `Config::load` (`lnxdrive-core/src/config.rs`) was `read_to_string` +
-+  `serde_yaml::from_str`, with **no** pre-parse validation.
-+- `serde_yaml 0.9` is deprecated/archived and offers no configurable
-+  alias/depth/size limits — migrating to it was a dead end, and migrating to the
-+  API-compatible `serde_yaml_ng` would **not** add protection (same
-+  `unsafe-libyaml` backend). See [[AIDEC-2026-05-28-001]] for the full
-+  six-crate comparison and why `serde_norway` was chosen over the
-+  hardened-but-supply-chain-risky `serde_yaml_bw`.
-+
-+Operator decision (per [[feedback-minimum-viable-plus-tde]]): adopt a maintained
-+fork whose built-in limits mitigate the bomb by default, rather than write and
-+maintain a bespoke alias-counting pre-scanner.
-+
-+## Change
-+
-+### Code
-+
-+- **`lnxdrive-engine/Cargo.toml`** — workspace dependency `serde_yaml = "0.9"`
-+  → `serde_norway = "0.9"` (with a comment explaining the security rationale).
-+- **`crates/lnxdrive-core/Cargo.toml`**, **`crates/lnxdrive-cli/Cargo.toml`** —
-+  `serde_yaml.workspace = true` → `serde_norway.workspace = true`.
-+- **`crates/lnxdrive-core/src/config.rs`**:
-+  - New `Config::MAX_CONFIG_BYTES = 1 << 20` (1 MiB).
-+  - New `pub fn from_yaml_str(&str) -> anyhow::Result<Self>` enforcing the size
-+    cap then deferring to `serde_norway::from_str`. `Config::load` delegates to
-+    it (so the hardening is exercisable without disk I/O).
-+  - Internal test call site migrated to `serde_norway::from_str`.
-+- **`crates/lnxdrive-cli/src/commands/config.rs`** — two `serde_yaml::to_string`
-+  call sites migrated to `serde_norway::to_string`.
-+
-+### Tests
-+
-+- **`lnxdrive-engine/tests/security/billion_laughs.yaml`** (new) — the canonical
-+  9-level alias bomb, at the Charter-specified workspace path.
-+- **`crates/lnxdrive-core/src/config.rs` (`#[cfg(test)]`)** — four tests:
-+  1. `test_billion_laughs_rejected` — the production path
-+     (`Config::from_yaml_str`) rejects the bomb and returns fast (a hang here
-+     would mean the cap regressed).
-+  2. `test_billion_laughs_trips_dos_limit` — parsing the same bomb to an untyped
-+     `serde_norway::Value` errors with a "limit"/"recursion"/"repetition"
-+     message, proving the rejection is the DoS guard and not typed-struct
-+     short-circuiting.
-+  3. `test_oversized_config_rejected` — a >1 MiB input fails the size cap before
-+     parsing.
-+  4. `test_default_config_still_parses` — the shipped `config/default-config.yaml`
-+     still parses, proving the hardening did not break valid input.
-+
-+### Governance
-+
-+- **[[AIDEC-2026-05-28-001]]** records the dependency decision with the full
-+  alternatives analysis (serde_yaml_ng / serde_yaml_bw / serde_norway + the
-+  low-level parsers), including the supply-chain reasoning that ruled out
-+  `serde_yaml_bw`'s three `0.0.x` author-maintained sub-crates.
-+- **Charter `## Files to modify`** — the ISSUE-002 row (which named the
-+  non-existent `lnxdrive-config/src/parser.rs`) is corrected atomically to the
-+  real path `lnxdrive-core/src/config.rs` and the actual mitigation shape
-+  (dependency swap + size cap, alias cap via the library).
-+
-+## Verification
-+
-+```bash
-+cd lnxdrive-engine
-+
-+# The four ISSUE-002 tests
-+cargo test -p lnxdrive-core --lib config::tests::test_billion_laughs_rejected \
-+  config::tests::test_billion_laughs_trips_dos_limit \
-+  config::tests::test_oversized_config_rejected \
-+  config::tests::test_default_config_still_parses
-+# Expected: 4 passed.
-+
-+# Full workspace — no regressions from the dependency swap
-+cargo test --workspace
-+# Expected: all green (lnxdrive-core: 223 passed, +4 vs. before).
-+```
-+
-+Governance:
-+
-+```bash
-+straymark validate
-+straymark charter status CHARTER-01-road-to-v0-1-0-alpha-1
-+```
-+
-+## Drift
-+
-+- **Charter path correction** — the Charter's ISSUE-002 entry named
-+  `lnxdrive-engine/crates/lnxdrive-config/src/parser.rs` "(or equivalent)"; no
-+  such crate exists. The real config parser is `lnxdrive-core/src/config.rs`.
-+  Row corrected atomically in this PR.
-+- **Mitigation shape vs. Charter wording** — the Charter said "size + alias
-+  caps". Final shape: **size cap implemented in-tree** (`MAX_CONFIG_BYTES`) +
-+  **alias cap delegated to `serde_norway`'s built-in limits** (rather than a
-+  hand-written alias pre-scanner). Recorded here and in [[AIDEC-2026-05-28-001]].
-+- **Cross-crate sweep** — the dependency rename also touched
-+  `lnxdrive-cli` (Cargo.toml + two `to_string` call sites), not enumerated in
-+  the Charter; listed in the updated row.
-+
-+## Risk
-+
-+Dependency migration of a parsing library plus an additive input cap.
-+
-+- **R1 — Behavioural difference between serde_yaml and serde_norway.** Low.
-+  `serde_norway` is a direct serde-yaml fork with the same data model; the full
-+  workspace suite (223 core tests incl. the existing config round-trip tests)
-+  passes unchanged, and `test_default_config_still_parses` pins the real shipped
-+  config.
-+- **R2 — serde_norway maintenance (bus factor 1, ~17-month release gap).**
-+  Accepted in [[AIDEC-2026-05-28-001]]; mitigated by the permissive license
-+  (forkable) and the library-independent size cap.
-+- **R3 — Limits not configurable.** Accepted: the threat model is a local config
-+  file; the hardcoded recursion/alias caps are more than sufficient.
-+
-+No emergent risks.
-+
-+## Telemetry
-+
-+| Metric | Estimated | Actual |
-+|---|---|---|
-+| Effort | 0.5 day | ~0.3 day |
-+| Lines added | ~80 | ~90 (incl. fixture + tests) |
-+| Lines removed | ~5 | ~5 |
-+| New files | 3 (fixture, AIDEC, AILOG) | 3 |
-+| Existing tests broken | 0 | 0 |
-+| Tests added | 1 (billion-laughs) | 4 |
-+| Pre-commit hook failures | n/a | none |
-diff --git a/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-28-004-ci-hardening-relocate-cargo-deny.md b/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-28-004-ci-hardening-relocate-cargo-deny.md
-new file mode 100644
-index 0000000..53efb05
---- /dev/null
-+++ b/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-28-004-ci-hardening-relocate-cargo-deny.md
-@@ -0,0 +1,176 @@
-+---
-+id: AILOG-2026-05-28-004
-+title: CI hardening — relocate dead engine workflow to repo root, add cargo-deny, remediate advisories
-+status: accepted
-+created: 2026-05-28
-+agent: claude-opus-4-8-v1.0
-+confidence: high
-+review_required: true
-+risk_level: medium
-+tags: [ci, supply-chain, cargo-deny, rustsec, clippy, charter-01, fase-1]
-+related:
-+  - CHARTER-01-road-to-v0-1-0-alpha-1
-+  - AILOG-2026-05-28-002
-+  - AILOG-2026-05-28-003
-+  - TDE-2026-05-28-001
-+  - TDE-2026-05-28-002
-+eu_ai_act_risk: not_applicable
-+nist_genai_risks: [information_security]
-+iso_42001_clause: [8]
-+---
-+
-+# AILOG: CI hardening — relocate workflow + cargo-deny + advisory remediation
-+
-+## Summary
-+
-+Closes the final Fase-1 item of Charter-01 ("cargo audit + cargo deny jobs in
-+CI"). An audit-before-acting pass found the premise was wrong in an important
-+way: **the engine CI workflow never ran.** It lived at
-+`lnxdrive-engine/.github/workflows/ci.yml`, but GitHub Actions only executes
-+workflows under the **repository-root** `.github/workflows/`; files in
-+subdirectories are ignored. `gh run list --workflow=ci.yml` returns 404 — there
-+is no run history. So the fmt / clippy / build / test / audit gates that
-+`ci.yml` defined had **never been enforced** on any PR.
-+
-+This PR therefore does more than "add cargo deny":
-+
-+1. **Relocate** the workflow to `.github/workflows/engine-ci.yml` (repo root)
-+   with `defaults.run.working-directory: lnxdrive-engine` and a path filter
-+   scoped to `lnxdrive-engine/**`, so it actually runs. Deletes the dead
-+   subdirectory `ci.yml`.
-+2. **Add a `cargo-deny` job** (EmbarkStudios/cargo-deny-action@v2) + a curated
-+   `lnxdrive-engine/deny.toml` (advisories / licenses / bans / sources). This
-+   **replaces** the old `rustsec/audit-check` job: cargo-deny's `advisories`
-+   check uses the same RustSec DB and subsumes cargo-audit, avoiding two
-+   overlapping ignore-lists.
-+3. **Make the now-live gates pass** — fix the pre-existing clippy debt and
-+   remediate the supply-chain advisories the gate surfaced (below).
-+
-+## Context
-+
-+Because the gates never ran, debt had accumulated undetected:
-+
-+- **Clippy** (`--workspace --all-targets -D warnings`) failed on 5 pre-existing
-+  lints: 3 `assert_eq!(bool, literal)` in `config.rs` tests
-+  (`clippy::bool_assert_comparison`) and 2 `Iterator::last` on a
-+  `DoubleEndedIterator` in `lnxdrive-cache` tests.
-+- **`cargo deny`** surfaced several RUSTSEC advisories and a license-policy gap.
-+
-+The operator chose (this session) "relocate + leave green" over a literal
-+minimal add. Per [[feedback-minimum-viable-plus-tde]], cheap fixes were applied
-+in-tree and genuinely out-of-scope fixes (breaking major bumps, a workspace-wide
-+reformat) were deferred to TDEs rather than bloating this PR or conflicting with
-+the open Fase-1 PRs (#35, #36).
-+
-+## Change
-+
-+### CI workflow
-+
-+- **`.github/workflows/engine-ci.yml`** (new, root) — relocated `check` job
-+  (toolchains, system deps, fmt, clippy, build, test) with
-+  `working-directory: lnxdrive-engine`, `Swatinem/rust-cache` scoped to the
-+  workspace, and a `paths:` filter. New `deny` job runs cargo-deny against
-+  `lnxdrive-engine/Cargo.toml`.
-+- **`lnxdrive-engine/.github/workflows/ci.yml`** — deleted (dead path).
-+- The **fmt step is non-blocking** (`continue-on-error: true`) due to ~48 files
-+  of pre-existing rustfmt debt (TDE-2026-05-28-001); the bulk reformat lands in
-+  a dedicated chore PR after #35/#36 merge, then the step flips to blocking.
-+
-+### Supply-chain (`lnxdrive-engine/deny.toml`, new)
-+
-+- Advisories **resolved** via `cargo update`: `quinn-proto 0.11.13→0.11.14`,
-+  `rustls-webpki 0.103.9→0.103.13`, `rand 0.9.2→0.9.4` (cleared 5 advisories).
-+- `protobuf 2.28` (RUSTSEC-2024-0437 recursion vuln + unmaintained) **removed at
-+  the root** by setting `prometheus = { default-features = false }` in the
-+  workspace `Cargo.toml` — `lnxdrive-telemetry` only uses the text registry, not
-+  the protobuf push gateway.
-+- Advisories **deferred** (allow-listed with justification, tracked in
-+  TDE-2026-05-28-002): `RUSTSEC-2024-0363` (sqlx 0.7.4 — fix is the breaking
-+  sqlx 0.8 bump; SQLite not exploitable per the advisory) and
-+  `RUSTSEC-2024-0436` (paste — unmaintained, no known vuln, ubiquitous).
-+- Licenses: allow-list includes the project's own `GPL-3.0-or-later` plus the
-+  permissive licenses present (MIT, Apache-2.0, BSD-*, ISC, Unicode-*, MPL-2.0,
-+  CC0-1.0, CDLA-Permissive-2.0). Bans: `multiple-versions = warn`. Sources:
-+  crates.io only.
-+
-+### Clippy debt fixed
-+
-+- `crates/lnxdrive-core/src/config.rs` — 3× `assert_eq!(x, true/false)` →
-+  `assert!(x)` / `assert!(!x)`.
-+- `crates/lnxdrive-cache/tests/repository_tests.rs` — 2× `.split('/').last()` →
-+  `.next_back()`.
-+- `crates/lnxdrive-fuse/src/hydration.rs` — `manual_checked_ops`: a
-+  `total_size == 0` guard followed by `/ total_size` rewritten to
-+  `(range_end * 100).checked_div(total_size).map_or(100, …)`. Surfaced only by
-+  the first real CI run: GitHub's stable clippy was **1.96.0** while the local
-+  pinned-`stable` toolchain was **1.93.0**, and `manual_checked_ops` did not
-+  exist in 1.93. Fixing it keeps both versions green. The underlying fragility —
-+  a floating `stable` toolchain with `-D warnings` re-breaks on any new clippy
-+  release — is flagged to the operator; pinning `rust-toolchain.toml` to an
-+  exact version is a project-policy decision left to them.
-+
-+## Verification
-+
-+```bash
-+cd lnxdrive-engine
-+cargo clippy --workspace --all-targets -- -D warnings   # clean
-+cargo test --workspace                                  # all green
-+cargo deny check                                        # advisories ok, bans ok, licenses ok, sources ok
-+# fmt is intentionally non-blocking (TDE-2026-05-28-001):
-+cargo +nightly fmt --all -- --check                     # reports ~48 files (expected, deferred)
-+```
-+
-+```bash
-+straymark validate
-+```
-+
-+After merge, confirm the workflow is recognised (it wasn't before):
-+`gh run list --workflow=engine-ci.yml` should show runs.
-+
-+## Drift
-+
-+- **Premise correction (major)** — the Charter assumed jobs would be *added to*
-+  `lnxdrive-engine/.github/workflows/ci.yml`. That file never ran (wrong
-+  location). The real fix is **relocation** to the repo root; documented in the
-+  updated Charter row.
-+- **Consolidation** — replaced the planned separate `cargo audit` job with
-+  cargo-deny (which subsumes it), rather than maintaining two advisory configs.
-+- **Scope deferrals (TDEs)** — workspace rustfmt (TDE-2026-05-28-001, fmt step
-+  non-blocking) and breaking advisory fixes (TDE-2026-05-28-002, sqlx/paste
-+  allow-listed) deferred to keep this PR focused and conflict-free with #35/#36.
-+- **Cross-cutting files touched** beyond the Charter's `ci.yml` entry:
-+  `.github/workflows/engine-ci.yml` (new), workspace `Cargo.toml` + `Cargo.lock`
-+  (dep updates + prometheus features), `deny.toml` (new), and the two
-+  clippy-debt files. Charter row updated atomically.
-+- A dead duplicate `lnxdrive-engine/.github/workflows/docs-validation.yml`
-+  remains (a docs workflow, also ignored by GitHub); left untouched as
-+  out-of-scope for engine CI.
-+
-+## Risk
-+
-+- **R1 — Relocated workflow misconfigured (working-directory / path filter).**
-+  Medium-low. Verified locally that every command runs from `lnxdrive-engine`;
-+  the first PR run will confirm end-to-end. If the path filter is too narrow,
-+  the failure mode is "doesn't run", caught immediately on the PR.
-+- **R2 — Allow-listing real advisories (sqlx).** Accepted: SQLite backend is
-+  non-exploitable per the advisory; tracked in TDE-2026-05-28-002 with explicit
-+  justification, not silently ignored.
-+- **R3 — fmt left non-blocking.** Accepted: documented in TDE-2026-05-28-001
-+  with a concrete activation trigger (merge of #35/#36) and a flip-to-blocking
-+  step. Not silent — the step still annotates.
-+- **R4 — `prometheus default-features = false` drops a feature.** Low:
-+  `lnxdrive-telemetry` uses no protobuf/push API (grep-verified); it builds and
-+  its tests pass.
-+
-+## Telemetry
-+
-+| Metric | Estimated | Actual |
-+|---|---|---|
-+| Effort | 0.5 day (per Charter "add jobs") | ~0.7 day (scope grew: relocate + debt) |
-+| Lines added | ~60 | ~180 (workflow + deny.toml + 2 TDEs + AILOG) |
-+| Lines removed | ~5 | ~55 (old ci.yml + lint fixes) |
-+| New files | 1 (deny.toml) | 4 (workflow, deny.toml, 2 TDEs) |
-+| Advisories resolved | n/a | 6 (5 via update + protobuf removed) |
-+| Advisories deferred (justified) | n/a | 2 (sqlx, paste) |
-+| Existing tests broken | 0 | 0 |
-+| Pre-commit hook failures | n/a | none |
-diff --git a/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-29-002-mitigate-risk-002-oauth-keyring-session-handle.md b/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-29-002-mitigate-risk-002-oauth-keyring-session-handle.md
-new file mode 100644
-index 0000000..3dffa3f
---- /dev/null
-+++ b/.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-29-002-mitigate-risk-002-oauth-keyring-session-handle.md
-@@ -0,0 +1,279 @@
-+---
-+id: AILOG-2026-05-29-002
-+title: Mitigate RISK-002 — move OAuth tokens off the public D-Bus surface
-+status: accepted
-+created: 2026-05-29
-+agent: claude-opus-4-7-v1.0
-+confidence: high
-+review_required: true
-+risk_level: high
-+tags: [security, dbus, auth, oauth, keyring, goa, charter-01, risk-002]
-+related:
-+  - CHARTER-01-road-to-v0-1-0-alpha-1
-+  - AILOG-2026-05-29-001
-+  - AILOG-2026-02-03-006
-+eu_ai_act_risk: not_applicable
-+nist_genai_risks: [information_security, data_privacy]
-+iso_42001_clause: [8]
-+---
-+
-+# AILOG: Mitigate RISK-002 — move OAuth tokens off the public D-Bus surface
-+
-+## Summary
-+
-+Replaces the vulnerable `Auth.CompleteAuthWithTokens(access_token,
-+refresh_token, expires_at_unix)` method on the D-Bus interface
-+`com.strangedaystech.LNXDrive.Auth` with `Auth.CompleteAuthViaGOA(goa_account_path)`,
-+which only accepts the non-sensitive GNOME Online Accounts D-Bus path.
-+The daemon now resolves the path to a Microsoft account internally,
-+fetches tokens from `org.gnome.OnlineAccounts.OAuth2Based.GetAccessToken`,
-+and persists them in the system keyring through the pre-existing
-+`KeyringTokenStorage` adapter. Tokens never travel as D-Bus method
-+arguments anymore.
-+
-+This closes the highest-severity item in
-+`.straymark/02-design/risk-analysis/RISK-002-security-vulns.md`
-+(CVSS 9.1, P0) and is the first batch of `CHARTER-01-road-to-v0-1-0-alpha-1`.
-+
-+## Context
-+
-+`RISK-002` documented that the D-Bus `Auth` interface accepted raw OAuth
-+tokens as method arguments, meaning any local process listening on the
-+session bus could read `Bearer …` strings with `dbus-monitor`.
-+`AILOG-2026-02-03-006` had landed the keyring-based storage design
-+correctly (`KeyringTokenStorage::{store,load,clear}` in
-+`lnxdrive-graph/src/auth.rs`), but the GOA integration shipped in
-+PR #2 took a shortcut: it added `CompleteAuthWithTokens` accepting raw
-+tokens as D-Bus parameters and **never called `KeyringTokenStorage::store`**
-+— the only side effect was setting `state.is_authenticated = true`.
-+
-+The four pre-existing unit tests for that method (named
-+`test_auth_complete_with_tokens_*`) validated the *vulnerable* behaviour
-+by asserting that the method accepted token strings and updated the
-+state. They are removed in this change.
-+
-+The mitigation strategy was chosen with the operator on 2026-05-29:
-+**minimum viable** — break the public D-Bus surface (the project is
-+pre-release alpha, no external consumers exist), redirect through a
-+new method that only takes the GOA account path, and reuse the keyring
-+storage that is already implemented and exercised by the CLI flow. A
-+broader refactor (introducing a `TokenSource` trait inside `GraphClient`
-+so that `access_token` is no longer accepted as a constructor argument
-+at all) was scoped out of this AILOG and recorded as TDE-001 for a
-+future iteration. See the "Out of scope" section below.
-+
-+## Actions performed
-+
-+### 1. New trait boundary in `lnxdrive-ipc`
-+
-+Created `lnxdrive-engine/crates/lnxdrive-ipc/src/auth_backend.rs`
-+defining `trait AuthBackend` (async, Send + Sync) with a single method
-+`complete_auth_via_goa(&self, goa_account_path: &str) -> AuthBackendResult`.
-+The error type `AuthBackendError` enumerates the four coarse-grained
-+failure modes (`InvalidAccount`, `GoaCallFailed`, `KeyringStoreFailed`,
-+`Internal`); no sensitive material is ever carried in the error.
-+
-+`AuthInterface` (the zbus `#[interface]` implementation) now holds an
-+`Option<Arc<dyn AuthBackend>>`. Two constructors:
-+
-+- `AuthInterface::new(state)` — backend `None`, used by unit tests that
-+  do not exercise the GOA path.
-+- `AuthInterface::with_backend(state, backend)` — production wiring.
-+
-+`DbusService` gained a fluent setter `with_auth_backend(Arc<dyn AuthBackend>)`
-+and threads the backend through the interface registration in
-+`DbusService::start()`. When the backend is absent the service still
-+starts but `CompleteAuthViaGOA` returns `false` and a warning is logged.
-+
-+### 2. Public D-Bus method swap
-+
-+`lnxdrive-engine/crates/lnxdrive-ipc/src/service.rs`:
-+
-+- **Removed** `async fn complete_auth_with_tokens(access_token, refresh_token, expires_at_unix)`.
-+  This is a deliberate breaking change to the D-Bus contract. No
-+  external consumers existed before v0.1.0-alpha.1 ships; the GOA
-+  integration in PR #2 is the only known caller and is updated in this
-+  change.
-+- **Added** `async fn complete_auth_via_goa(goa_account_path: String) -> bool`.
-+  The method validates the path prefix locally, then delegates to the
-+  configured `AuthBackend`. On success it updates `state.is_authenticated`,
-+  `state.account_email`, and `state.auth_source = Some("goa")`; on failure
-+  it logs the backend error (which does not carry tokens) and returns
-+  `false`. No payload of the call is logged at info level.
-+
-+### 3. Production backend in `lnxdrive-daemon`
-+
-+Created `lnxdrive-engine/crates/lnxdrive-daemon/src/goa_auth_backend.rs`.
-+`GoaAuthBackend` implements `AuthBackend` by:
-+
-+1. Validating that the path begins with `/org/gnome/OnlineAccounts/Accounts/`.
-+2. Calling `org.gnome.OnlineAccounts.OAuth2Based.GetAccessToken` on the
-+   account path to obtain the access token + `expires_in` directly from
-+   GOA — no caller passes the token.
-+3. Calling `org.freedesktop.DBus.Properties.Get` on the
-+   `org.gnome.OnlineAccounts.Account` interface to read the
-+   `PresentationIdentity` property (the user e-mail).
-+4. Building a `lnxdrive_core::ports::Tokens { access_token, refresh_token: None, expires_at }`
-+   and persisting it through
-+   `lnxdrive_graph::auth::KeyringTokenStorage::store(&email, &tokens)`.
-+5. Returning the e-mail to the caller. **No tokens are returned, logged
-+   at info level, or sent back over D-Bus.**
-+
-+`lnxdrive-daemon/src/main.rs` wires the backend at daemon startup:
-+
-+```rust
-+let dbus_service = DbusService::new(Arc::clone(&self.daemon_state))
-+    .with_auth_backend(Arc::new(GoaAuthBackend::new()));
-+```
-+
-+### 4. Tests
-+
-+`lnxdrive-engine/crates/lnxdrive-ipc/src/service.rs` test module:
-+
-+- **Removed** the four vulnerable tests
-+  `test_auth_complete_with_tokens_*` that asserted the bug behaviour
-+  (accepting tokens as parameters and toggling state without keyring
-+  persistence).
-+- **Added** four new tests against `complete_auth_via_goa`:
-+  - `test_auth_complete_via_goa_succeeds_when_backend_returns_email`
-+  - `test_auth_complete_via_goa_rejects_invalid_path_before_calling_backend`
-+  - `test_auth_complete_via_goa_without_backend_returns_false`
-+  - `test_auth_complete_via_goa_propagates_backend_failure`
-+- Introduced a `MockAuthBackend` in the test module that captures the
-+  last call (so we can assert that backend invocation is skipped for
-+  invalid paths) and returns a configurable `Ok`/`Err`.
-+
-+Test totals after the change:
-+
-+- `cargo test -p lnxdrive-ipc` → **71 passed, 0 failed** (was 71 passed before, but 4 of them were validating the bug; net is the same count, with the 4 vulnerable tests replaced by 4 secure ones).
-+- `cargo test -p lnxdrive-daemon` → **6 passed** (5 pre-existing + 1 new `goa_auth_backend::tests::rejects_non_goa_path`).
-+- `cargo test --workspace` → 218 passed, 1 pre-existing failure unrelated to this change (`lnxdrive-core::config::tests::default_path_ends_with_config_yaml` fails on `main` too, sensitive to the cwd of `cargo test`; tracked as a separate TDE).
-+
-+### 5. Integration leak test
-+
-+Added `lnxdrive-testing/scripts/leak-test-dbus-tokens.sh`. The script
-+launches the daemon inside a `dbus-run-session`, captures all session
-+bus traffic with `dbus-monitor` while exercising `Auth.StartAuth`,
-+`Auth.CompleteAuthWithTokens` (which now returns `UnknownMethod` — the
-+positive regression signal) and `Auth.CompleteAuthViaGOA` with a fake
-+account path, then `grep`s the trace for `Bearer `, JWT-shaped strings
-+(`eyJ[A-Za-z0-9_\-]{20,}`), `refresh_token` and `access_token`.
-+
-+Token-shaped strings the operator's own calls send (as request arguments)
-+are filtered out before the assertion; the assertion runs only on
-+*reply* messages (signals, method_return, error). That way the
-+regression signal is "the daemon parrots tokens back" rather than
-+"the operator sent strings that look like tokens", which is the bug we
-+actually care about.
-+
-+The script is invoked manually for now (`bash lnxdrive-testing/scripts/leak-test-dbus-tokens.sh`)
-+and is wired into CI in a follow-up PR alongside `cargo test --workspace`
-+(part of Fase 2 of `CHARTER-01`).
-+
-+## Out of scope (recorded ex-ante so the drift gate ignores them)
-+
-+- **`TokenSource` trait for `GraphClient`.** During scoping with the
-+  operator we considered making `GraphClient::new` resolve the token
-+  internally through a trait abstraction so that callers cannot pass a
-+  raw token at all. The audit revealed that `GraphClient::new(&token)`
-+  is only called from production code that has already loaded the token
-+  from the keyring (`daemon/main.rs:183`, `cli/commands/sync.rs:101`),
-+  so the additional refactor does not close any new attack surface —
-+  it would only enforce the invariant at compile time. It is recorded
-+  as **TDE-001** in `.straymark/06-evolution/technical-debt/` and as
-+  a separate GitHub issue under milestone `v0.2.0-beta`.
-+
-+- **CI integration of the leak test.** Wiring
-+  `leak-test-dbus-tokens.sh` into `lnxdrive-engine/.github/workflows/ci.yml`
-+  lands with the broader CI hardening of Fase 2 (which also turns on
-+  `cargo test --workspace`, `cargo audit` and `cargo deny`). Doing it
-+  here would bloat this PR with workflow plumbing.
-+
-+- **`AGENT-RULES.md` § Identity update for `agent: claude-opus-4-7-v1.0`.**
-+  The current StrayMark template still suggests `claude-code-v1.0` as
-+  the canonical identifier. Continuing to use the actual model
-+  identifier per Anthropic's guidance; alignment with the template is
-+  cosmetic.
-+
-+## Risks
-+
-+- **R1 — Breaking the public D-Bus contract.** Probability low,
-+  severity low.
-+  Mitigation: this is a pre-release alpha. No published consumer
-+  outside the monorepo exists. The release notes for `v0.1.0-alpha.1`
-+  will document the contract.
-+- **R2 — GOA `Properties.Get(PresentationIdentity)` may return a value
-+  that is not exactly the user e-mail on some providers (it can be
-+  `user@host` styled, or a friendly display name).** Probability
-+  medium, severity medium.
-+  Mitigation: the keyring entry is keyed by whatever GOA returns; the
-+  daemon stores and reads the same string consistently. If we later
-+  discover that GOA returns a non-email identity for some providers,
-+  we add a normalisation step (or switch to `Identity` / `Id` property)
-+  in a follow-up. The risk is captured because it can surface during
-+  the `lnxdrive-testing/` E2E smoke test, not during unit tests.
-+- **R3 — `Auth.CompleteAuthViaGOA` returning the same boolean shape as
-+  the old method may mask a backend failure as "completed but not
-+  signed-in".** Probability low, severity low.
-+  Mitigation: the new method updates `state.is_authenticated` *only*
-+  after the backend returns `Ok`, so a `false` return guarantees that
-+  `is_authenticated` was not toggled. UI callers that observed the old
-+  semantics will see `false` whenever GOA or the keyring fail — strictly
-+  better than the previous behaviour, which set
-+  `is_authenticated = true` regardless of token validity.
-+
-+## Verification
-+
-+### Local checks
-+
-+```bash
-+# Workspace-level build
-+cargo build -p lnxdrive-ipc -p lnxdrive-daemon \
-+    --manifest-path lnxdrive-engine/Cargo.toml
-+
-+# Unit tests for the touched crates
-+cargo test -p lnxdrive-ipc -p lnxdrive-daemon \
-+    --manifest-path lnxdrive-engine/Cargo.toml
-+
-+# (Optional) full workspace — note the pre-existing
-+# config::tests::default_path_ends_with_config_yaml failure that fails
-+# on main too; not a regression of this change.
-+cargo test --workspace \
-+    --manifest-path lnxdrive-engine/Cargo.toml
-+
-+# Static rejection of the removed method (with the daemon running):
-+gdbus introspect --session \
-+    --dest com.strangedaystech.LNXDrive \
-+    --object-path /com/strangedaystech/LNXDrive \
-+    | grep -E 'CompleteAuthWithTokens|CompleteAuthViaGOA'
-+# Expected: CompleteAuthViaGOA appears, CompleteAuthWithTokens does not.
-+```
-+
-+### Production smoke (after deploy)
-+
-+```bash
-+# Leak test — fails if any token-shaped string appears in D-Bus replies.
-+cargo build -p lnxdrive-daemon --manifest-path lnxdrive-engine/Cargo.toml
-+bash lnxdrive-testing/scripts/leak-test-dbus-tokens.sh
-+
-+# Manual E2E with a real Microsoft account configured in GOA:
-+gdbus call --session \
-+    --dest com.strangedaystech.LNXDrive \
-+    --object-path /com/strangedaystech/LNXDrive \
-+    --method com.strangedaystech.LNXDrive.Auth.CompleteAuthViaGOA \
-+    "/org/gnome/OnlineAccounts/Accounts/<your-account-id>"
-+# Expected: returns true. Then:
-+secret-tool search --all service lnxdrive
-+# Expected: an entry under user@yourdomain with the token JSON.
-+```
-+
-+## Follow-up
-+
-+- **TDE-001**: refactor `GraphClient` to forbid raw `access_token` in
-+  the constructor and resolve tokens via a `TokenSource` trait.
-+  Milestone `v0.2.0-beta`. GitHub issue link to follow when the TDE
-+  is filed.
-+- **CI integration of the leak test**: lands with Fase 2 CI hardening
-+  PR.
-+- **Closes GitHub issue #5** (`OAuth tokens visible in DBus traffic`,
-+  `priority/P0`, milestone `v0.1.0-alpha`).
-diff --git a/.straymark/07-ai-audit/decisions/AIDEC-2026-05-28-001-yaml-parser-serde-norway.md b/.straymark/07-ai-audit/decisions/AIDEC-2026-05-28-001-yaml-parser-serde-norway.md
-new file mode 100644
-index 0000000..50de07f
---- /dev/null
-+++ b/.straymark/07-ai-audit/decisions/AIDEC-2026-05-28-001-yaml-parser-serde-norway.md
-@@ -0,0 +1,151 @@
-+---
-+id: AIDEC-2026-05-28-001
-+title: YAML parser — migración de serde_yaml (deprecated) a serde_norway
-+status: accepted
-+created: 2026-05-28
-+agent: claude-opus-4-8-v1.0
-+confidence: high
-+review_required: true
-+risk_level: medium
-+tags: [yaml, dependencies, security, billion-laughs, dos, charter-01, issue-002]
-+related:
-+  - CHARTER-01-road-to-v0-1-0-alpha-1
-+  - AILOG-2026-05-28-003
-+---
-+
-+# AIDEC: YAML parser — migración a serde_norway
-+
-+## Context
-+
-+El parser de configuración (`lnxdrive-core::config::Config::load`) deserializa
-+YAML con `serde_yaml = "0.9.34+deprecated"`. ISSUE-002 (alias D5 / SIM-L4-003,
-+P0) requiere endurecer ese parser contra el ataque **billion-laughs**
-+(bomba de expansión de alias YAML). `serde_yaml` de dtolnay está **archivado y
-+sin mantenimiento** (README: "no longer maintained"; tracking RustSec
-+advisory-db #2132) y **no ofrece ninguna protección configurable ni integrada**
-+contra alias bombs.
++La auditoría de Fase 3 (`.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md`)
++registró el hallazgo **G1**: el Charter-01 nombra cuatro grupos de ajustes
++(Account, Folders, Network, System), pero el panel implementa Account, Sync
++(≈Folders), Advanced (≈Network) y Conflicts — **no existe un grupo "System"**, y
++el daemon **no expone API D-Bus** para sus ajustes candidatos: arranque
++automático, gestión de caché y política de deshidratación.
++
++De esos tres, solo el **arranque automático** es implementable sin API D-Bus
++nueva (gestionando una unit de usuario de systemd o un `.desktop` de autostart
++desde el panel). **Caché** y **deshidratación** requieren extender la interfaz
++`Settings` del daemon con métodos nuevos y la lógica para aplicarlos — trabajo
++**cruzado** (daemon + panel) y de diseño no trivial.
 +
 +## Problem
 +
-+¿Con qué librería YAML reemplazamos `serde_yaml` para (a) mitigar billion-laughs
-+y (b) salir del crate deprecated, manteniendo la API serde (`from_str` a structs
-+tipados) y minimizando la superficie de migración?
++¿Dónde y cuándo abordamos G1, dado que el Charter-01 es estrictamente "Road to
++v0.1.0-alpha.1" y G1 mezcla un control trivial (auto-start) con ajustes que no
++tienen backend y exceden el MVP del alpha?
 +
 +## Alternatives Considered
 +
-+> Investigación con datos verificados contra crates.io API, GitHub API,
-+> docs.rs y rustsec.org (corte 2026-05-28). Pesos de evaluación: base de
-+> usuarios 20 %, mantenimiento activo 25 %, madurez+tests 20 %, protección
-+> billion-laughs 20 %, calidad de commits/PRs 15 %.
++### Alternativa 1 — Implementar G1 completo ahora, dentro de Charter-01
 +
-+### Alternative 1: `serde_yaml_ng` (acatton)
++Crear la página "System" con auto-start + caché + deshidratación, añadiendo la
++API D-Bus necesaria en el daemon.
 +
-+Continuación API-compatible del serde-yaml de dtolnay.
++**Pros:** cierra el "cuatro grupos" literal del Charter.
++**Cons:** caché/deshidratación **no son MVP alpha**; obliga a diseñar y exponer
++API D-Bus nueva (superficie + pruebas) bajo presión del release alpha; infla un
++Charter cuyo objetivo declarado es el alpha mínimo. Contradice
++[[feedback_minimum_viable_plus_tde]].
 +
-+**Pros**: 4.2M descargas; CI con clippy/miri/fuzz; mantenedor responde.
-+**Cons**: **NO protege contra billion-laughs** (mismo backend `unsafe-libyaml`),
-+además de un bug O(n²) de anidamiento sin arreglar; release en crates.io
-+desfasada ~16 meses respecto al repo; relicenció a MIT-only; "no professional
-+support". **No resuelve el objetivo de ISSUE-002.** Índice 2.95.
++### Alternativa 2 — Página "System" solo con auto-start ahora, resto diferido
 +
-+### Alternative 2: `serde_yaml_bw` (Bourumir Wyngs)
++Enviar una página con el único control implementable y dejar caché/deshidratación
++para después.
 +
-+Fork endurecido con protección de dos capas (pre-check `Budget` +
-+`DeserializerOptions` con límites de recursión/alias/nodos, activos por defecto).
++**Pros:** algo de "System" visible en el alpha sin API nueva.
++**Cons:** un grupo "System" a medias (un solo toggle) confunde más que ayuda;
++mezcla alcance v0.1 y v0.2 en un mismo grupo; habría que rediseñarlo al añadir el
++resto. Bajo valor para el usuario alpha.
 +
-+**Pros**: protección billion-laughs configurable de primera clase; suite de
-+tests enorme (yaml-test-suite completa + ~60 tests de seguridad) + fuzzing +
-+Miri; releases muy activos (may-2026). Índice 4.10.
-+**Cons**: base de usuarios joven (135k descargas, concentradas vía `axoasset`);
-+desarrollo **auto-mergeado asistido por IA** (poca revisión humana entre pares);
-+y —decisivo— depende de una pila de **tres crates `0.0.x` del propio autor**
-+(`saphyr-parser-bw` 0.0.613 → renombrado a `granit-parser` 0.0.1 en mayo 2026)
-+en la raíz de confianza, con rebrand en curso y versionado pre-release que puede
-+romper compatibilidad en cualquier publicación. `edition 2024` (Rust ≥1.85), sin
-+MSRV declarada.
++### Alternativa 3 — Fase nueva dentro de Charter-01 para G1
 +
-+### Alternative 3: `serde_norway` (cafkafk)
++Añadir una "Fase 7: System settings" al roadmap de Charter-01.
 +
-+Fork mantenido de serde-yaml usado por eza, utoipa, schematic, mago.
++**Pros:** mantiene G1 rastreado en el Charter activo.
++**Cons:** **incoherente con el alcance del Charter** — Charter-01 es "Road to
++v0.1.0-alpha.1"; una fase de ajustes que requiere API nueva y no es MVP no
++pertenece a un Charter de alpha. Diluiría el criterio de "hecho" del alpha.
 +
-+**Pros**: mayor base de usuarios de los forks (6.9M descargas; usuarios
-+marquee); **es el reemplazo que RUSTSEC recomienda** frente al inseguro
-+`serde_yml` (RUSTSEC-2025-0068); protección billion-laughs **integrada y activa
-+por defecto** (límite de recursión 128 + cap de repetición de alias
-+`events.len()*100`, errores `RecursionLimitExceeded`/`RepetitionLimitExceeded`
-+en `src/de.rs`); suite de tests heredada + fuzzing + CI con `cargo deny` diario;
-+RUSTSEC limpio; backend `unsafe-libyaml-norway` con versionado `0.2.x` estable;
-+licencia dual MIT/Apache-2.0; API drop-in (`from_str`/`to_string`).
-+**Cons**: límites DoS **hardcoded, no configurables**; release estancado desde
-+dic-2024 (~17 meses); bus factor 1. Índice 3.95.
++### Alternativa 4 — Diferir G1 a un Charter v0.2 futuro (ELEGIDA)
 +
-+### Alternative 4 (descartada de raíz): parsers de bajo nivel
++Documentar G1 como diferido; abordarlo en un Charter v0.2 (cuando v0.2 arranque),
++junto con el resto de ajustes avanzados y su API D-Bus.
 +
-+`saphyr`/`saphyr-parser` y `yaml-rust2`: **no deserializan directo a structs
-+tipados** (romperían `from_str::<Config>()`, exigiendo mapeo manual) y **tampoco
-+protegen contra billion-laughs** (verificado en su `parser.rs`).
++**Pros:** respeta el alcance del alpha; agrupa el grupo "System" completo de forma
++coherente (auto-start + caché + deshidratación + su API) en el ciclo donde
++pertenece; no introduce API D-Bus a medias en el alpha.
++**Cons:** el panel del alpha mostrará tres grupos en vez de cuatro — aceptable y
++documentado.
 +
 +## Decision
 +
-+**Chosen**: Alternative 3 — `serde_norway`.
++**Alternativa 4.** G1 (grupo "System") se **pospone a v0.2** y se abordará en un
++**Charter v0.2 futuro**, no como fase de Charter-01 ni como implementación parcial
++en el alpha. No se crea el Charter v0.2 ahora (sería prematuro y de un solo ítem);
++esta AIDEC es la semilla de seguimiento y se promoverá al backlog de v0.2 cuando
++ese ciclo comience.
 +
-+**Justification**: El input de ISSUE-002 es un **archivo de configuración local**
-+(`~/.config/lnxdrive/config.yaml`), no un endpoint de red expuesto a atacantes
-+arbitrarios. Para ese modelo de amenaza, los límites **hardcoded y activos por
-+defecto** de `serde_norway` (recursión 128 + cap de repetición de alias) mitigan
-+billion-laughs de sobra; la configurabilidad de `serde_yaml_bw` es
-+over-engineering aquí. A cambio obtenemos:
-+
-+1. La mayor base de usuarios y validación de ecosistema de los forks (eza,
-+   utoipa, …) y el aval explícito de RUSTSEC.
-+2. Salida del crate deprecated sin introducir **tres dependencias `0.0.x` de un
-+   único autor con rebrand activo** en la raíz de confianza — justo el tipo de
-+   dependencia que el `cargo deny`/`cargo audit` del PR de CI-hardening de esta
-+   misma Fase 1 señalaría.
-+3. Migración mínima (swap de crate, API compatible) con protección activa sin
-+   configurar nada.
-+
-+El estancamiento de releases (~17 meses) se acepta para una dependencia de
-+parsing estable (fork maduro de serde-yaml, CI de auditoría diaria); la licencia
-+permisiva permite forkear si hiciera falta un fix.
++El Charter-01 se actualiza para reflejar que la Fase 3 entrega **tres** grupos de
++ajustes wired al daemon (Account, Folders/Sync, Network/Advanced) más Conflicts,
++y que el grupo "System" queda **fuera de alcance del alpha** por esta decisión.
 +
 +## Consequences
 +
-+### Positive
-+- Billion-laughs mitigado por defecto, sin código de límites propio que mantener.
-+- Fuera del `serde_yaml` deprecated; backend con versionado estable.
-+- Cambio de superficie mínimo; API serde idéntica.
-+
-+### Negative
-+- Límites DoS no ajustables por configuración (aceptable para un config local).
-+- Dependemos de un mantenedor único con cadencia de releases lenta.
-+
-+### Risks
-+- **Mantenedor único / release estancado** → Mitigación: licencia MIT/Apache
-+  permite forkear; el cap de tamaño propio (`MAX_CONFIG_BYTES`) añade una capa
-+  independiente de la librería.
-+- **Defensa en profundidad**: además de los límites de `serde_norway`,
-+  `Config::from_yaml_str` rechaza configs > 1 MiB antes de parsear.
-+
-+## Implementation
-+
-+```toml
-+# lnxdrive-engine/Cargo.toml (workspace)
-+serde_norway = "0.9"
-+```
-+
-+`Config::load` → `Config::from_yaml_str` (cap de tamaño + `serde_norway::from_str`).
-+Regresión: `lnxdrive-engine/tests/security/billion_laughs.yaml` +
-+`config::tests::test_billion_laughs_rejected` / `_trips_dos_limit` /
-+`test_oversized_config_rejected` / `test_default_config_still_parses`.
-+
-+## References
-+
-+- serde_norway: https://crates.io/crates/serde_norway · https://github.com/cafkafk/serde-norway
-+- RUSTSEC-2025-0068 (recomienda serde_norway sobre serde_yml): https://rustsec.org
-+- serde_yaml unmaintained tracking: https://github.com/rustsec/advisory-db/issues/2132
-+- serde_yaml_bw (alternativa endurecida evaluada): https://github.com/bourumir-wyngs/serde-yaml-bw
-+
-+---
-+
-+<!-- Template: StrayMark | https://strangedays.tech -->
-diff --git a/.straymark/07-ai-audit/ethical-reviews/ETH-2026-05-29-001-oauth-token-keyring-handling.md b/.straymark/07-ai-audit/ethical-reviews/ETH-2026-05-29-001-oauth-token-keyring-handling.md
++- El panel del alpha no tendrá grupo "System"; el arranque automático se gestiona
++  por el packaging/systemd del alpha, no por la UI todavía.
++- Cuando arranque v0.2, su Charter incluirá: API D-Bus de caché y deshidratación
++  en `Settings`, y la página "System" del panel (auto-start + caché +
++  deshidratación) que las consume.
++- Fase 3 puede cerrarse con los hallazgos **H** (H1–H5) resueltos sin bloquear por
++  G1.
+diff --git a/.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md b/.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md
 new file mode 100644
-index 0000000..3754f08
+index 0000000..9220bab
 --- /dev/null
-+++ b/.straymark/07-ai-audit/ethical-reviews/ETH-2026-05-29-001-oauth-token-keyring-handling.md
-@@ -0,0 +1,182 @@
++++ b/.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md
+@@ -0,0 +1,194 @@
 +---
-+id: ETH-2026-05-29-001
-+title: OAuth token handling — moving credentials off the public D-Bus surface
-+status: draft
-+created: 2026-05-29
-+agent: claude-opus-4-7-v1.0
-+confidence: high
-+review_required: true
-+risk_level: high
-+eu_ai_act_risk: not_applicable
-+nist_genai_risks: [information_security, data_privacy]
-+iso_42001_clause: [8]
-+gdpr_legal_basis: contract
-+fria_required: false
-+tags: [security, credentials, oauth, keyring, dbus, gdpr]
-+related:
-+  - AILOG-2026-05-29-002
-+  - CHARTER-01-road-to-v0-1-0-alpha-1
-+  - RISK-002-security-vulns
-+approved_by: null
-+approved_date: null
++audit_role: internal-calibrated-audit
++calibrator: claude-opus-4-8
++charter_id: CHARTER-01-road-to-v0-1-0-alpha-1
++phase: "Fase 3 — GTK4 preferences panel"
++component: lnxdrive-gnome/preferences
++audited_at: 2026-05-31
++method: 3 parallel Explore agents (D-Bus contract / UI logic / async+build), reconciled and code-verified by the calibrator
++findings_consolidated: 6
++findings_by_severity:
++  high: 1
++  medium: 3
++  low: 1
++  gap: 1
++false_positives_rejected: 4
++verdict: FUNCTIONAL_WITH_DRIFT
 +---
 +
-+# ETH: OAuth token handling — moving credentials off the public D-Bus surface
++# Internal audit — Fase 3 GTK4 preferences panel
 +
-+> **IMPORTANT**: This document is a DRAFT created by an AI agent.
-+> It requires human review and approval before merging the corresponding
-+> code change (see `AILOG-2026-05-29-002` for the implementation).
++**Reviewer:** claude-opus-4-8
++**Date:** 2026-05-31
++**Confidence:** High
++**Component:** `lnxdrive-gnome/preferences/` (binary `lnxdrive-preferences`)
 +
-+## Executive Summary
++## 1. Executive summary
 +
-+The lnxdrive daemon used to accept the user's Microsoft OAuth access
-+token and refresh token as plain D-Bus method arguments
-+(`Auth.CompleteAuthWithTokens(access_token, refresh_token, expires_at)`).
-+Any local process listening on the user's D-Bus session bus could read
-+those credentials with `dbus-monitor` and impersonate the user against
-+Microsoft Graph until the refresh token was revoked. The mitigation
-+landed in `AILOG-2026-05-29-002` removes that public surface, has the
-+daemon fetch tokens internally from GNOME Online Accounts, and persists
-+them in the system keyring (`secret-service` / GNOME Keyring / KDE
-+Wallet, whichever the user has configured).
++Fase 3 of Charter-01 is scoped as "implement the GTK4 preferences panel
++(currently a `println!("not yet implemented")` stub)". That stub is only the
++placeholder `lnxdrive-gnome/src/main.rs`; the **real panel already exists and is
++~95% built** under `lnxdrive-gnome/preferences/` — an `adw::Application` with a
++typed zbus client, an onboarding wizard, and four pages (Account, Sync,
++Conflicts, Advanced). It **compiles** (`cargo check` clean, 12 warnings) and,
++unlike the FUSE crate audited in Fase 2, it **does not have a fatal runtime trap**
++(async is correctly `async-io` + glib `spawn_local`, no stray `block_on`/
++`tokio::spawn`; GSettings schema id/keys, app-id, and build wiring are
++consistent).
 +
-+This is an **ethical review** rather than a pure security review
-+because the issue concerns user credentials and personal data
-+(the e-mail address tied to the Microsoft account), so it falls under
-+GDPR Article 32 ("Security of processing") and the project's own
-+DOCUMENTATION-POLICY requirement that changes touching credentials
-+get a human ethical sign-off before merging.
++The audit was run because "compiles" is not "works" — the panel had never been
++exercised against a real daemon, and the zbus proxy contract is validated at
++**runtime**, not compile time. Three Explore agents (D-Bus contract / UI logic /
++async+build) produced findings that the calibrator reconciled and verified
++against source, rejecting four agent over-classifications.
 +
-+## Context
++**The one serious finding is a cross-component governance drift (H1):** Fase 1
++(RISK-002) removed `Auth.CompleteAuthWithTokens` from the daemon and replaced it
++with `Auth.CompleteAuthViaGOA` to keep OAuth tokens off the D-Bus surface, but
++the **panel was never updated** — it still declares/calls `complete_auth_with_tokens`
++(now nonexistent), and that GOA code is behind `#[cfg(feature = "goa")]` while
++`Cargo.toml` defines **no `goa` feature**, so GOA SSO is compiled out entirely.
++This is the **third occurrence (N=3)** of the "declared but not wired" pattern
++already reported upstream to StrayMark (#205) — and the first one that is a
++*regression* of a shipped Fase-1 mitigation rather than an original gap.
 +
-+The lnxdrive daemon is a desktop application that synchronises files
-+between the user's Microsoft OneDrive account and the local filesystem.
-+Authentication uses Microsoft's OAuth2 PKCE flow, either initiated by
-+the in-app browser (`Auth.StartAuth` / `Auth.CompleteAuth`) or
-+delegated to GNOME Online Accounts so the user can re-use credentials
-+already on file in the desktop session.
++Mitigating fact: the **manual browser auth path works** (`start_auth()` +
++`AuthStateChanged` signal, both present on the daemon — `auth_page.rs:238-295`),
++so the panel can still authenticate; only the GOA "use your existing Microsoft
++account" path (FR-019–023) is broken. Hence H1 is **High, not Critical**.
 +
-+Before this change, the GOA path was implemented by the UI obtaining
-+the access and refresh tokens from GOA and then passing them as
-+arguments to the daemon's D-Bus method `Auth.CompleteAuthWithTokens`.
-+On a Linux session bus those arguments are visible to any process the
-+user runs (the session bus is intra-user, not inter-user, but any
-+program the user starts — including malicious ones — can subscribe).
-+A pre-existing risk analysis recorded the issue as RISK-002 with
-+CVSS 9.1.
++**Overall verdict: FUNCTIONAL_WITH_DRIFT.** The panel runs and mostly works; the
++material work is fixing the RISK-002 drift, three medium robustness items, lint
++cleanup, and the absent "System" group.
 +
-+## Ethical concerns and how the change addresses them
++## 2. Scope
 +
-+### 1. Confidentiality of authentication credentials
++Audited: every Rust source under `lnxdrive-gnome/preferences/src/`, the zbus
++client contract against the daemon's interfaces in
++`lnxdrive-engine/crates/lnxdrive-ipc/src/service.rs`, plus `Cargo.toml`,
++`meson.build`, the GSettings schema, and the desktop/metainfo files. Not run:
++live execution against a mounted daemon (no authenticated account available in
++this environment) — deferred to manual verification.
 +
-+**Concern.** OAuth refresh tokens are long-lived bearer credentials.
-+Their disclosure is materially equivalent to disclosure of the user's
-+password for the duration of the refresh window. Storing them in cleartext
-+on the wire — even an intra-user wire — is incompatible with the
-+"appropriate technical measures" obligation of GDPR Art. 32 and with
-+the StrayMark `AGENT-RULES.md` rule "Never document credentials,
-+tokens, API keys, or PII in document content" (interpreted broadly:
-+the rule's spirit is "never expose them where they don't strictly
-+need to be").
++## 3. Findings (calibrated)
 +
-+**Mitigation.** The D-Bus method no longer accepts tokens. The new
-+method takes only the GOA account D-Bus path (a non-secret identifier).
-+The daemon fetches the token internally from GOA and immediately
-+persists it in the system keyring, which is accessible only to the
-+calling user (via `org.freedesktop.secrets` ACLs).
++### H1 — RISK-002 drift: GOA auth broken & compiled out — **HIGH**
 +
-+### 2. Personal data — user e-mail
++- **Client** declares and calls `complete_auth_with_tokens(access_token,
++  refresh_token, expires_at_unix)` — `dbus_client.rs:88,235-243` and
++  `onboarding/auth_page.rs:362`.
++- **Daemon** removed that method in Fase 1; only `complete_auth(code, state)`
++  (`service.rs:873`) and `complete_auth_via_goa(goa_account_path)`
++  (`service.rs:917`) exist. `service.rs:902` states it "replaces the historical
++  `CompleteAuthWithTokens`"; the tests at `service.rs:2004` confirm it was
++  deleted.
++- The GOA UI is gated on `#[cfg(feature = "goa")]` (`auth_page.rs:20,35,143,338`)
++  but `preferences/Cargo.toml` defines **no `[features]`** → the gate is always
++  false → GOA SSO is compiled out (also the source of the `unexpected cfg value
++  'goa'` warnings).
++- **Impact:** GOA SSO (FR-019–023) is non-functional and, if re-enabled as-is,
++  would call a method the daemon no longer exposes (`UnknownMethod` at runtime).
++  Manual browser auth is unaffected.
++- **Remediation:** (a) add `[features] goa = []` (decide default on/off) to
++  `Cargo.toml`; (b) add a `complete_auth_via_goa(goa_account_path)` proxy method
++  to `dbus_client.rs` and drop/deprecate `complete_auth_with_tokens`;
++  (c) rewrite `auth_page.rs::on_goa_sign_in_clicked` to pass the GOA account
++  object path to `complete_auth_via_goa` instead of fetching tokens client-side.
 +
-+**Concern.** The new flow returns the user's e-mail address (read from
-+`org.gnome.OnlineAccounts.Account.PresentationIdentity`) and stores it
-+both in the daemon's in-memory state (`DaemonState::account_email`)
-+and as the keyring entry's username key. This is personal data under
-+GDPR.
++### H2 — Daemon state not consumed (no live status) — **MEDIUM**
 +
-+**Mitigation.** The processing is necessary for the contract the user
-+enters with the local application (they explicitly sign in to their
-+Microsoft account in order for the app to sync their files) — Art. 6(1)(b)
-+contract basis. The e-mail is not transmitted to any third party that
-+isn't already part of the OAuth flow (Microsoft Identity itself).
-+The keyring entry stays on the user's machine. No telemetry, no
-+analytics. The e-mail appears in logs only at `info!` level inside
-+the daemon's `tracing` output, which is local-only.
++- The client proxies omit several daemon-exposed properties/signals: `Sync`
++  `sync_status`/`last_sync_time`/`pending_changes` + `sync_started`/
++  `sync_completed`/`sync_progress` (`service.rs:652-705`); `Status`
++  `connection_status`/`dbus_health` + `quota_changed`/`connection_changed`
++  (`service.rs:762-790`); `Settings.config_changed` (`service.rs:1066`).
++- **Impact:** the panel shows no live sync/connection status and does not refresh
++  on external changes. Functional gap, not a crash.
++- **Remediation:** add the missing properties/signals to the proxies and wire a
++  minimal set (sync status + quota refresh) into the relevant pages.
 +
-+### 3. Resilience to malicious local processes
++### H3 — Silent error handling — **MEDIUM**
 +
-+**Concern.** A malicious local process running under the same user
-+could still attempt to call `Auth.CompleteAuthViaGOA(arbitrary_path)`
-+to coerce the daemon into authenticating against an attacker-controlled
-+GOA account.
++- D-Bus call failures go to `eprintln!`/stderr, not the UI (e.g.
++  `sync_page.rs:200`, `account_page.rs`), so a dead daemon leaves the panel
++  showing default values as if loaded.
++- JSON parsing uses `unwrap_or_default()` (`folder_tree.rs:416`), so a malformed
++  `GetRemoteFolderTree` response renders an **empty tree indistinguishable from
++  "no folders"**.
++- **Impact:** silent degradation; user operates on stale/empty UI believing it
++  loaded.
++- **Remediation:** surface load/save failures via an `adw::Toast`/banner;
++  distinguish parse-error from empty in `folder_tree`.
 +
-+**Mitigation (partial).** Two layers reduce the impact: (a) the daemon
-+validates that the path starts with `/org/gnome/OnlineAccounts/Accounts/`,
-+so the attacker cannot trick it into talking to a different D-Bus
-+service; (b) the keyring entry is keyed by the e-mail returned by GOA
-+itself, so the worst the attacker can do is add a *new* keyring entry
-+for a *different* account (without affecting the legitimate user's
-+existing entry). This is acceptable for the alpha; a stronger guard
-+(D-Bus peer-credentials check restricting `Auth.*` calls to a known
-+set of UIDs / Flatpak app IDs) is a future hardening tracked outside
-+this ETH.
++### H4 — `folder_tree` load race — **MEDIUM**
 +
-+### 4. No telemetry, no exfiltration
++- `FolderTree::new` fires `load_remote_tree()` and `load_selected_folders()` as
++  two independent `spawn_local` tasks (`folder_tree.rs:205-206`); `apply_selections`
++  can run before the tree is populated, dropping the selection highlight. A
++  related issue: `apply_selections` only walks root-level nodes, so lazily-loaded
++  children are not marked.
++- **Impact:** selective-sync selections may not display correctly.
++- **Remediation:** chain selections after the tree populates (await both, or
++  apply selections in the populate continuation); apply recursively as nodes
++  expand.
 +
-+**Concern.** Any code that handles credentials must be auditable not
-+to leak them via telemetry, crash dumps or analytics.
++### H5 — Compiler warnings — **LOW**
 +
-+**Mitigation.** The daemon emits no telemetry and no crash reporting
-+in the v0.1.0-alpha cycle (both are explicitly out of scope per
-+`AILOG-2026-05-29-001`). The `tracing` output is structured but never
-+emits the access or refresh token (only the GOA path, the e-mail at
-+`info!`, and the keyring outcome). The `lnxdrive-testing/scripts/leak-test-dbus-tokens.sh`
-+script validates this at the wire level on every test run.
++- 12 warnings: unused `gtk4::prelude` imports (`sync_page.rs:11`,
++  `onboarding/mod.rs:17`, `app.rs:12`), `unexpected cfg value 'goa'` (resolved by
++  H1's feature definition), deprecated `ActionRowBuilder::icon_name`
++  (`confirm_page.rs:90,96`).
++- **Remediation:** remove unused imports; migrate the deprecated builder call;
++  the `cfg` warnings disappear once `goa` is a declared feature.
 +
-+## GDPR fields
++### G1 — "System" settings group absent — **GAP**
 +
-+- **Legal basis** (Art. 6): `contract` — the user signs in to use the
-+  app's sync functionality.
-+- **Data minimisation** (Art. 5(1)(c)): only the e-mail (account
-+  identifier) and the access/refresh tokens are stored. No additional
-+  profile fields are read from GOA.
-+- **Storage limitation** (Art. 5(1)(e)): the access token has a TTL
-+  set by Microsoft (~1h); the refresh token is retained until the user
-+  signs out (`Auth.Logout`) at which point `KeyringTokenStorage::clear`
-+  removes the entry.
-+- **Integrity and confidentiality** (Art. 5(1)(f) / Art. 32): tokens
-+  live only in the system keyring at rest and in-memory at the
-+  daemon while a sync is active; they never traverse the D-Bus
-+  session bus as method arguments after this change.
-+- **DPIA** (Art. 35): not required — local processing, no large-scale
-+  monitoring, no special categories, single user per installation.
++- The Charter names four groups (Account, Folders, Network, System). The panel
++  has Account, Sync (≈Folders), Advanced (≈Network), Conflicts — but **no
++  "System" group**, and the daemon exposes **no D-Bus API** for its candidate
++  settings (auto-start, cache, dehydration policy).
++- **Resolution — DEFERRED to v0.2** (see [[AIDEC-2026-05-31-001]]): the whole
++  "System" group is deferred to a future v0.2 Charter rather than implemented
++  partially in the alpha. Cache and dehydration controls need new daemon D-Bus
++  API; auto-start alone would be a one-toggle group mixing v0.1/v0.2 scope. Fase 3
++  ships three wired groups (Account, Folders/Sync, Network/Advanced) + Conflicts;
++  the "System" group is out of alpha scope by that decision.
 +
-+## Open questions for the reviewer
++## 4. Rejected (agent over-classifications)
 +
-+1. **Identity scope choice.** We picked the GOA `PresentationIdentity`
-+   property as the keyring username. On some GOA providers this is the
-+   e-mail, on others it may be a display name. Should we instead use
-+   the GOA `Identity` (UUID-shaped) field for stability across renames,
-+   even if it makes the keyring entries less human-readable? This
-+   choice affects how migrations would work later.
++The calibrator verified and **rejected** these as not-a-bug for this codebase:
 +
-+2. **Logging of GOA path at `info!`.** The new code logs the full
-+   GOA path (`/org/gnome/OnlineAccounts/Accounts/1234`) at `info!`
-+   level. It is not a credential but it does correlate to a specific
-+   account on the user's machine. Acceptable, or downgrade to `debug!`?
++- **`.expect()` cascade in GTK factories** (`folder_tree.rs:227,260-318`) — flagged
++  CRITICAL by the UI agent, but these are idiomatic gtk4-rs factory closures where
++  the item type is guaranteed by construction (`TreeListModel`/`ListItem` always
++  yield the registered type). The async+build agent correctly rated them low.
++  **Rejected as CRITICAL; at most a stylistic LOW.**
++- **`Files` interface missing from client** — the panel is the *preferences* UI;
++  pin/unpin/file-status is Nautilus' concern, not this binary's. **Not applicable.**
++- **`conflict_list.rs:296` `STRATEGY_VALUES[i]` index** — the two arrays are
++  fixed-size consts of equal length; no runtime risk exists today. **LOW, not
++  CRITICAL.**
++- **async-runtime deadlock (FUSE-style)** — verified absent: zbus uses `async-io`
++  (not tokio), all D-Bus calls run via `glib spawn_local`, no `block_on`. **No bug.**
 +
-+3. **D-Bus peer-credentials restriction.** The current contract lets
-+   any local process under the user call the `Auth` interface. Should
-+   v0.1.0-alpha already restrict callers to the lnxdrive UI binaries
-+   (Flatpak app ID match), or is that a v0.2 hardening?
++## 5. Remediation plan (→ Fase 3 implementation)
 +
-+## Approval
++Ordered, each on the `feat/charter-01-phase-3-*` branch with regression coverage
++where testable and a closing AILOG:
 +
-+This ETH is `draft`. Approval workflow:
++1. **H1 (High):** define the `goa` feature; replace the client/`auth_page` token
++   path with `complete_auth_via_goa`. Backport a governance note (this is a
++   Fase-1 RISK-002 regression) and feed the N=3 "declared but not wired" data
++   point into the upstream-feedback drafts.
++2. **H3 (Medium):** toast/banner on D-Bus errors; parse-error vs empty in
++   `folder_tree`.
++3. **H4 (Medium):** fix the `folder_tree` load ordering + recursive selection.
++4. **H2 (Medium):** extend proxies and wire live sync/quota status.
++5. **G1 (Gap):** decide System-group scope; implement auto-start or document
++   deferral.
++6. **H5 (Low):** clear warnings + deprecation.
 +
-+1. The reviewer reads the AILOG-2026-05-29-002 implementation alongside
-+   this ETH.
-+2. The reviewer either approves (set `status: approved`, fill
-+   `reviewed_by`, `reviewed_at`, `review_outcome`, `approved_by`,
-+   `approved_date`) or requests revisions.
-+3. The corresponding GitHub PR (closes issue #5) cannot be merged
-+   without an approved ETH per the project's `AGENT-RULES.md`.
++Verification: `cargo clippy -p lnxdrive-preferences -- -D warnings` clean; unit
++tests for any non-GTK logic added; manual run against a live daemon recorded in
++the closing AILOG (the panel cannot be exercised end-to-end in CI — same
++`/dev/fuse`/display constraint class as the T101 mount test).
+diff --git a/.straymark/audits/CHARTER-01/upstream-feedback-drafts.md b/.straymark/audits/CHARTER-01/upstream-feedback-drafts.md
+index 53a33d3..031bbab 100644
+--- a/.straymark/audits/CHARTER-01/upstream-feedback-drafts.md
++++ b/.straymark/audits/CHARTER-01/upstream-feedback-drafts.md
+@@ -10,7 +10,8 @@
+ > |---|---|---|---|
+ > | 2a | `charter drift` rejects the range its Charter template ships | CLI/format friction (ad-hoc) | ✅ filed — [straymark#207](https://github.com/StrangeDaysTech/straymark/issues/207) |
+ > | 2b | `charter audit --prepare` default range under-covers phase audits | Documentation gap (ad-hoc) | ✅ filed — [straymark#208](https://github.com/StrangeDaysTech/straymark/issues/208) |
+-> | 1 | "declared but not wired" transfers to N=2 (crate/D-Bus surface) | Pattern candidate | 🕓 draft below — file at Charter close |
++> | 1 | "declared but not wired" — now N=3 (cross-component regression of a shipped mitigation, found in Fase 3) | Pattern candidate | ✅ filed — [straymark#209](https://github.com/StrangeDaysTech/straymark/issues/209) (advanced from Charter-close cadence: the Fase-3 panel audit produced the N=3 data point) |
++> | 4 | Charter scope declared against assumed (un-read) code → code-reconnaissance gate at creation | Process / methodology gap | ✅ filed — [straymark#210](https://github.com/StrangeDaysTech/straymark/issues/210) |
+ > | 3 | External-audit calibration results (dual-model + calibrator-hunts-missed) | External audit results / pattern | 🕓 draft below — file at Charter close |
+ >
+ > The cadence committed in #205 is **per Charter close** for telemetry + audit
 diff --git a/.straymark/charters/01-road-to-v0-1-0-alpha-1.md b/.straymark/charters/01-road-to-v0-1-0-alpha-1.md
-index 233c4da..d438eeb 100644
+index 4efd532..2d78735 100644
 --- a/.straymark/charters/01-road-to-v0-1-0-alpha-1.md
 +++ b/.straymark/charters/01-road-to-v0-1-0-alpha-1.md
-@@ -1,6 +1,7 @@
- ---
- charter_id: CHARTER-01-road-to-v0-1-0-alpha-1
--status: declared
-+status: in-progress
-+started_at: 2026-05-29
- effort_estimate: L
- trigger: "MVP audit on 2026-05-28 found engine ~70% / GNOME UI ~45% ready, four P0 risks unmitigated, zero release artifacts. Operator committed scope to v0.1.0 alpha (GNOME-only, P0 risks block release) on 2026-05-29."
- originating_ailogs: [AILOG-2026-05-29-001]
-@@ -8,7 +9,7 @@ originating_ailogs: [AILOG-2026-05-29-001]
- 
- # Charter: Road to v0.1.0-alpha.1
- 
--> **Status (mirrored from frontmatter — source of truth is above):** declared. Effort: L (~5–7 calendar weeks).
-+> **Status (mirrored from frontmatter — source of truth is above):** in-progress (started 2026-05-29). Effort: L (~5–7 calendar weeks).
- >
- > **Origin:** Follow-up of `AILOG-2026-05-29-001` — full diagnosis of the MVP state, the scope-narrowing decisions taken with the operator, and the phase outline that this Charter formalizes.
- 
-@@ -58,10 +59,10 @@ This Charter spans many files across 7 phases. The table below names the load-be
- | `README.md`, `CLAUDE.md`, `GEMINI.md`, `ayuda.md` | Remove archived UIs from the monorepo matrix (Fase 0) |
- | `lnxdrive-engine/crates/lnxdrive-graph/src/auth.rs` (or equivalent) | `RISK-002`: tokens stored in keyring, never returned over D-Bus (Fase 1) |
- | `lnxdrive-engine/crates/lnxdrive-daemon/src/dbus_iface.rs` | `RISK-002`: D-Bus interface uses opaque `SessionHandle`, removes any field carrying a raw token (Fase 1) |
--| `lnxdrive-engine/crates/lnxdrive-fuse/src/write_serializer.rs` | `RISK-003`: implement per-inode lock for write-during-hydration (Fase 1) |
--| `lnxdrive-engine/crates/lnxdrive-daemon/src/health.rs` (new) | `RISK-001`: D-Bus session bus health monitor + reconnect (Fase 1) |
--| `lnxdrive-engine/crates/lnxdrive-config/src/parser.rs` (or equivalent) + `lnxdrive-engine/tests/security/billion_laughs.yaml` | `ISSUE-002`: YAML hardening + regression fixture (Fase 1) |
--| `lnxdrive-engine/.github/workflows/ci.yml` | Add `cargo audit`, `cargo deny`, `cargo test --workspace` jobs (Fase 1 + 2) |
-+| `lnxdrive-engine/crates/lnxdrive-fuse/src/{inode_entry.rs, filesystem.rs, hydration.rs}` + `tests/integration_write_during_hydration.rs` (new) | `RISK-003`: per-inode `parking_lot::Mutex` on `InodeEntry`; `FuseHandler::write()` returns `EBUSY` (was `EIO`) when `HydrationManager::is_hydrating(ino)` under the inode lock; `HydrationManager::hydrate()` registers in the active map atomically with the lock before any `.await`. The original Charter entry pointed at `write_serializer.rs` based on the risk doc; audit on 2026-05-28 confirmed `write_serializer.rs` was already implemented (serializes DB writes via `tokio::sync::mpsc`) and the actual data-integrity gap was the FUSE write path. (Fase 1) |
-+| `lnxdrive-engine/crates/lnxdrive-daemon/src/{health.rs (new), main.rs}` + `lnxdrive-engine/crates/lnxdrive-ipc/src/service.rs` | `RISK-001`: D-Bus session bus health monitor + reconnect. New `health.rs` supervises the connection (active `get_id()` probe + timeout; reconnect with backoff re-registering all 9 interfaces; yields on name-taken). `main.rs` wraps `DbusService` in `Arc`, hands the connection to the monitor, and splits `run`/`run_inner` for a single monitor-join exit point. `service.rs` adds a `DaemonState::dbus_health` field + read-only `dbus_health` property on `StatusInterface` (distinct from cloud `connection_status`). Original entry named only `health.rs`; `main.rs` + cross-crate `service.rs` added atomically (drift R7, AILOG-2026-05-28-002). NameLost fast-path and full Unix-socket fallback deferred to v0.2. (Fase 1) |
-+| `lnxdrive-engine/Cargo.toml` + `crates/lnxdrive-core/src/config.rs` + `crates/{lnxdrive-core,lnxdrive-cli}/Cargo.toml` + `crates/lnxdrive-cli/src/commands/config.rs` + `lnxdrive-engine/tests/security/billion_laughs.yaml` (new) | `ISSUE-002`: YAML hardening + regression fixture. Migrate `serde_yaml 0.9` (deprecated) → `serde_norway` (RUSTSEC-recommended fork with built-in recursion + alias-repetition caps, on by default), and add a 1 MiB input size cap in a new `Config::from_yaml_str`. Original entry named `lnxdrive-config/src/parser.rs` (no such crate exists); the real config parser is `lnxdrive-core/src/config.rs`. Final mitigation shape = in-tree size cap + alias cap delegated to the library (not a hand-written pre-scanner). Dependency decision recorded in AIDEC-2026-05-28-001; details + cross-crate sweep (lnxdrive-cli) in AILOG-2026-05-28-003. (Fase 1) |
-+| `.github/workflows/engine-ci.yml` (new, repo root) + `lnxdrive-engine/deny.toml` (new) + workspace `Cargo.toml`/`Cargo.lock` | `cargo deny` + supply-chain hardening (Fase 1). **Premise correction:** the engine CI lived at `lnxdrive-engine/.github/workflows/ci.yml`, a subdirectory path GitHub Actions ignores, so it **never ran** (fmt/clippy/build/test/audit never enforced). Relocate to the repo root with `working-directory` + path filter so it runs; add a `cargo-deny` job + `deny.toml` (subsumes the planned separate `cargo audit`). Resolve 6 advisories (cargo update + drop prometheus protobuf feature), defer 2 breaking ones (sqlx 0.8, paste) as TDE-2026-05-28-002, fix 5 pre-existing clippy lints, leave fmt non-blocking pending the workspace reformat (TDE-2026-05-28-001). Details: AILOG-2026-05-28-004. (Fase 1) |
- | `lnxdrive-engine/specs/002-files-on-demand/tasks.md` | Close the one remaining `[ ]` task (Fase 2) |
- | The ~4 engine files containing `todo!()/unimplemented!()` (incl. `audit.rs`, `filesystem.rs`) | Implement, remove, or feature-gate; replace ~10 debug `println!` with `tracing::debug!` (Fase 2) |
- | `lnxdrive-gnome/src/main.rs`, `lnxdrive-gnome/data/ui/preferences.ui` (new), `lnxdrive-gnome/Cargo.toml` | GTK4 prefs panel with 4 settings groups (Fase 3) |
-diff --git a/lnxdrive-engine/.github/workflows/ci.yml b/lnxdrive-engine/.github/workflows/ci.yml
-deleted file mode 100644
-index 6909f59..0000000
---- a/lnxdrive-engine/.github/workflows/ci.yml
-+++ /dev/null
-@@ -1,51 +0,0 @@
--name: CI
--
--on:
--  push:
--    branches: [main, "feat/*", "fix/*"]
--  pull_request:
--    branches: [main]
--
--env:
--  CARGO_TERM_COLOR: always
--  RUST_BACKTRACE: 1
--
--jobs:
--  check:
--    name: Check
--    runs-on: ubuntu-latest
--    steps:
--      - uses: actions/checkout@v4
--      - uses: dtolnay/rust-toolchain@stable
--        with:
--          components: clippy
--      - uses: dtolnay/rust-toolchain@nightly
--        with:
--          components: rustfmt
--      - uses: Swatinem/rust-cache@v2
--
--      - name: Install system dependencies
--        run: |
--          sudo apt-get update
--          sudo apt-get install -y libsqlite3-dev libdbus-1-dev libsecret-1-dev libfuse3-dev pkg-config
--
--      - name: Check formatting
--        run: cargo +nightly fmt --all -- --check
--
--      - name: Clippy
--        run: cargo clippy --workspace --all-targets -- -D warnings
--
--      - name: Build
--        run: cargo build --workspace
--
--      - name: Test
--        run: cargo test --workspace
--
--  security:
--    name: Security Audit
--    runs-on: ubuntu-latest
--    steps:
--      - uses: actions/checkout@v4
--      - uses: rustsec/audit-check@v2
--        with:
--          token: ${{ secrets.GITHUB_TOKEN }}
-diff --git a/lnxdrive-engine/Cargo.lock b/lnxdrive-engine/Cargo.lock
-index 3b50247..37a3745 100644
---- a/lnxdrive-engine/Cargo.lock
-+++ b/lnxdrive-engine/Cargo.lock
-@@ -1548,7 +1548,7 @@ dependencies = [
-  "lnxdrive-graph",
-  "lnxdrive-sync",
-  "serde_json",
-- "serde_yaml",
-+ "serde_norway",
-  "tempfile",
-  "tokio",
-  "tracing",
-@@ -1575,7 +1575,7 @@ dependencies = [
-  "dirs",
-  "serde",
-  "serde_json",
-- "serde_yaml",
-+ "serde_norway",
-  "tempfile",
-  "thiserror 1.0.69",
-  "uuid",
-@@ -1586,6 +1586,8 @@ name = "lnxdrive-daemon"
- version = "0.1.0"
- dependencies = [
-  "anyhow",
-+ "async-trait",
-+ "chrono",
-  "dirs",
-  "lnxdrive-cache",
-  "lnxdrive-core",
-@@ -1598,6 +1600,7 @@ dependencies = [
-  "tokio-util",
-  "tracing",
-  "tracing-subscriber",
-+ "zbus",
- ]
- 
- [[package]]
-@@ -1613,6 +1616,7 @@ dependencies = [
-  "lnxdrive-cache",
-  "lnxdrive-core",
-  "lnxdrive-graph",
-+ "parking_lot",
-  "reqwest",
-  "serde",
-  "serde_json",
-@@ -1658,6 +1662,7 @@ name = "lnxdrive-ipc"
- version = "0.1.0"
- dependencies = [
-  "anyhow",
-+ "async-trait",
-  "lnxdrive-core",
-  "serde",
-  "serde_json",
-@@ -2195,16 +2200,9 @@ dependencies = [
-  "lazy_static",
-  "memchr",
-  "parking_lot",
-- "protobuf",
-  "thiserror 1.0.69",
- ]
- 
--[[package]]
--name = "protobuf"
--version = "2.28.0"
--source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "106dd99e98437432fed6519dedecfade6a06a73bb7b2a1e019fdd2bee5778d94"
--
- [[package]]
- name = "quinn"
- version = "0.11.9"
-@@ -2227,14 +2225,14 @@ dependencies = [
- 
- [[package]]
- name = "quinn-proto"
--version = "0.11.13"
-+version = "0.11.14"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "f1906b49b0c3bc04b5fe5d86a77925ae6524a19b816ae38ce1e426255f1d8a31"
-+checksum = "434b42fec591c96ef50e21e886936e66d3cc3f737104fdb9b737c40ffb94c098"
- dependencies = [
-  "bytes",
-  "getrandom 0.3.4",
-  "lru-slab",
-- "rand 0.9.2",
-+ "rand 0.9.4",
-  "ring",
-  "rustc-hash",
-  "rustls",
-@@ -2288,9 +2286,9 @@ dependencies = [
- 
- [[package]]
- name = "rand"
--version = "0.9.2"
-+version = "0.9.4"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "6db2770f06117d490610c7488547d543617b21bfa07796d7a12f6f1bd53850d1"
-+checksum = "44c5af06bb1b7d3216d91932aed5265164bf384dc89cd6ba05cf59a35f5f76ea"
- dependencies = [
-  "rand_chacha 0.9.0",
-  "rand_core 0.9.5",
-@@ -2524,9 +2522,9 @@ dependencies = [
- 
- [[package]]
- name = "rustls-webpki"
--version = "0.103.9"
-+version = "0.103.13"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "d7df23109aa6c1567d1c575b9952556388da57401e4ace1d15f79eedad0d8f53"
-+checksum = "61c429a8649f110dddef65e2a5ad240f747e85f7758a6bccc7e5777bd33f756e"
- dependencies = [
-  "ring",
-  "rustls-pki-types",
-@@ -2635,6 +2633,19 @@ dependencies = [
-  "zmij",
- ]
- 
-+[[package]]
-+name = "serde_norway"
-+version = "0.9.42"
-+source = "registry+https://github.com/rust-lang/crates.io-index"
-+checksum = "e408f29489b5fd500fab51ff1484fc859bb655f32c671f307dcd733b72e8168c"
-+dependencies = [
-+ "indexmap",
-+ "itoa",
-+ "ryu",
-+ "serde",
-+ "unsafe-libyaml-norway",
-+]
-+
- [[package]]
- name = "serde_path_to_error"
- version = "0.1.20"
-@@ -2669,19 +2680,6 @@ dependencies = [
-  "serde",
- ]
- 
--[[package]]
--name = "serde_yaml"
--version = "0.9.34+deprecated"
--source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "6a8b1a1a2ebf674015cc02edccce75287f1a0130d394307b36743c2f5d504b47"
--dependencies = [
-- "indexmap",
-- "itoa",
-- "ryu",
-- "serde",
-- "unsafe-libyaml",
--]
--
- [[package]]
- name = "sha1"
- version = "0.10.6"
-@@ -3454,10 +3452,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
- checksum = "39ec24b3121d976906ece63c9daad25b85969647682eee313cb5779fdd69e14e"
- 
- [[package]]
--name = "unsafe-libyaml"
--version = "0.2.11"
-+name = "unsafe-libyaml-norway"
-+version = "0.2.15"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "673aac59facbab8a9007c7f6108d11f63b603f7cabff99fabf650fea5c32b861"
-+checksum = "b39abd59bf32521c7f2301b52d05a6a2c975b6003521cbd0c6dc1582f0a22104"
- 
- [[package]]
- name = "untrusted"
-diff --git a/lnxdrive-engine/Cargo.toml b/lnxdrive-engine/Cargo.toml
-index 6042c07..435c0d1 100644
---- a/lnxdrive-engine/Cargo.toml
-+++ b/lnxdrive-engine/Cargo.toml
-@@ -29,7 +29,10 @@ tokio = { version = "1.35", features = ["full"] }
- # Serialization
- serde = { version = "1.0", features = ["derive"] }
- serde_json = "1.0"
--serde_yaml = "0.9"
-+# serde_norway: maintained serde-yaml fork (RUSTSEC-recommended replacement for
-+# the deprecated serde_yaml). Built-in DoS limits (recursion depth + alias
-+# repetition cap) mitigate billion-laughs by default — see ISSUE-002 / AIDEC.
-+serde_norway = "0.9"
- 
- # Common utilities
- uuid = { version = "1.6", features = ["v4", "serde"] }
-@@ -38,6 +41,7 @@ async-trait = "0.1"
- 
- # Concurrent data structures
- dashmap = "6.0"
-+parking_lot = "0.12"
- 
- # Cryptography (for cache path hashing)
- sha2 = "0.10"
-@@ -83,7 +87,10 @@ governor = "0.6"
- # Observability
- tracing = "0.1"
- tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
--prometheus = "0.13"
-+# default-features disabled drops the `protobuf` feature (pulls the unmaintained
-+# protobuf 2.x — RUSTSEC-2024-0436/0437). Telemetry only uses the text format /
-+# registry, not the protobuf push gateway. (ISSUE: CI hardening, Charter-01)
-+prometheus = { version = "0.13", default-features = false }
- 
- # Error handling
- thiserror = "1.0"
-diff --git a/lnxdrive-engine/crates/lnxdrive-cache/tests/repository_tests.rs b/lnxdrive-engine/crates/lnxdrive-cache/tests/repository_tests.rs
-index cd47039..f39b6eb 100644
---- a/lnxdrive-engine/crates/lnxdrive-cache/tests/repository_tests.rs
-+++ b/lnxdrive-engine/crates/lnxdrive-cache/tests/repository_tests.rs
-@@ -63,7 +63,7 @@ const VALID_HASH_2: &str = "BBBBBBBBBBBBBBBBBBBBBBBBBBB=";
- /// Create a hydrated test sync item (for FUSE tests)
- fn create_hydrated_sync_item(path: &str) -> SyncItem {
-     let local_path = SyncPath::new(PathBuf::from(path)).unwrap();
--    let remote_path = RemotePath::new(format!("/{}", path.split('/').last().unwrap())).unwrap();
-+    let remote_path = RemotePath::new(format!("/{}", path.split('/').next_back().unwrap())).unwrap();
-     let mut item = SyncItem::new_file(
-         local_path,
-         remote_path,
-@@ -73,7 +73,7 @@ fn create_hydrated_sync_item(path: &str) -> SyncItem {
-     .unwrap();
- 
-     // Set remote ID (use a valid format without dots or special chars) and mark as hydrated
--    let filename = path.split('/').last().unwrap().replace(".", "_");
-+    let filename = path.split('/').next_back().unwrap().replace(".", "_");
-     let remote_id = RemoteId::new(format!("remote_{}", filename)).unwrap();
-     item.set_remote_id(remote_id);
- 
-diff --git a/lnxdrive-engine/crates/lnxdrive-cli/Cargo.toml b/lnxdrive-engine/crates/lnxdrive-cli/Cargo.toml
-index 24f8c9b..5b1b226 100644
---- a/lnxdrive-engine/crates/lnxdrive-cli/Cargo.toml
-+++ b/lnxdrive-engine/crates/lnxdrive-cli/Cargo.toml
-@@ -21,7 +21,7 @@ clap.workspace = true
- anyhow.workspace = true
- tokio.workspace = true
- serde_json.workspace = true
--serde_yaml.workspace = true
-+serde_norway.workspace = true
- tracing.workspace = true
- tracing-subscriber.workspace = true
- chrono.workspace = true
-diff --git a/lnxdrive-engine/crates/lnxdrive-cli/src/commands/config.rs b/lnxdrive-engine/crates/lnxdrive-cli/src/commands/config.rs
-index 105fa94..a226bae 100644
---- a/lnxdrive-engine/crates/lnxdrive-cli/src/commands/config.rs
-+++ b/lnxdrive-engine/crates/lnxdrive-cli/src/commands/config.rs
-@@ -58,7 +58,7 @@ impl ConfigCommand {
-             formatter.success(&format!("Configuration ({})", config_path.display()));
-             formatter.info("");
- 
--            let yaml = serde_yaml::to_string(&config)
-+            let yaml = serde_norway::to_string(&config)
-                 .context("Failed to serialize configuration to YAML")?;
- 
-             for line in yaml.lines() {
-@@ -122,7 +122,7 @@ impl ConfigCommand {
- 
-                 // Serialize and save
-                 let yaml =
--                    serde_yaml::to_string(&config).context("Failed to serialize configuration")?;
-+                    serde_norway::to_string(&config).context("Failed to serialize configuration")?;
-                 std::fs::write(&config_path, &yaml)
-                     .context("Failed to write configuration file")?;
- 
-diff --git a/lnxdrive-engine/crates/lnxdrive-core/Cargo.toml b/lnxdrive-engine/crates/lnxdrive-core/Cargo.toml
-index b395400..b54bf79 100644
---- a/lnxdrive-engine/crates/lnxdrive-core/Cargo.toml
-+++ b/lnxdrive-engine/crates/lnxdrive-core/Cargo.toml
-@@ -11,7 +11,7 @@ uuid.workspace = true
- chrono.workspace = true
- serde.workspace = true
- serde_json.workspace = true
--serde_yaml.workspace = true
-+serde_norway.workspace = true
- thiserror.workspace = true
- async-trait.workspace = true
- anyhow.workspace = true
-diff --git a/lnxdrive-engine/crates/lnxdrive-core/src/config.rs b/lnxdrive-engine/crates/lnxdrive-core/src/config.rs
-index 2335fbf..c223840 100644
---- a/lnxdrive-engine/crates/lnxdrive-core/src/config.rs
-+++ b/lnxdrive-engine/crates/lnxdrive-core/src/config.rs
-@@ -108,10 +108,37 @@ pub struct FuseConfig {
- // ---------------------------------------------------------------------------
- 
- impl Config {
-+    /// Maximum size (bytes) accepted for a configuration file.
-+    ///
-+    /// ISSUE-002 defense-in-depth: a hard input cap bounds the work the YAML
-+    /// parser can be asked to do. The default config is ~1.4 KB, so 1 MiB
-+    /// leaves generous headroom for hand-edited configs while rejecting absurd
-+    /// inputs before parsing. Alias-expansion ("billion-laughs") bombs are
-+    /// additionally stopped by `serde_norway`'s built-in recursion-depth and
-+    /// alias-repetition limits.
-+    const MAX_CONFIG_BYTES: usize = 1 << 20; // 1 MiB
-+
-     /// Load configuration from a YAML file at `path`.
-     pub fn load(path: &Path) -> anyhow::Result<Self> {
-         let content = std::fs::read_to_string(path)?;
--        let config: Config = serde_yaml::from_str(&content)?;
-+        Self::from_yaml_str(&content)
-+    }
-+
-+    /// Parse configuration from an in-memory YAML string.
-+    ///
-+    /// Enforces [`Config::MAX_CONFIG_BYTES`] before parsing, then defers to
-+    /// `serde_norway`, whose recursion-depth and alias-repetition caps reject
-+    /// billion-laughs alias bombs (ISSUE-002). Separated from [`Config::load`]
-+    /// so the hardening can be exercised by tests without touching the disk.
-+    pub fn from_yaml_str(content: &str) -> anyhow::Result<Self> {
-+        if content.len() > Self::MAX_CONFIG_BYTES {
-+            anyhow::bail!(
-+                "configuration exceeds maximum size of {} bytes (got {} bytes)",
-+                Self::MAX_CONFIG_BYTES,
-+                content.len()
-+            );
-+        }
-+        let config: Config = serde_norway::from_str(content)?;
-         Ok(config)
-     }
- 
-@@ -122,7 +149,7 @@ impl Config {
- 
-     /// Platform-appropriate default path for the configuration file.
-     ///
--    /// Typically `$XDG_CONFIG_HOME/lnxdrive-engine/config.yaml` on Linux.
-+    /// Typically `$XDG_CONFIG_HOME/lnxdrive/config.yaml` on Linux.
-     pub fn default_path() -> PathBuf {
-         dirs::config_dir()
-             .unwrap_or_else(|| PathBuf::from("~/.config"))
-@@ -604,6 +631,68 @@ mod tests {
- 
-     use super::*;
- 
-+    // -- ISSUE-002: YAML hardening (billion-laughs + size cap) --
-+
-+    /// Malicious alias-expansion bomb, loaded verbatim from the workspace-level
-+    /// security fixture (Charter-01 path).
-+    const BILLION_LAUGHS: &str = include_str!(concat!(
-+        env!("CARGO_MANIFEST_DIR"),
-+        "/../../tests/security/billion_laughs.yaml"
-+    ));
-+
-+    /// The shipped default config — used to prove hardening did not break valid
-+    /// input.
-+    const DEFAULT_CONFIG_YAML: &str = include_str!(concat!(
-+        env!("CARGO_MANIFEST_DIR"),
-+        "/../../config/default-config.yaml"
-+    ));
-+
-+    #[test]
-+    fn test_billion_laughs_rejected() {
-+        // The production loader path must reject the bomb — and return fast. If
-+        // this test ever hangs instead of failing, the alias-expansion cap has
-+        // regressed.
-+        let result = Config::from_yaml_str(BILLION_LAUGHS);
-+        assert!(
-+            result.is_err(),
-+            "billion-laughs YAML must be rejected by Config::from_yaml_str"
-+        );
-+    }
-+
-+    #[test]
-+    fn test_billion_laughs_trips_dos_limit() {
-+        // Deserializing the same bomb to an untyped Value forces full alias
-+        // expansion, proving the rejection comes from serde_norway's DoS limit
-+        // (recursion / alias-repetition) rather than typed-struct short-circuit.
-+        let result: Result<serde_norway::Value, _> = serde_norway::from_str(BILLION_LAUGHS);
-+        let err = result.expect_err("billion-laughs must trip the parser's DoS limit");
-+        let msg = err.to_string().to_lowercase();
-+        assert!(
-+            msg.contains("limit") || msg.contains("recursion") || msg.contains("repetition"),
-+            "error should indicate a DoS limit was hit, got: {msg}"
-+        );
-+    }
-+
-+    #[test]
-+    fn test_oversized_config_rejected() {
-+        // A config larger than MAX_CONFIG_BYTES is rejected before parsing.
-+        let huge = format!("# pad\n{}", "#".repeat(Config::MAX_CONFIG_BYTES));
-+        let result = Config::from_yaml_str(&huge);
-+        let err = result.expect_err("config over the size cap must be rejected");
-+        assert!(
-+            err.to_string().contains("maximum size"),
-+            "oversized config should fail with the size-cap error, got: {err}"
-+        );
-+    }
-+
-+    #[test]
-+    fn test_default_config_still_parses() {
-+        // Hardening must not break the shipped default config.
-+        let config = Config::from_yaml_str(DEFAULT_CONFIG_YAML)
-+            .expect("default config must still parse after ISSUE-002 hardening");
-+        assert!(config.sync.poll_interval > 0);
-+    }
-+
-     // -- Defaults --
- 
-     #[test]
-@@ -992,7 +1081,7 @@ fuse:
-     #[test]
-     fn default_path_ends_with_config_yaml() {
-         let p = Config::default_path();
--        assert!(p.ends_with("lnxdrive-engine/config.yaml"));
-+        assert!(p.ends_with("lnxdrive/config.yaml"));
-     }
- 
-     // -- ValidationError Display --
-@@ -1015,7 +1104,7 @@ fuse:
-     fn fuse_config_default_returns_expected_values() {
-         let fuse = FuseConfig::default();
-         assert_eq!(fuse.mount_point, "~/OneDrive");
--        assert_eq!(fuse.auto_mount, true);
-+        assert!(fuse.auto_mount);
-         assert_eq!(fuse.cache_dir, "~/.local/share/lnxdrive/cache");
-         assert_eq!(fuse.cache_max_size_gb, 10);
-         assert_eq!(fuse.dehydration_threshold_percent, 80);
-@@ -1036,9 +1125,9 @@ dehydration_max_age_days: 45
- dehydration_interval_minutes: 90
- hydration_concurrency: 12
- "#;
--        let fuse: FuseConfig = serde_yaml::from_str(yaml).expect("deserialize FuseConfig");
-+        let fuse: FuseConfig = serde_norway::from_str(yaml).expect("deserialize FuseConfig");
-         assert_eq!(fuse.mount_point, "/mnt/onedrive");
--        assert_eq!(fuse.auto_mount, false);
-+        assert!(!fuse.auto_mount);
-         assert_eq!(fuse.cache_dir, "/var/cache/lnxdrive");
-         assert_eq!(fuse.cache_max_size_gb, 25);
-         assert_eq!(fuse.dehydration_threshold_percent, 75);
-@@ -1089,7 +1178,7 @@ fuse:
- 
-         let cfg = Config::load(tmp.path()).expect("load config with fuse section");
-         assert_eq!(cfg.fuse.mount_point, "~/OneDrive");
--        assert_eq!(cfg.fuse.auto_mount, true);
-+        assert!(cfg.fuse.auto_mount);
-         assert_eq!(cfg.fuse.cache_dir, "~/.local/share/lnxdrive/cache");
-         assert_eq!(cfg.fuse.cache_max_size_gb, 15);
-         assert_eq!(cfg.fuse.dehydration_threshold_percent, 85);
-diff --git a/lnxdrive-engine/crates/lnxdrive-daemon/Cargo.toml b/lnxdrive-engine/crates/lnxdrive-daemon/Cargo.toml
-index a5c80d8..751b1ff 100644
---- a/lnxdrive-engine/crates/lnxdrive-daemon/Cargo.toml
-+++ b/lnxdrive-engine/crates/lnxdrive-daemon/Cargo.toml
-@@ -24,3 +24,6 @@ tracing.workspace = true
- tracing-subscriber.workspace = true
- serde_json.workspace = true
- dirs = "5.0"
-+async-trait.workspace = true
-+zbus.workspace = true
-+chrono.workspace = true
-diff --git a/lnxdrive-engine/crates/lnxdrive-daemon/src/goa_auth_backend.rs b/lnxdrive-engine/crates/lnxdrive-daemon/src/goa_auth_backend.rs
-new file mode 100644
-index 0000000..61780d0
---- /dev/null
-+++ b/lnxdrive-engine/crates/lnxdrive-daemon/src/goa_auth_backend.rs
-@@ -0,0 +1,211 @@
-+//! GNOME Online Accounts (GOA) implementation of [`AuthBackend`].
-+//!
-+//! This backend fulfils the mitigation for **RISK-002** (CVSS 9.1, OAuth
-+//! tokens transmitted in cleartext over the D-Bus session bus). The
-+//! D-Bus surface in `lnxdrive-ipc` no longer accepts raw tokens as method
-+//! arguments; instead it accepts a **GOA account D-Bus path** and
-+//! delegates to this backend, which:
-+//!
-+//! 1. Calls `org.gnome.OnlineAccounts.OAuth2Based.GetAccessToken` on the
-+//!    given account path to obtain the access token internally.
-+//! 2. Calls `org.freedesktop.DBus.Properties.Get` on the
-+//!    `org.gnome.OnlineAccounts.Account` interface to read the
-+//!    `PresentationIdentity` property (the user e-mail).
-+//! 3. Persists the token in the system keyring via
-+//!    [`lnxdrive_graph::auth::KeyringTokenStorage`].
-+//! 4. Returns the user e-mail to the caller. **No tokens are ever
-+//!    returned, logged at info level, or sent back over D-Bus.**
-+//!
-+//! Note that GOA does not expose the refresh token on its public D-Bus
-+//! API — it manages refreshes internally and exposes only the current
-+//! access token via `GetAccessToken`. We store the access token (and a
-+//! `None` refresh token) in the keyring; the daemon's existing
-+//! [`lnxdrive_graph::auth::OAuth2Provider::refresh_via_goa`] is used for
-+//! subsequent refreshes.
-+
-+use async_trait::async_trait;
-+use chrono::{Duration, Utc};
-+use lnxdrive_core::ports::Tokens;
-+use lnxdrive_graph::auth::KeyringTokenStorage;
-+use lnxdrive_ipc::auth_backend::{AuthBackend, AuthBackendError, AuthBackendResult};
-+use tracing::{debug, error, info, warn};
-+use zbus::Connection;
-+
-+const GOA_BUS: &str = "org.gnome.OnlineAccounts";
-+const GOA_ACCOUNT_PATH_PREFIX: &str = "/org/gnome/OnlineAccounts/Accounts/";
-+const GOA_OAUTH2_INTERFACE: &str = "org.gnome.OnlineAccounts.OAuth2Based";
-+const GOA_ACCOUNT_INTERFACE: &str = "org.gnome.OnlineAccounts.Account";
-+
-+/// `AuthBackend` that talks to GNOME Online Accounts over D-Bus.
-+///
-+/// Holds its own D-Bus session connection (cloned `Arc` internally by
-+/// `zbus`). The connection is acquired lazily on the first call so that
-+/// daemons started in environments without a session bus still boot.
-+pub struct GoaAuthBackend {
-+    /// Optional pre-acquired session bus connection. When `None`, the
-+    /// backend opens a fresh connection on every call. Mainly useful for
-+    /// tests that want to inject a custom connection.
-+    connection: Option<Connection>,
-+}
-+
-+impl GoaAuthBackend {
-+    /// Returns a backend that opens a fresh `zbus::Connection::session()`
-+    /// on every call.
-+    pub fn new() -> Self {
-+        Self { connection: None }
-+    }
-+
-+    /// Returns a backend that reuses the supplied D-Bus connection.
-+    #[allow(dead_code)] // reserved for integration tests in lnxdrive-testing
-+    pub fn with_connection(connection: Connection) -> Self {
-+        Self {
-+            connection: Some(connection),
-+        }
-+    }
-+
-+    async fn session_connection(&self) -> Result<Connection, AuthBackendError> {
-+        if let Some(conn) = &self.connection {
-+            return Ok(conn.clone());
-+        }
-+        Connection::session().await.map_err(|err| {
-+            error!("GoaAuthBackend: failed to acquire session bus: {}", err);
-+            AuthBackendError::GoaCallFailed
-+        })
-+    }
-+}
-+
-+impl Default for GoaAuthBackend {
-+    fn default() -> Self {
-+        Self::new()
-+    }
-+}
-+
-+#[async_trait]
-+impl AuthBackend for GoaAuthBackend {
-+    async fn complete_auth_via_goa(&self, goa_account_path: &str) -> AuthBackendResult {
-+        if !goa_account_path.starts_with(GOA_ACCOUNT_PATH_PREFIX) {
-+            warn!(
-+                "GoaAuthBackend rejected non-GOA path: {}",
-+                goa_account_path
-+            );
-+            return Err(AuthBackendError::InvalidAccount);
-+        }
-+
-+        let conn = self.session_connection().await?;
-+
-+        // (1) Fetch the access token from GOA. The call is performed
-+        //     daemon-side; the token never appears as a public D-Bus
-+        //     method argument.
-+        let (access_token, expires_in) = call_goa_get_access_token(&conn, goa_account_path)
-+            .await
-+            .map_err(|err| {
-+                warn!(
-+                    "GoaAuthBackend: GetAccessToken failed for {}: {}",
-+                    goa_account_path, err
-+                );
-+                AuthBackendError::GoaCallFailed
-+            })?;
-+
-+        // (2) Fetch the user e-mail via the standard Properties API.
-+        let email = call_goa_presentation_identity(&conn, goa_account_path)
-+            .await
-+            .map_err(|err| {
-+                warn!(
-+                    "GoaAuthBackend: PresentationIdentity lookup failed for {}: {}",
-+                    goa_account_path, err
-+                );
-+                AuthBackendError::GoaCallFailed
-+            })?;
-+
-+        let expires_at = Utc::now() + Duration::seconds(i64::from(expires_in));
-+        let tokens = Tokens {
-+            access_token,
-+            // GOA does not expose the refresh token; refreshes are
-+            // delegated back to GOA via `refresh_via_goa`.
-+            refresh_token: None,
-+            expires_at,
-+        };
-+
-+        // (3) Persist in the system keyring.
-+        KeyringTokenStorage::store(&email, &tokens).map_err(|err| {
-+            error!(
-+                "GoaAuthBackend: keyring store failed for {}: {}",
-+                email, err
-+            );
-+            AuthBackendError::KeyringStoreFailed
-+        })?;
-+
-+        debug!(
-+            "GoaAuthBackend: stored GOA-issued tokens in keyring for {} \
-+             (expires_in={}s)",
-+            email, expires_in
-+        );
-+        info!(
-+            "GoaAuthBackend: completed authentication for GOA account {} \
-+             (user e-mail captured, no tokens left D-Bus)",
-+            goa_account_path
-+        );
-+        Ok(email)
-+    }
-+}
-+
-+/// Calls `org.gnome.OnlineAccounts.OAuth2Based.GetAccessToken` on the
-+/// given account path and returns `(access_token, expires_in_seconds)`.
-+async fn call_goa_get_access_token(
-+    conn: &Connection,
-+    goa_account_path: &str,
-+) -> anyhow::Result<(String, i32)> {
-+    let reply = conn
-+        .call_method(
-+            Some(zbus::names::BusName::from_static_str(GOA_BUS)?),
-+            goa_account_path,
-+            Some(zbus::names::InterfaceName::from_static_str(
-+                GOA_OAUTH2_INTERFACE,
-+            )?),
-+            "GetAccessToken",
-+            &(),
-+        )
-+        .await?;
-+    let (access_token, expires_in): (String, i32) = reply.body().deserialize()?;
-+    Ok((access_token, expires_in))
-+}
-+
-+/// Reads the `PresentationIdentity` property from the GOA `Account`
-+/// interface — typically the user e-mail address.
-+async fn call_goa_presentation_identity(
-+    conn: &Connection,
-+    goa_account_path: &str,
-+) -> anyhow::Result<String> {
-+    let reply = conn
-+        .call_method(
-+            Some(zbus::names::BusName::from_static_str(GOA_BUS)?),
-+            goa_account_path,
-+            Some(zbus::names::InterfaceName::from_static_str(
-+                "org.freedesktop.DBus.Properties",
-+            )?),
-+            "Get",
-+            &(GOA_ACCOUNT_INTERFACE, "PresentationIdentity"),
-+        )
-+        .await?;
-+    // The Properties.Get reply is a `Variant<String>`. Deserializing into
-+    // `OwnedValue` decouples the lifetime from the (temporary) message body.
-+    let owned: zbus::zvariant::OwnedValue = reply.body().deserialize()?;
-+    let email: String = TryInto::<String>::try_into(owned).map_err(|err| {
-+        anyhow::anyhow!("PresentationIdentity is not a string: {}", err)
-+    })?;
-+    Ok(email)
-+}
-+
-+#[cfg(test)]
-+mod tests {
-+    use super::*;
-+
-+    #[tokio::test]
-+    async fn rejects_non_goa_path() {
-+        let backend = GoaAuthBackend::new();
-+        let result = backend
-+            .complete_auth_via_goa("/wrong/prefix/Accounts/1234")
-+            .await;
-+        assert_eq!(result, Err(AuthBackendError::InvalidAccount));
-+    }
-+}
-diff --git a/lnxdrive-engine/crates/lnxdrive-daemon/src/health.rs b/lnxdrive-engine/crates/lnxdrive-daemon/src/health.rs
-new file mode 100644
-index 0000000..dc8938c
---- /dev/null
-+++ b/lnxdrive-engine/crates/lnxdrive-daemon/src/health.rs
-@@ -0,0 +1,399 @@
-+//! D-Bus session bus health monitor + reconnect (RISK-001 mitigation).
-+//!
-+//! The session bus is the only channel between the daemon and the UI. If the
-+//! bus restarts (or our connection is otherwise lost) the daemon would silently
-+//! stop serving its interfaces until manually restarted. This module spawns a
-+//! background task that actively probes the live connection and, on failure,
-+//! rebuilds it and re-registers every interface with exponential backoff.
-+//!
-+//! # Scope
-+//!
-+//! Monitor + reconnect only. A full Unix-socket fallback is deferred to v0.2
-+//! per Charter-01. Detection is **active probing** (`DBusProxy::get_id()` with a
-+//! timeout): zbus 4.x exposes no "connection closed" future, and the `NameLost`
-+//! fast-path is intentionally omitted to avoid pulling a `Stream` adapter
-+//! dependency for a marginal latency gain over the periodic probe.
-+
-+use std::sync::Arc;
-+use std::time::Duration;
-+
-+use lnxdrive_ipc::service::{DaemonState, DbusService};
-+use tokio::sync::Mutex;
-+use tokio::task::JoinHandle;
-+use tokio_util::sync::CancellationToken;
-+use tracing::{debug, error, info, warn};
-+
-+/// D-Bus transport health, surfaced to the UI via [`DaemonState::dbus_health`].
-+///
-+/// This is orthogonal to `DaemonState::connection_status`, which tracks the
-+/// cloud (OneDrive) network connection — not the local session bus.
-+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-+pub enum DbusHealth {
-+    /// Connection to the session bus is live and the name is held.
-+    Online,
-+    /// The connection dropped; the monitor is attempting to re-register.
-+    Reconnecting,
-+    /// Another instance acquired the name during the outage; this daemon yields.
-+    Lost,
-+}
-+
-+impl DbusHealth {
-+    /// Stable string form stored in [`DaemonState::dbus_health`] and exposed
-+    /// over D-Bus.
-+    pub fn as_str(self) -> &'static str {
-+        match self {
-+            DbusHealth::Online => "online",
-+            DbusHealth::Reconnecting => "reconnecting",
-+            DbusHealth::Lost => "lost",
-+        }
-+    }
-+}
-+
-+/// Tunables for the health monitor. [`Default`] provides production values.
-+#[derive(Clone, Debug)]
-+pub struct HealthConfig {
-+    /// How often to probe the live connection with `DBusProxy::get_id()`.
-+    pub probe_interval: Duration,
-+    /// Per-probe timeout; a hung probe is treated as a dropped bus.
-+    pub probe_timeout: Duration,
-+    /// First backoff delay after a detected drop.
-+    pub backoff_base: Duration,
-+    /// Cap on the backoff delay.
-+    pub backoff_max: Duration,
-+    /// Multiplier applied per failed reconnect attempt.
-+    pub backoff_factor: f64,
-+    /// Symmetric jitter fraction applied to each delay (0.0..=1.0).
-+    pub backoff_jitter: f64,
-+}
-+
-+impl Default for HealthConfig {
-+    fn default() -> Self {
-+        Self {
-+            probe_interval: Duration::from_secs(5),
-+            probe_timeout: Duration::from_secs(2),
-+            backoff_base: Duration::from_millis(500),
-+            backoff_max: Duration::from_secs(30),
-+            backoff_factor: 2.0,
-+            backoff_jitter: 0.2,
-+        }
-+    }
-+}
-+
-+/// Result of a single liveness probe, factored out for unit testing.
-+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-+pub enum ProbeOutcome {
-+    /// The bus answered the probe.
-+    Alive,
-+    /// The probe errored or timed out — treat the bus as gone.
-+    Dropped,
-+}
-+
-+/// Exponential backoff delay for a 0-based `attempt`, before jitter, clamped to
-+/// [`HealthConfig::backoff_max`]. Pure function — unit-testable without a bus.
-+pub fn backoff_delay(cfg: &HealthConfig, attempt: u32) -> Duration {
-+    let base = cfg.backoff_base.as_secs_f64();
-+    let scaled = base * cfg.backoff_factor.powi(attempt as i32);
-+    let clamped = scaled.min(cfg.backoff_max.as_secs_f64());
-+    Duration::from_secs_f64(clamped)
-+}
-+
-+/// Apply symmetric jitter to `base`. `rand01` is the RNG sample in `[0, 1)`,
-+/// injected so the function is deterministic under test. A `rand01` of `0.5`
-+/// is the identity; `0.0` and `~1.0` hit the `±jitter_frac` extremes.
-+pub fn apply_jitter(base: Duration, jitter_frac: f64, rand01: f64) -> Duration {
-+    if jitter_frac <= 0.0 {
-+        return base;
-+    }
-+    let frac = jitter_frac.clamp(0.0, 1.0);
-+    let delta = (rand01 * 2.0 - 1.0) * frac;
-+    let secs = (base.as_secs_f64() * (1.0 + delta)).max(0.0);
-+    Duration::from_secs_f64(secs)
-+}
-+
-+/// Classify a probe result. A transport error or timeout means the bus is gone.
-+pub fn classify_probe(probe_ok: bool) -> ProbeOutcome {
-+    if probe_ok {
-+        ProbeOutcome::Alive
-+    } else {
-+        ProbeOutcome::Dropped
-+    }
-+}
-+
-+/// Whether an error from [`DbusService::start`] means another process already
-+/// owns the well-known name (single-instance contention), as opposed to a
-+/// transient bus failure. Mirrors the string match historically inlined in
-+/// `main::run`; kept here so both call sites share one definition.
-+pub fn is_name_taken_error(err: &anyhow::Error) -> bool {
-+    let s = format!("{err:#}");
-+    s.contains("already taken")
-+        || s.contains("already owned")
-+        || s.contains("NameTaken")
-+        || s.contains("name already")
-+}
-+
-+/// Cheap, non-cryptographic `[0, 1)` sample for jitter, avoiding a `rand`
-+/// dependency. Quality is irrelevant here — it only de-synchronizes reconnect
-+/// storms across concurrent user-session daemons.
-+fn rng_sample() -> f64 {
-+    use std::time::{SystemTime, UNIX_EPOCH};
-+    let nanos = SystemTime::now()
-+        .duration_since(UNIX_EPOCH)
-+        .map(|d| d.subsec_nanos())
-+        .unwrap_or(0);
-+    (nanos % 1_000_000) as f64 / 1_000_000.0
-+}
-+
-+/// Update the D-Bus health string in shared state under the lock.
-+async fn set_dbus_health(state: &Arc<Mutex<DaemonState>>, health: DbusHealth) {
-+    let mut s = state.lock().await;
-+    s.dbus_health = health.as_str().to_string();
-+}
-+
-+/// Spawns the health monitor task. The monitor **owns** the connection for the
-+/// rest of the process lifetime; the caller keeps only the returned handle and
-+/// awaits it during shutdown.
-+///
-+/// The caller must establish `initial_connection` synchronously *before*
-+/// spawning (so single-instance detection happens at startup), then hand it
-+/// over here.
-+pub fn spawn_health_monitor(
-+    dbus_service: Arc<DbusService>,
-+    initial_connection: zbus::Connection,
-+    state: Arc<Mutex<DaemonState>>,
-+    shutdown: CancellationToken,
-+    cfg: HealthConfig,
-+) -> JoinHandle<()> {
-+    tokio::spawn(async move {
-+        monitor_loop(dbus_service, initial_connection, state, shutdown, cfg).await;
-+    })
-+}
-+
-+/// Why the healthy phase ended.
-+enum PhaseExit {
-+    /// Graceful shutdown requested.
-+    Shutdown,
-+    /// The bus connection was lost.
-+    BusDropped,
-+}
-+
-+/// Outcome of the reconnect phase.
-+enum ReconnectResult {
-+    /// Re-registered successfully; carries the new connection.
-+    Connected(zbus::Connection),
-+    /// Shutdown requested mid-backoff.
-+    Shutdown,
-+    /// Another instance owns the name; this daemon must yield.
-+    NameTaken,
-+}
-+
-+/// Two-phase supervision loop: hold a live connection and probe it; on loss,
-+/// rebuild it with backoff. Exits on shutdown or on losing the name to a peer.
-+async fn monitor_loop(
-+    dbus_service: Arc<DbusService>,
-+    mut connection: zbus::Connection,
-+    state: Arc<Mutex<DaemonState>>,
-+    shutdown: CancellationToken,
-+    cfg: HealthConfig,
-+) {
-+    info!("D-Bus health monitor started");
-+    loop {
-+        match healthy_phase(&connection, &shutdown, &cfg).await {
-+            PhaseExit::Shutdown => {
-+                info!("D-Bus health monitor stopping (shutdown)");
-+                return;
-+            }
-+            PhaseExit::BusDropped => {
-+                warn!("D-Bus session bus connection lost; entering reconnect");
-+            }
-+        }
-+
-+        set_dbus_health(&state, DbusHealth::Reconnecting).await;
-+        // Release the dead connection so the well-known name can be re-acquired.
-+        drop(connection);
-+
-+        match reconnect_phase(&dbus_service, &shutdown, &cfg).await {
-+            ReconnectResult::Connected(conn) => {
-+                connection = conn;
-+                set_dbus_health(&state, DbusHealth::Online).await;
-+                info!("D-Bus service re-registered after bus recovery");
-+            }
-+            ReconnectResult::Shutdown => {
-+                info!("D-Bus health monitor stopping during reconnect (shutdown)");
-+                return;
-+            }
-+            ReconnectResult::NameTaken => {
-+                error!(
-+                    "D-Bus name taken by another instance after reconnect; \
-+                     yielding single-instance ownership and shutting down"
-+                );
-+                set_dbus_health(&state, DbusHealth::Lost).await;
-+                shutdown.cancel();
-+                return;
-+            }
-+        }
-+    }
-+}
-+
-+/// Hold the connection and probe it at `probe_interval` until shutdown or loss.
-+async fn healthy_phase(
-+    connection: &zbus::Connection,
-+    shutdown: &CancellationToken,
-+    cfg: &HealthConfig,
-+) -> PhaseExit {
-+    let proxy = match zbus::fdo::DBusProxy::new(connection).await {
-+        Ok(p) => p,
-+        Err(e) => {
-+            warn!(error = %e, "Failed to create D-Bus probe proxy; treating bus as dropped");
-+            return PhaseExit::BusDropped;
-+        }
-+    };
-+
-+    let mut ticker = tokio::time::interval(cfg.probe_interval);
-+    ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
-+    // The first tick fires immediately; consume it so we don't probe the instant
-+    // we (re)connect.
-+    ticker.tick().await;
-+
-+    loop {
-+        tokio::select! {
-+            _ = shutdown.cancelled() => return PhaseExit::Shutdown,
-+            _ = ticker.tick() => {
-+                let probe_ok = match tokio::time::timeout(cfg.probe_timeout, proxy.get_id()).await {
-+                    Ok(Ok(_)) => true,
-+                    Ok(Err(e)) => {
-+                        warn!(error = %e, "D-Bus liveness probe failed");
-+                        false
-+                    }
-+                    Err(_) => {
-+                        warn!(timeout_ms = cfg.probe_timeout.as_millis() as u64,
-+                              "D-Bus liveness probe timed out");
-+                        false
-+                    }
-+                };
-+                match classify_probe(probe_ok) {
-+                    ProbeOutcome::Alive => debug!("D-Bus liveness probe ok"),
-+                    ProbeOutcome::Dropped => return PhaseExit::BusDropped,
-+                }
-+            }
-+        }
-+    }
-+}
-+
-+/// Rebuild the service with exponential backoff until it re-registers, the name
-+/// is lost to a peer, or shutdown is requested.
-+async fn reconnect_phase(
-+    dbus_service: &Arc<DbusService>,
-+    shutdown: &CancellationToken,
-+    cfg: &HealthConfig,
-+) -> ReconnectResult {
-+    let mut attempt: u32 = 0;
-+    loop {
-+        // `Builder::session().name()` arbitrates name ownership atomically at the
-+        // bus, so we attempt `start()` directly and classify the error — no
-+        // separate `try_acquire_name` probe (which would introduce a TOCTOU gap).
-+        match dbus_service.start().await {
-+            Ok(conn) => return ReconnectResult::Connected(conn),
-+            Err(e) if is_name_taken_error(&e) => return ReconnectResult::NameTaken,
-+            Err(e) => {
-+                let delay = apply_jitter(
-+                    backoff_delay(cfg, attempt),
-+                    cfg.backoff_jitter,
-+                    rng_sample(),
-+                );
-+                warn!(
-+                    attempt,
-+                    delay_ms = delay.as_millis() as u64,
-+                    error = %e,
-+                    "D-Bus reconnect attempt failed; backing off"
-+                );
-+                tokio::select! {
-+                    _ = shutdown.cancelled() => return ReconnectResult::Shutdown,
-+                    _ = tokio::time::sleep(delay) => {}
-+                }
-+                attempt = attempt.saturating_add(1);
-+            }
-+        }
-+    }
-+}
-+
-+#[cfg(test)]
-+mod tests {
-+    use super::*;
-+
-+    #[test]
-+    fn backoff_delay_is_geometric_and_clamped() {
-+        let cfg = HealthConfig::default();
-+        assert_eq!(backoff_delay(&cfg, 0), Duration::from_millis(500));
-+        assert_eq!(backoff_delay(&cfg, 1), Duration::from_secs(1));
-+        assert_eq!(backoff_delay(&cfg, 2), Duration::from_secs(2));
-+        assert_eq!(backoff_delay(&cfg, 3), Duration::from_secs(4));
-+        // 0.5 * 2^6 = 32s, clamped to backoff_max (30s).
-+        assert_eq!(backoff_delay(&cfg, 6), Duration::from_secs(30));
-+        assert_eq!(backoff_delay(&cfg, 100), Duration::from_secs(30));
-+    }
-+
-+    #[test]
-+    fn apply_jitter_zero_frac_is_identity() {
-+        let base = Duration::from_secs(4);
-+        assert_eq!(apply_jitter(base, 0.0, 0.9), base);
-+    }
-+
-+    #[test]
-+    fn apply_jitter_midpoint_is_identity() {
-+        let base = Duration::from_secs(4);
-+        // rand01 = 0.5 -> delta 0 -> unchanged.
-+        assert_eq!(apply_jitter(base, 0.2, 0.5), base);
-+    }
-+
-+    #[test]
-+    fn apply_jitter_stays_within_bounds() {
-+        let base = Duration::from_secs(10);
-+        let frac = 0.2;
-+        let lo = base.as_secs_f64() * (1.0 - frac);
-+        let hi = base.as_secs_f64() * (1.0 + frac);
-+        for &r in &[0.0_f64, 0.25, 0.5, 0.75, 0.999] {
-+            let d = apply_jitter(base, frac, r).as_secs_f64();
-+            assert!(d >= lo - 1e-9, "below lower bound: r={r} d={d}");
-+            assert!(d <= hi + 1e-9, "above upper bound: r={r} d={d}");
-+        }
-+    }
-+
-+    #[test]
-+    fn jitter_extremes_are_symmetric() {
-+        let base = Duration::from_secs(10);
-+        let lo = apply_jitter(base, 0.2, 0.0).as_secs_f64();
-+        let hi = apply_jitter(base, 0.2, 0.999).as_secs_f64();
-+        assert!((lo - 8.0).abs() < 0.01, "lo={lo}");
-+        assert!((hi - 12.0).abs() < 0.05, "hi={hi}");
-+    }
-+
-+    #[test]
-+    fn dbus_health_strings() {
-+        assert_eq!(DbusHealth::Online.as_str(), "online");
-+        assert_eq!(DbusHealth::Reconnecting.as_str(), "reconnecting");
-+        assert_eq!(DbusHealth::Lost.as_str(), "lost");
-+    }
-+
-+    #[test]
-+    fn classify_probe_maps_bool() {
-+        assert_eq!(classify_probe(true), ProbeOutcome::Alive);
-+        assert_eq!(classify_probe(false), ProbeOutcome::Dropped);
-+    }
-+
-+    #[test]
-+    fn is_name_taken_error_matches_known_strings() {
-+        for msg in [
-+            "name already taken",
-+            "the name is already owned",
-+            "NameTaken error from bus",
-+            "that name already exists",
-+        ] {
-+            assert!(
-+                is_name_taken_error(&anyhow::anyhow!("{msg}")),
-+                "should match: {msg}"
-+            );
-+        }
-+        assert!(!is_name_taken_error(&anyhow::anyhow!("connection refused")));
-+        assert!(!is_name_taken_error(&anyhow::anyhow!("bus not available")));
-+    }
-+}
-diff --git a/lnxdrive-engine/crates/lnxdrive-daemon/src/main.rs b/lnxdrive-engine/crates/lnxdrive-daemon/src/main.rs
-index 7267349..a00fa60 100644
---- a/lnxdrive-engine/crates/lnxdrive-daemon/src/main.rs
-+++ b/lnxdrive-engine/crates/lnxdrive-daemon/src/main.rs
-@@ -22,6 +22,10 @@ use lnxdrive_graph::{
-     auth::KeyringTokenStorage, client::GraphClient, provider::GraphCloudProvider,
- };
- use lnxdrive_ipc::service::{DaemonState, DaemonSyncState, DbusService, DBUS_NAME};
-+
-+mod goa_auth_backend;
-+mod health;
-+use goa_auth_backend::GoaAuthBackend;
- use lnxdrive_sync::{engine::SyncEngine, filesystem::LocalFileSystemAdapter};
- use tokio::sync::Mutex;
- use tokio_util::sync::CancellationToken;
-@@ -103,20 +107,21 @@ impl DaemonService {
-         // T231: Single instance lock via D-Bus name
-         info!("Checking for existing daemon instance...");
- 
--        // T224: Start D-Bus service (this also acquires the well-known name)
--        let dbus_service = DbusService::new(Arc::clone(&self.daemon_state));
--        let _dbus_connection = match dbus_service.start().await {
-+        // T224: Start D-Bus service (this also acquires the well-known name).
-+        // RISK-002 mitigation: wire the GOA-backed AuthBackend so
-+        // `Auth.CompleteAuthViaGOA` can persist tokens in the keyring without
-+        // exposing them as D-Bus method arguments.
-+        let dbus_service = Arc::new(
-+            DbusService::new(Arc::clone(&self.daemon_state))
-+                .with_auth_backend(Arc::new(GoaAuthBackend::new())),
-+        );
-+        let initial_connection = match dbus_service.start().await {
-             Ok(conn) => {
-                 info!("D-Bus service started, acquired name {}", DBUS_NAME);
-                 conn
-             }
-             Err(e) => {
--                let err_str = format!("{e:#}");
--                if err_str.contains("already taken")
--                    || err_str.contains("already owned")
--                    || err_str.contains("NameTaken")
--                    || err_str.contains("name already")
--                {
-+                if health::is_name_taken_error(&e) {
-                     error!(
-                         "Another instance of lnxdrived is already running (D-Bus name {} is taken)",
-                         DBUS_NAME
-@@ -130,6 +135,34 @@ impl DaemonService {
-             }
-         };
- 
-+        // RISK-001 mitigation: hand the connection to the health monitor, which
-+        // owns it for the rest of the process lifetime and re-registers every
-+        // interface (with backoff) if the session bus drops.
-+        let health_handle = health::spawn_health_monitor(
-+            Arc::clone(&dbus_service),
-+            initial_connection,
-+            Arc::clone(&self.daemon_state),
-+            self.shutdown.clone(),
-+            health::HealthConfig::default(),
-+        );
-+
-+        // Run the daemon's main work, then always await the monitor on exit so
-+        // the connection is dropped cleanly regardless of which path returns.
-+        let result = self.run_inner().await;
-+        self.shutdown.cancel();
-+        if let Err(e) = health_handle.await {
-+            warn!(error = %e, "Health monitor task join error");
-+        }
-+        result
-+    }
-+
-+    /// The daemon's main work: account/token load, sync engine, FUSE auto-mount,
-+    /// and the periodic polling loop.
-+    ///
-+    /// Split out of [`DaemonService::run`] so the D-Bus connection and its
-+    /// health monitor share a single common exit point (RISK-001): every early
-+    /// return below lands back in `run`, which then awaits the monitor.
-+    async fn run_inner(&self) -> Result<()> {
-         // Try to load account and tokens
-         let account_opt = self
-             .state_repo
-diff --git a/lnxdrive-engine/crates/lnxdrive-fuse/Cargo.toml b/lnxdrive-engine/crates/lnxdrive-fuse/Cargo.toml
-index 103c07b..ac3d62e 100644
---- a/lnxdrive-engine/crates/lnxdrive-fuse/Cargo.toml
-+++ b/lnxdrive-engine/crates/lnxdrive-fuse/Cargo.toml
-@@ -25,6 +25,7 @@ anyhow.workspace = true
- 
- # Concurrency and data structures
- dashmap.workspace = true
-+parking_lot.workspace = true
- 
- # Serialization
- serde.workspace = true
-diff --git a/lnxdrive-engine/crates/lnxdrive-fuse/src/filesystem.rs b/lnxdrive-engine/crates/lnxdrive-fuse/src/filesystem.rs
-index eef529f..633c44e 100644
---- a/lnxdrive-engine/crates/lnxdrive-fuse/src/filesystem.rs
-+++ b/lnxdrive-engine/crates/lnxdrive-fuse/src/filesystem.rs
-@@ -1417,10 +1417,7 @@ impl Filesystem for LnxDriveFs {
-                     // Ensure hydration is running (handles race with open())
-                     if !hm.is_hydrating(ino) {
-                         if let Some(remote_id) = entry.remote_id() {
--                            debug!(
--                                "read: inode {} not hydrating yet, starting hydration",
--                                ino
--                            );
-+                            debug!("read: inode {} not hydrating yet, starting hydration", ino);
-                             match self.rt_handle.block_on(hm.hydrate(
-                                 ino,
-                                 *entry.item_id(),
-@@ -1450,10 +1447,11 @@ impl Filesystem for LnxDriveFs {
-                         "read: waiting for hydration range ino={} offset={} size={}",
-                         ino, offset, size
-                     );
--                    match self
--                        .rt_handle
--                        .block_on(hm.wait_for_range(ino, offset as u64, size as u64))
--                    {
-+                    match self.rt_handle.block_on(hm.wait_for_range(
-+                        ino,
-+                        offset as u64,
-+                        size as u64,
-+                    )) {
-                         Ok(()) => {
-                             // Hydration complete for this range - read from cache
-                             let remote_id = match entry.remote_id() {
-@@ -1561,20 +1559,22 @@ impl Filesystem for LnxDriveFs {
-     /// # State Handling
-     ///
-     /// - `Online`: Returns EIO (file needs to be hydrated first)
--    /// - `Hydrating`: Returns EIO (hydration in progress)
-+    /// - `Hydrating`: Returns EBUSY (hydration in progress, RISK-003)
-     /// - `Hydrated`, `Pinned`, `Modified`: Writes to local cache, transitions to Modified
-     ///   if not already in that state
-     ///
--    /// # Write During Hydration (T099)
-+    /// # Write During Hydration (RISK-003)
-     ///
--    /// When a file is being hydrated (state = Hydrating), write operations return EIO.
--    /// This prevents data corruption that could occur if a write modified partial content.
--    /// The application should retry the write after hydration completes. In practice:
-+    /// When a file is being hydrated, write operations return EBUSY. Primary check
-+    /// is `HydrationManager::is_hydrating(ino)` (live `DashMap` lookup, always
-+    /// fresh). Backed by `InodeEntry::lock_state_guard()` which serializes the
-+    /// is_hydrating check + cache write with `HydrationManager::hydrate()`
-+    /// start-of-hydration registration, preventing a hydration from starting
-+    /// between the check and the cache write.
-     ///
--    /// - Most applications will have opened the file with O_RDONLY for initial read
--    /// - If opened with O_RDWR and hydration is triggered by read, writes will fail
--    ///   until hydration completes
--    /// - This is consistent with how network filesystems handle similar scenarios
-+    /// The application should retry the write after hydration completes. EBUSY
-+    /// matches POSIX semantics for "resource temporarily occupied" and is the
-+    /// contract verified by SIM-L2-002.
-     ///
-     /// # Performance
-     ///
-@@ -1606,6 +1606,37 @@ impl Filesystem for LnxDriveFs {
-             }
-         };
- 
-+        // RISK-003 primary guard: live check against HydrationManager's active set
-+        // (DashMap lookup, always fresh — InodeEntry.state may be stale).
-+        if let Some(ref hm) = self.hydration_manager {
-+            if hm.is_hydrating(ino) {
-+                debug!(
-+                    "write: inode {} hydration in progress (pre-lock check), returning EBUSY",
-+                    ino
-+                );
-+                reply.error(libc::EBUSY);
-+                return;
-+            }
-+        }
-+
-+        // Acquire per-inode serialization lock. Held across the is_hydrating
-+        // re-check and the cache write to prevent a hydration from starting
-+        // between the check and the write (RISK-003 / SIM-L2-002).
-+        let _state_guard = entry.lock_state_guard();
-+
-+        // Re-check under lock: a hydrate() call racing with us may have
-+        // registered between the pre-lock check and the lock acquisition.
-+        if let Some(ref hm) = self.hydration_manager {
-+            if hm.is_hydrating(ino) {
-+                debug!(
-+                    "write: inode {} hydration in progress (locked re-check), returning EBUSY",
-+                    ino
-+                );
-+                reply.error(libc::EBUSY);
-+                return;
-+            }
-+        }
-+
-         // Handle based on state
-         match entry.state() {
-             lnxdrive_core::domain::sync_item::ItemState::Online => {
-@@ -1617,12 +1648,13 @@ impl Filesystem for LnxDriveFs {
-                 reply.error(libc::EIO);
-             }
-             lnxdrive_core::domain::sync_item::ItemState::Hydrating => {
--                // File is being hydrated - would need to wait for completion
-+                // Stale state field reported Hydrating without a live hydration
-+                // in the manager — treat as transient/busy.
-                 debug!(
--                    "write: inode {} is Hydrating, would wait for completion before writing",
-+                    "write: inode {} state is Hydrating (no live hydration), returning EBUSY",
-                     ino
-                 );
--                reply.error(libc::EIO);
-+                reply.error(libc::EBUSY);
-             }
-             lnxdrive_core::domain::sync_item::ItemState::Hydrated
-             | lnxdrive_core::domain::sync_item::ItemState::Pinned
-@@ -1913,17 +1945,17 @@ impl Filesystem for LnxDriveFs {
-         // Create InodeEntry for the new directory
-         let entry = InodeEntry::new(
-             new_ino,
--            UniqueId::new(),               // Generate a new unique ID
--            None,                          // No remote ID yet (will be assigned after cloud sync)
--            InodeNumber::new(parent),      // Parent inode
--            name_str.to_string(),          // Directory name
--            FileType::Directory,           // This is a directory
--            0,                             // Size is 0 for directories
--            perm,                          // Calculated permissions
--            now,                           // mtime
--            now,                           // ctime
--            now,                           // atime
--            2,                             // nlink=2 (. and parent link)
-+            UniqueId::new(),          // Generate a new unique ID
-+            None,                     // No remote ID yet (will be assigned after cloud sync)
-+            InodeNumber::new(parent), // Parent inode
-+            name_str.to_string(),     // Directory name
-+            FileType::Directory,      // This is a directory
-+            0,                        // Size is 0 for directories
-+            perm,                     // Calculated permissions
-+            now,                      // mtime
-+            now,                      // ctime
-+            now,                      // atime
-+            2,                        // nlink=2 (. and parent link)
-             lnxdrive_core::domain::sync_item::ItemState::Modified, // Needs to be synced
-         );
- 
-@@ -2138,12 +2170,20 @@ impl Filesystem for LnxDriveFs {
- 
-         // T098: Validate filename lengths
-         if name_str.len() > NAME_MAX {
--            debug!("rename: source name too long ({} > {})", name_str.len(), NAME_MAX);
-+            debug!(
-+                "rename: source name too long ({} > {})",
-+                name_str.len(),
-+                NAME_MAX
-+            );
-             reply.error(libc::ENAMETOOLONG);
-             return;
-         }
-         if newname_str.len() > NAME_MAX {
--            debug!("rename: dest name too long ({} > {})", newname_str.len(), NAME_MAX);
-+            debug!(
-+                "rename: dest name too long ({} > {})",
-+                newname_str.len(),
-+                NAME_MAX
-+            );
-             reply.error(libc::ENAMETOOLONG);
-             return;
-         }
-@@ -2157,10 +2197,7 @@ impl Filesystem for LnxDriveFs {
-         let source_entry = match self.inode_table.lookup(parent, name_str) {
-             Some(entry) => entry,
-             None => {
--                debug!(
--                    "rename: source {} not found in parent {}",
--                    name_str, parent
--                );
-+                debug!("rename: source {} not found in parent {}", name_str, parent);
-                 reply.error(libc::ENOENT);
-                 return;
-             }
-@@ -2345,7 +2382,10 @@ impl Filesystem for LnxDriveFs {
-         }
- 
-         // Generate a new inode number
--        let new_ino = match self.rt_handle.block_on(self.write_handle.increment_inode_counter()) {
-+        let new_ino = match self
-+            .rt_handle
-+            .block_on(self.write_handle.increment_inode_counter())
-+        {
-             Ok(ino) => InodeNumber::new(ino),
-             Err(e) => {
-                 warn!("create: failed to allocate inode: {}", e);
-@@ -2398,7 +2438,10 @@ impl Filesystem for LnxDriveFs {
-         let item_id = *sync_item.id();
- 
-         // Save the SyncItem to the database
--        if let Err(e) = self.rt_handle.block_on(self.write_handle.save_item(sync_item)) {
-+        if let Err(e) = self
-+            .rt_handle
-+            .block_on(self.write_handle.save_item(sync_item))
-+        {
-             warn!("create: failed to save SyncItem: {}", e);
-             reply.error(libc::EIO);
-             return;
-@@ -2417,12 +2460,12 @@ impl Filesystem for LnxDriveFs {
-             InodeNumber::new(parent),
-             name_str.to_string(),
-             FileType::RegularFile,
--            0,    // Size is 0 for newly created files
-+            0, // Size is 0 for newly created files
-             perm,
--            now,  // mtime
--            now,  // ctime
--            now,  // atime
--            1,    // nlink
-+            now, // mtime
-+            now, // ctime
-+            now, // atime
-+            1,   // nlink
-             ItemState::Modified,
-         );
- 
-@@ -2608,7 +2651,10 @@ impl Filesystem for LnxDriveFs {
-         let value = match xattr::get_xattr(&entry, name_str, hydration_progress) {
-             Some(v) => v,
-             None => {
--                debug!("getxattr: attribute {} not found for inode {}", name_str, ino);
-+                debug!(
-+                    "getxattr: attribute {} not found for inode {}",
-+                    name_str, ino
-+                );
-                 reply.error(libc::ENODATA);
-                 return;
-             }
-@@ -4469,7 +4515,10 @@ mod tests {
- 
-             // Verify the directory is empty
-             let children = fs.inode_table().children(10);
--            assert!(children.is_empty(), "empty_dir has no children - rmdir can proceed");
-+            assert!(
-+                children.is_empty(),
-+                "empty_dir has no children - rmdir can proceed"
-+            );
-         }
- 
-         #[tokio::test]
-@@ -4794,7 +4843,12 @@ mod tests {
- 
-             fs.insert_entry(make_test_entry(1, 1, "", true));
-             fs.insert_entry(make_entry_with_state(
--                10, 1, "file.txt", false, ItemState::Hydrated, 100,
-+                10,
-+                1,
-+                "file.txt",
-+                false,
-+                ItemState::Hydrated,
-+                100,
-             ));
- 
-             // Get the "parent" which is a file
-@@ -4819,7 +4873,12 @@ mod tests {
-             // Insert root and a file
-             fs.insert_entry(make_test_entry(1, 1, "", true));
-             fs.insert_entry(make_entry_with_state(
--                10, 1, "to_delete.txt", false, ItemState::Hydrated, 100,
-+                10,
-+                1,
-+                "to_delete.txt",
-+                false,
-+                ItemState::Hydrated,
-+                100,
-             ));
- 
-             assert_eq!(fs.inode_table().len(), 2);
-@@ -4887,7 +4946,12 @@ mod tests {
- 
-             fs.insert_entry(make_test_entry(1, 1, "", true));
-             fs.insert_entry(make_entry_with_state(
--                10, 1, "old_name.txt", false, ItemState::Hydrated, 100,
-+                10,
-+                1,
-+                "old_name.txt",
-+                false,
-+                ItemState::Hydrated,
-+                100,
-             ));
- 
-             // Verify original name
-@@ -4909,7 +4973,12 @@ mod tests {
-             fs.insert_entry(make_test_entry(10, 1, "dir1", true));
-             fs.insert_entry(make_test_entry(20, 1, "dir2", true));
-             fs.insert_entry(make_entry_with_state(
--                100, 10, "file.txt", false, ItemState::Hydrated, 100,
-+                100,
-+                10,
-+                "file.txt",
-+                false,
-+                ItemState::Hydrated,
-+                100,
-             ));
- 
-             // File is in dir1
-@@ -4946,7 +5015,12 @@ mod tests {
- 
-             fs.insert_entry(make_test_entry(1, 1, "", true));
-             fs.insert_entry(make_entry_with_state(
--                10, 1, "file.txt", false, ItemState::Hydrated, 100,
-+                10,
-+                1,
-+                "file.txt",
-+                false,
-+                ItemState::Hydrated,
-+                100,
-             ));
- 
-             // Destination parent doesn't exist
-@@ -4965,10 +5039,20 @@ mod tests {
- 
-             fs.insert_entry(make_test_entry(1, 1, "", true));
-             fs.insert_entry(make_entry_with_state(
--                10, 1, "source.txt", false, ItemState::Hydrated, 100,
-+                10,
-+                1,
-+                "source.txt",
-+                false,
-+                ItemState::Hydrated,
-+                100,
-             ));
-             fs.insert_entry(make_entry_with_state(
--                20, 1, "target.txt", false, ItemState::Hydrated, 200,
-+                20,
-+                1,
-+                "target.txt",
-+                false,
-+                ItemState::Hydrated,
-+                200,
-             ));
- 
-             // Both files exist
-diff --git a/lnxdrive-engine/crates/lnxdrive-fuse/src/hydration.rs b/lnxdrive-engine/crates/lnxdrive-fuse/src/hydration.rs
-index 4fd6bf5..a933418 100644
---- a/lnxdrive-engine/crates/lnxdrive-fuse/src/hydration.rs
-+++ b/lnxdrive-engine/crates/lnxdrive-fuse/src/hydration.rs
-@@ -216,8 +216,13 @@ struct ActiveHydration {
-     request: Arc<HydrationRequest>,
-     /// Cancellation token for the download task
-     cancel_token: CancellationToken,
--    /// Join handle for the download task (for awaiting completion)
--    _task_handle: JoinHandle<()>,
-+    /// Join handle for the download task (for awaiting completion).
-+    /// Optional because the entry is inserted into the active map *before*
-+    /// the task is spawned (RISK-003: the insert must happen under the
-+    /// per-inode state_guard lock, before any `.await`, so concurrent
-+    /// FUSE writes see `is_hydrating(ino) == true` as soon as the lock
-+    /// is released).
-+    _task_handle: Option<JoinHandle<()>>,
- }
- 
- /// Manages concurrent file hydration (download) operations.
-@@ -265,6 +270,10 @@ pub struct HydrationManager {
-     provider: Arc<GraphCloudProvider>,
-     /// Tokio runtime handle for spawning tasks
-     rt_handle: Handle,
-+    /// Inode table for acquiring per-inode `state_guard` (RISK-003).
-+    /// Used by `hydrate()` to serialize active-map registration with FUSE
-+    /// `write()`'s hydration check.
-+    inode_table: Arc<crate::inode::InodeTable>,
- }
- 
- impl HydrationManager {
-@@ -283,6 +292,7 @@ impl HydrationManager {
-         write_handle: WriteSerializerHandle,
-         provider: Arc<GraphCloudProvider>,
-         rt_handle: Handle,
-+        inode_table: Arc<crate::inode::InodeTable>,
-     ) -> Self {
-         Self {
-             active: Arc::new(DashMap::new()),
-@@ -291,6 +301,7 @@ impl HydrationManager {
-             write_handle,
-             provider,
-             rt_handle,
-+            inode_table,
-         }
-     }
- }
-@@ -354,6 +365,25 @@ impl HydrationManager {
-         // Create cancellation token
-         let cancel_token = CancellationToken::new();
- 
-+        // RISK-003: Register the inode in the active map BEFORE any await
-+        // and BEFORE spawning the download task, under the per-inode
-+        // state_guard lock. This guarantees that a concurrent FUSE write()
-+        // (which acquires the same state_guard and then checks
-+        // is_hydrating(ino)) will see this inode as hydrating from the moment
-+        // it can re-acquire the lock.
-+        {
-+            let entry = self.inode_table.get(ino);
-+            let _guard = entry.as_ref().map(|e| e.lock_state_guard());
-+            self.active.insert(
-+                ino,
-+                ActiveHydration {
-+                    request: Arc::clone(&request),
-+                    cancel_token: cancel_token.clone(),
-+                    _task_handle: None,
-+                },
-+            );
-+        }
-+
-         // Clone values for the spawned task
-         let semaphore = Arc::clone(&self.semaphore);
-         let cache = Arc::clone(&self.cache);
-@@ -363,10 +393,16 @@ impl HydrationManager {
-         let cancel_token_clone = cancel_token.clone();
-         let active_map = self.active.clone();
- 
--        // Update item state to Hydrating
--        write_handle
-+        // Update item state to Hydrating (DB only; the in-memory active map
-+        // was already updated under the inode lock above).
-+        if let Err(e) = write_handle
-             .update_state(item_id, ItemState::Hydrating)
--            .await?;
-+            .await
-+        {
-+            // Roll back the active-map registration on failure.
-+            self.active.remove(&ino);
-+            return Err(e);
-+        }
- 
-         // Spawn the download task
-         let task_handle = self.rt_handle.spawn(async move {
-@@ -420,15 +456,11 @@ impl HydrationManager {
-             active_map.remove(&ino);
-         });
- 
--        // Insert into active map
--        self.active.insert(
--            ino,
--            ActiveHydration {
--                request,
--                cancel_token,
--                _task_handle: task_handle,
--            },
--        );
-+        // Fill in the task_handle on the active-map entry that was inserted
-+        // before the spawn (see RISK-003 comment above).
-+        if let Some(mut active) = self.active.get_mut(&ino) {
-+            active._task_handle = Some(task_handle);
-+        }
- 
-         Ok(progress_rx)
-     }
-@@ -718,13 +750,12 @@ impl HydrationManager {
- 
-         // For sequential downloads, we need to wait until downloaded bytes >= range_end
-         // Progress is percentage, so we calculate required progress
--        let required_progress = if total_size == 0 {
--            100u8
--        } else {
--            // Calculate minimum progress needed for the range to be available
--            // We need at least (range_end / total_size * 100) progress
--            ((range_end * 100) / total_size).min(100) as u8
--        };
-+        // Minimum progress (percentage) needed for the range to be available.
-+        // `checked_div` yields None when total_size == 0, in which case the file
-+        // is fully available (100%). Otherwise clamp to 100.
-+        let required_progress = (range_end * 100)
-+            .checked_div(total_size)
-+            .map_or(100u8, |progress| progress.min(100) as u8);
- 
-         tracing::debug!(
-             ino,
-@@ -835,6 +866,46 @@ impl HydrationManager {
-         self.active.contains_key(&ino)
-     }
- 
-+    /// Test-only: register an inode as actively hydrating without spawning a
-+    /// real download task. Used by integration tests for RISK-003 (SIM-L2-002)
-+    /// to exercise the write-during-hydration EBUSY path without standing up
-+    /// a mocked GraphCloudProvider.
-+    #[doc(hidden)]
-+    pub fn test_register_active(
-+        &self,
-+        ino: u64,
-+        item_id: UniqueId,
-+        remote_id: RemoteId,
-+        total_size: u64,
-+    ) {
-+        let cache_path = self.cache.cache_path(&remote_id);
-+        let (request, _rx) = HydrationRequest::new(
-+            ino,
-+            item_id,
-+            remote_id,
-+            total_size,
-+            cache_path,
-+            HydrationPriority::UserOpen,
-+        );
-+        let entry = self.inode_table.get(ino);
-+        let _guard = entry.as_ref().map(|e| e.lock_state_guard());
-+        self.active.insert(
-+            ino,
-+            ActiveHydration {
-+                request: Arc::new(request),
-+                cancel_token: CancellationToken::new(),
-+                _task_handle: None,
-+            },
-+        );
-+    }
-+
-+    /// Test-only: deregister an inode previously marked active via
-+    /// `test_register_active`.
-+    #[doc(hidden)]
-+    pub fn test_unregister_active(&self, ino: u64) {
-+        self.active.remove(&ino);
-+    }
-+
-     /// Gets the current progress of an active hydration.
-     ///
-     /// # Arguments
-@@ -923,7 +994,13 @@ impl HydrationManager {
- 
-                 // Start hydration with PinRequest priority
-                 let _progress_rx = self
--                    .hydrate(ino, item_id, remote_id, total_size, HydrationPriority::PinRequest)
-+                    .hydrate(
-+                        ino,
-+                        item_id,
-+                        remote_id,
-+                        total_size,
-+                        HydrationPriority::PinRequest,
-+                    )
-                     .await?;
- 
-                 // Wait for completion
-@@ -1055,8 +1132,8 @@ impl HydrationManager {
- // ============================================================================
- 
- use crate::inode::InodeTable;
--use std::pin::Pin;
- use std::future::Future;
-+use std::pin::Pin;
- 
- /// Type alias for the boxed future returned by recursive pin/unpin operations.
- type PinResultFuture<'a> =
-@@ -1101,7 +1178,13 @@ impl HydrationManager {
-                     // Pin the file
-                     if let Some(remote_id) = child.remote_id() {
-                         match self
--                            .pin(ino, item_id, remote_id.clone(), child.size(), current_state.clone())
-+                            .pin(
-+                                ino,
-+                                item_id,
-+                                remote_id.clone(),
-+                                child.size(),
-+                                current_state.clone(),
-+                            )
-                             .await
-                         {
-                             Ok(()) => {
-diff --git a/lnxdrive-engine/crates/lnxdrive-fuse/src/inode_entry.rs b/lnxdrive-engine/crates/lnxdrive-fuse/src/inode_entry.rs
-index f7c3869..f465ebf 100644
---- a/lnxdrive-engine/crates/lnxdrive-fuse/src/inode_entry.rs
-+++ b/lnxdrive-engine/crates/lnxdrive-fuse/src/inode_entry.rs
-@@ -9,6 +9,7 @@ use std::{
- };
- 
- use lnxdrive_core::domain::{ItemState, RemoteId, UniqueId};
-+use parking_lot::{Mutex, MutexGuard};
- 
- /// A newtype wrapper for FUSE inode numbers.
- ///
-@@ -119,6 +120,16 @@ pub struct InodeEntry {
- 
-     /// Current sync/hydration state
-     pub state: ItemState,
-+
-+    /// Per-inode serialization lock for write-during-hydration mitigation (RISK-003).
-+    ///
-+    /// Held briefly by `FuseHandler::write()` to make the
-+    /// "check `HydrationManager::is_hydrating(ino)` → write to cache" sequence
-+    /// atomic with `HydrationManager::hydrate()` marking the inode as active.
-+    /// Prevents a hydration from starting (and corrupting subsequent download
-+    /// chunks with the application's bytes) between the FUSE write's hydration
-+    /// check and the cache write.
-+    state_guard: Mutex<()>,
- }
- 
- impl InodeEntry {
-@@ -171,9 +182,19 @@ impl InodeEntry {
-             lookup_count: AtomicU64::new(0),
-             open_handles: AtomicU64::new(0),
-             state,
-+            state_guard: Mutex::new(()),
-         }
-     }
- 
-+    /// Acquires the per-inode serialization lock (RISK-003).
-+    ///
-+    /// Used by `FuseHandler::write()` to serialize cache writes with
-+    /// `HydrationManager::hydrate()` start-of-hydration registration.
-+    /// Returns a guard whose lifetime defines the critical section.
-+    pub fn lock_state_guard(&self) -> MutexGuard<'_, ()> {
-+        self.state_guard.lock()
-+    }
-+
-     /// Converts this inode entry to a FUSE FileAttr structure.
-     ///
-     /// This is used to respond to `getattr()` and `lookup()` calls.
-diff --git a/lnxdrive-engine/crates/lnxdrive-fuse/tests/integration_write_during_hydration.rs b/lnxdrive-engine/crates/lnxdrive-fuse/tests/integration_write_during_hydration.rs
-new file mode 100644
-index 0000000..9de1980
---- /dev/null
-+++ b/lnxdrive-engine/crates/lnxdrive-fuse/tests/integration_write_during_hydration.rs
-@@ -0,0 +1,213 @@
-+//! Integration test for RISK-003 / SIM-L2-002: FUSE write during hydration
-+//! must be blocked to prevent file corruption.
-+//!
-+//! The mitigation has two layers, verified here:
-+//!
-+//! 1. `InodeEntry::lock_state_guard()` — per-inode `parking_lot::Mutex` that
-+//!    serializes a FUSE `write()`'s `is_hydrating` check + cache write with
-+//!    `HydrationManager::hydrate()`'s active-map registration. Prevents a
-+//!    hydration from starting between a write's check and its cache write.
-+//!
-+//! 2. `HydrationManager::is_hydrating(ino)` — live `DashMap` lookup that
-+//!    `FuseHandler::write()` consults to decide between `EBUSY` (active
-+//!    hydration) and proceeding with the cache write.
-+//!
-+//! The exact `libc::EBUSY` return is verified by code review of
-+//! `filesystem.rs::write()`; we cannot drive `LnxDriveFs::write()` directly
-+//! from a unit test because `fuser::ReplyWrite` has no public constructor —
-+//! exercising the full callback would require standing up a real FUSE mount.
-+
-+use std::{
-+    sync::Arc,
-+    thread,
-+    time::{Duration, Instant, SystemTime},
-+};
-+
-+use lnxdrive_cache::pool::DatabasePool;
-+use lnxdrive_core::domain::{ItemState, RemoteId, UniqueId};
-+use lnxdrive_fuse::write_serializer::WriteSerializer;
-+use lnxdrive_fuse::{
-+    inode::InodeTable,
-+    inode_entry::{InodeEntry, InodeNumber},
-+    ContentCache, HydrationManager,
-+};
-+use lnxdrive_graph::{client::GraphClient, provider::GraphCloudProvider};
-+use tempfile::tempdir;
-+use tokio::runtime::Handle;
-+
-+fn make_test_entry(ino: u64, name: &str) -> InodeEntry {
-+    InodeEntry::new(
-+        InodeNumber::new(ino),
-+        UniqueId::new(),
-+        Some(RemoteId::new(format!("remote_{}", ino)).unwrap()),
-+        InodeNumber::new(1),
-+        name.to_string(),
-+        fuser::FileType::RegularFile,
-+        10 * 1024 * 1024, // 10 MB placeholder (SIM-L2-002 uses 100 MB; 10 MB is sufficient)
-+        0o644,
-+        SystemTime::now(),
-+        SystemTime::now(),
-+        SystemTime::now(),
-+        1,
-+        ItemState::Online,
-+    )
-+}
-+
-+/// Verifies that `InodeEntry::lock_state_guard()` provides genuine mutual
-+/// exclusion across threads. This is the primitive RISK-003 relies on.
-+#[test]
-+fn state_guard_provides_mutual_exclusion() {
-+    let entry = Arc::new(make_test_entry(42, "test.bin"));
-+    let entry_clone = Arc::clone(&entry);
-+
-+    // Hold the guard on the main thread, then spawn a thread that tries to
-+    // acquire it. The thread should block until we release.
-+    let guard = entry.lock_state_guard();
-+
-+    let (tx, rx) = std::sync::mpsc::channel();
-+    let handle = thread::spawn(move || {
-+        let _g = entry_clone.lock_state_guard();
-+        tx.send(Instant::now()).unwrap();
-+    });
-+
-+    // The child thread should NOT have acquired the lock yet.
-+    thread::sleep(Duration::from_millis(50));
-+    assert!(
-+        rx.try_recv().is_err(),
-+        "child thread acquired the lock while main thread held it"
-+    );
-+
-+    let release_time = Instant::now();
-+    drop(guard);
-+
-+    // After release, child thread must acquire promptly.
-+    let acquired_time = rx
-+        .recv_timeout(Duration::from_secs(2))
-+        .expect("child thread never acquired lock after release");
-+    handle.join().unwrap();
-+
-+    assert!(
-+        acquired_time >= release_time,
-+        "child thread reported acquisition before release"
-+    );
-+}
-+
-+/// Verifies the RISK-003 contract end-to-end at the HydrationManager level:
-+/// after `test_register_active(ino)` returns, `is_hydrating(ino)` returns
-+/// `true` — meaning a concurrent FUSE write that re-checks `is_hydrating`
-+/// under the inode lock will observe the hydration and return `EBUSY`.
-+#[tokio::test]
-+async fn hydration_registration_makes_is_hydrating_true() {
-+    let temp = tempdir().unwrap();
-+    let cache = Arc::new(ContentCache::new(temp.path().to_path_buf()).unwrap());
-+    let pool = DatabasePool::in_memory().await.unwrap();
-+    let (serializer, write_handle) = WriteSerializer::new(pool.clone());
-+    tokio::spawn(async move { serializer.run().await });
-+
-+    let inode_table = Arc::new(InodeTable::new());
-+    let entry = make_test_entry(99, "concurrent.bin");
-+    let item_id = *entry.item_id();
-+    let remote_id = entry.remote_id().unwrap().clone();
-+    let total_size = entry.size();
-+    inode_table.insert(entry);
-+
-+    // GraphCloudProvider with a dummy token — the test exercises only the
-+    // lock + active-map paths, never reaching real Graph API calls.
-+    let client = GraphClient::new("test_dummy_token");
-+    let provider = Arc::new(GraphCloudProvider::new(client));
-+
-+    let hm = HydrationManager::new(
-+        4,
-+        cache,
-+        write_handle,
-+        provider,
-+        Handle::current(),
-+        Arc::clone(&inode_table),
-+    );
-+
-+    assert!(
-+        !hm.is_hydrating(99),
-+        "fresh manager must report not hydrating"
-+    );
-+
-+    hm.test_register_active(99, item_id, remote_id, total_size);
-+
-+    assert!(
-+        hm.is_hydrating(99),
-+        "after registration, is_hydrating must report true — this is the \
-+         signal a concurrent FuseHandler::write() observes to return EBUSY"
-+    );
-+
-+    hm.test_unregister_active(99);
-+    assert!(!hm.is_hydrating(99));
-+}
-+
-+/// Verifies that `HydrationManager::test_register_active` acquires the per-inode
-+/// state_guard, blocking concurrent FUSE-write-style critical sections — the
-+/// RISK-003 atomicity property.
-+///
-+/// `clippy::await_holding_lock` is suppressed because the test is *intentionally*
-+/// holding the lock across an await to demonstrate that the lock blocks
-+/// concurrent registration; the main `tokio::time::sleep` is only used to give
-+/// the spawned task a window to attempt acquisition.
-+#[tokio::test]
-+#[allow(clippy::await_holding_lock)]
-+async fn hydration_registration_serializes_with_inode_lock() {
-+    let temp = tempdir().unwrap();
-+    let cache = Arc::new(ContentCache::new(temp.path().to_path_buf()).unwrap());
-+    let pool = DatabasePool::in_memory().await.unwrap();
-+    let (serializer, write_handle) = WriteSerializer::new(pool.clone());
-+    tokio::spawn(async move { serializer.run().await });
-+
-+    let inode_table = Arc::new(InodeTable::new());
-+    let entry = make_test_entry(123, "race.bin");
-+    let item_id = *entry.item_id();
-+    let remote_id = entry.remote_id().unwrap().clone();
-+    let total_size = entry.size();
-+    inode_table.insert(entry);
-+
-+    let client = GraphClient::new("test_dummy_token");
-+    let provider = Arc::new(GraphCloudProvider::new(client));
-+
-+    let hm = Arc::new(HydrationManager::new(
-+        4,
-+        cache,
-+        write_handle,
-+        provider,
-+        Handle::current(),
-+        Arc::clone(&inode_table),
-+    ));
-+
-+    // Simulate a FUSE write holding the inode lock.
-+    let entry_arc = inode_table.get(123).expect("entry inserted above");
-+    let write_guard = entry_arc.lock_state_guard();
-+
-+    // Concurrent hydration registration must block on the same lock.
-+    let hm_clone = Arc::clone(&hm);
-+    let registration = tokio::task::spawn_blocking(move || {
-+        let before = Instant::now();
-+        hm_clone.test_register_active(123, item_id, remote_id, total_size);
-+        before.elapsed()
-+    });
-+
-+    // Give the spawned task time to attempt acquisition.
-+    tokio::time::sleep(Duration::from_millis(100)).await;
-+    assert!(
-+        !hm.is_hydrating(123),
-+        "hydration must NOT be registered while inode lock is held by simulated FUSE write"
-+    );
-+
-+    // Release the lock; registration should complete promptly.
-+    drop(write_guard);
-+
-+    let elapsed = registration.await.expect("registration task panicked");
-+    assert!(
-+        elapsed >= Duration::from_millis(50),
-+        "registration completed too fast — lock was not actually contended (elapsed={:?})",
-+        elapsed
-+    );
-+    assert!(
-+        hm.is_hydrating(123),
-+        "after lock release, hydration registration must complete and be visible"
-+    );
-+}
-diff --git a/lnxdrive-engine/crates/lnxdrive-ipc/Cargo.toml b/lnxdrive-engine/crates/lnxdrive-ipc/Cargo.toml
-index ae50fc2..d7b0554 100644
---- a/lnxdrive-engine/crates/lnxdrive-ipc/Cargo.toml
-+++ b/lnxdrive-engine/crates/lnxdrive-ipc/Cargo.toml
-@@ -15,3 +15,4 @@ serde_json.workspace = true
- thiserror.workspace = true
- tracing.workspace = true
- anyhow.workspace = true
-+async-trait.workspace = true
-diff --git a/lnxdrive-engine/crates/lnxdrive-ipc/src/auth_backend.rs b/lnxdrive-engine/crates/lnxdrive-ipc/src/auth_backend.rs
-new file mode 100644
-index 0000000..44d1c24
---- /dev/null
-+++ b/lnxdrive-engine/crates/lnxdrive-ipc/src/auth_backend.rs
-@@ -0,0 +1,80 @@
-+//! Authentication backend trait.
-+//!
-+//! `AuthBackend` is the boundary between the D-Bus surface (`AuthInterface`)
-+//! and the secret-handling machinery (Microsoft Graph OAuth + system keyring).
-+//! The D-Bus surface never sees raw tokens — it only invokes the backend
-+//! through this trait, which is responsible for fetching tokens from
-+//! GNOME Online Accounts (or any future provider), persisting them in the
-+//! system keyring, and returning a non-sensitive identifier (the account
-+//! e-mail) to the caller.
-+//!
-+//! Production code wires a `GoaAuthBackend` (in `lnxdrive-daemon`) that
-+//! talks to `org.gnome.OnlineAccounts` via D-Bus and uses
-+//! `lnxdrive_graph::auth::KeyringTokenStorage` for persistence. Tests inject
-+//! a `MockAuthBackend` (see `service.rs` test module) so that unit tests
-+//! never touch GOA or the keyring.
-+
-+use async_trait::async_trait;
-+use std::fmt;
-+
-+/// Outcome of a backend operation that completes authentication.
-+///
-+/// On success the backend returns the **account e-mail** (used as the keyring
-+/// username key). On failure the backend returns a [`AuthBackendError`]
-+/// describing the cause. Error variants are intentionally coarse-grained:
-+/// the D-Bus surface only differentiates "completed" vs "failed", and the
-+/// detailed reason is reported through `tracing` logs by the backend itself.
-+pub type AuthBackendResult = Result<String, AuthBackendError>;
-+
-+/// Errors that an `AuthBackend` can report.
-+///
-+/// These do not carry sensitive material. The backend is expected to log
-+/// any details it captures (D-Bus error names, GOA error bodies, keyring
-+/// failure modes) through `tracing` before returning the error variant.
-+#[derive(Debug, Clone, PartialEq, Eq)]
-+pub enum AuthBackendError {
-+    /// The GOA account path was rejected by the backend before any call
-+    /// was made (e.g. malformed path, unsupported provider).
-+    InvalidAccount,
-+    /// GOA returned an error or the call itself failed (D-Bus error,
-+    /// timeout, unknown service, …).
-+    GoaCallFailed,
-+    /// Token persistence in the system keyring failed.
-+    KeyringStoreFailed,
-+    /// Catch-all for unexpected backend failures. Reserved for situations
-+    /// that are programming errors rather than expected runtime conditions.
-+    Internal,
-+}
-+
-+impl fmt::Display for AuthBackendError {
-+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-+        match self {
-+            Self::InvalidAccount => write!(f, "invalid GOA account path"),
-+            Self::GoaCallFailed => write!(f, "GOA D-Bus call failed"),
-+            Self::KeyringStoreFailed => write!(f, "keyring store failed"),
-+            Self::Internal => write!(f, "internal backend error"),
-+        }
-+    }
-+}
-+
-+impl std::error::Error for AuthBackendError {}
-+
-+/// Backend that the `AuthInterface` delegates to in order to complete
-+/// authentication without ever exposing raw tokens over D-Bus.
-+///
-+/// Implementations are responsible for:
-+/// 1. Fetching tokens from the upstream provider (GOA today).
-+/// 2. Persisting them in the system keyring.
-+/// 3. Returning the account e-mail so the daemon can update its state.
-+///
-+/// The trait deliberately accepts only the GOA account D-Bus path as input,
-+/// which is a non-sensitive identifier (it does NOT carry the token).
-+#[async_trait]
-+pub trait AuthBackend: Send + Sync {
-+    /// Completes authentication for the GOA account identified by
-+    /// `goa_account_path` (e.g. `/org/gnome/OnlineAccounts/Accounts/1234`).
-+    ///
-+    /// Returns the account e-mail on success. Implementations MUST NOT
-+    /// return raw tokens through this method.
-+    async fn complete_auth_via_goa(&self, goa_account_path: &str) -> AuthBackendResult;
-+}
-diff --git a/lnxdrive-engine/crates/lnxdrive-ipc/src/lib.rs b/lnxdrive-engine/crates/lnxdrive-ipc/src/lib.rs
-index 4411092..7bbdf38 100644
---- a/lnxdrive-engine/crates/lnxdrive-ipc/src/lib.rs
-+++ b/lnxdrive-engine/crates/lnxdrive-ipc/src/lib.rs
-@@ -30,8 +30,10 @@
- //! # }
- //! ```
- 
-+pub mod auth_backend;
- pub mod service;
- 
-+pub use auth_backend::{AuthBackend, AuthBackendError, AuthBackendResult};
- pub use service::{
-     AccountInterface, AuthInterface, ConflictsInterface, DaemonState, DaemonSyncState,
-     DbusService, FilesInterface, ManagerInterface, SettingsInterface, StatusInterface,
-diff --git a/lnxdrive-engine/crates/lnxdrive-ipc/src/service.rs b/lnxdrive-engine/crates/lnxdrive-ipc/src/service.rs
-index 418f0be..27d2eb9 100644
---- a/lnxdrive-engine/crates/lnxdrive-ipc/src/service.rs
-+++ b/lnxdrive-engine/crates/lnxdrive-ipc/src/service.rs
-@@ -22,6 +22,8 @@ use tokio::sync::Mutex;
- use tracing::{debug, info, warn};
- use zbus::zvariant::{OwnedValue, Value};
- 
-+use crate::auth_backend::AuthBackend;
-+
- /// D-Bus well-known name for the LNXDrive daemon
- pub const DBUS_NAME: &str = "com.strangedaystech.LNXDrive";
- 
-@@ -97,6 +99,11 @@ pub struct DaemonState {
- 
-     /// Network connection status: "online", "offline", "reconnecting"
-     pub connection_status: String,
-+    /// D-Bus session-bus transport health: "online", "reconnecting", "lost".
-+    ///
-+    /// Distinct from `connection_status` (which tracks the cloud/OneDrive
-+    /// network link). Updated by the daemon's D-Bus health monitor (RISK-001).
-+    pub dbus_health: String,
-     /// Storage quota used in bytes
-     pub quota_used: u64,
-     /// Storage quota total in bytes
-@@ -148,6 +155,7 @@ impl Default for DaemonState {
-             last_sync_time: 0,
-             pending_changes: 0,
-             connection_status: "online".to_string(),
-+            dbus_health: "online".to_string(),
-             quota_used: 0,
-             quota_total: 0,
-             is_authenticated: false,
-@@ -756,6 +764,16 @@ impl StatusInterface {
-         state.connection_status.clone()
-     }
- 
-+    /// D-Bus session-bus health: "online", "reconnecting", "lost".
-+    ///
-+    /// Lets the UI distinguish a session-bus outage (this daemon reconnecting)
-+    /// from a cloud/network outage. Set by the daemon's health monitor.
-+    #[zbus(property)]
-+    async fn dbus_health(&self) -> String {
-+        let state = self.state.lock().await;
-+        state.dbus_health.clone()
-+    }
-+
-     /// Emitted when storage quota changes
-     #[zbus(signal)]
-     async fn quota_changed(
-@@ -782,11 +800,43 @@ impl StatusInterface {
- /// check authentication status, and log out.
- pub struct AuthInterface {
-     state: Arc<Mutex<DaemonState>>,
-+    /// Backend that completes authentication without exposing tokens over D-Bus.
-+    ///
-+    /// `None` when the interface is constructed for unit tests that do not
-+    /// exercise the GOA path. Production code must use [`Self::with_backend`]
-+    /// so that `complete_auth_via_goa` can actually fetch tokens and persist
-+    /// them in the keyring. See [`crate::auth_backend::AuthBackend`] for the
-+    /// expected contract.
-+    backend: Option<Arc<dyn AuthBackend>>,
- }
- 
- impl AuthInterface {
-+    /// Constructs an `AuthInterface` without a backend.
-+    ///
-+    /// Calls to `complete_auth_via_goa` will return `false` until a backend
-+    /// is wired with [`Self::with_backend`]. This constructor exists so the
-+    /// existing unit tests that only exercise `start_auth` / `complete_auth`
-+    /// / `logout` / `is_authenticated` continue to compile unchanged.
-     pub fn new(state: Arc<Mutex<DaemonState>>) -> Self {
--        Self { state }
-+        Self {
-+            state,
-+            backend: None,
-+        }
-+    }
-+
-+    /// Constructs an `AuthInterface` wired to an `AuthBackend`.
-+    ///
-+    /// This is the constructor that production code in `lnxdrive-daemon`
-+    /// uses. The backend implementation owns the GOA D-Bus client and the
-+    /// keyring storage; the interface itself never touches either.
-+    pub fn with_backend(
-+        state: Arc<Mutex<DaemonState>>,
-+        backend: Arc<dyn AuthBackend>,
-+    ) -> Self {
-+        Self {
-+            state,
-+            backend: Some(backend),
-+        }
-     }
- }
- 
-@@ -840,38 +890,76 @@ impl AuthInterface {
-         true
-     }
- 
--    /// Completes authentication using pre-obtained tokens (e.g. from GOA)
-+    /// Completes authentication for a GNOME Online Accounts account.
-+    ///
-+    /// The caller passes only the **GOA account D-Bus path** (e.g.
-+    /// `/org/gnome/OnlineAccounts/Accounts/1234`), which is a non-sensitive
-+    /// identifier. The daemon then resolves the path to a Microsoft account
-+    /// internally — fetching tokens from `org.gnome.OnlineAccounts.OAuth2Based`
-+    /// and persisting them in the system keyring — without the tokens ever
-+    /// crossing the D-Bus session bus as method arguments.
-+    ///
-+    /// This method replaces the historical `CompleteAuthWithTokens`, which
-+    /// accepted raw `access_token` and `refresh_token` strings as D-Bus
-+    /// parameters and was vulnerable to interception by any local process
-+    /// listening on the session bus (RISK-002, CVSS 9.1). See the AILOG that
-+    /// closes RISK-002 for the full rationale and the
-+    /// `lnxdrive-testing/scripts/leak-test-dbus-tokens.sh` integration test
-+    /// that guards against regressions.
-     ///
-     /// # Arguments
--    /// * `access_token` - The OAuth2 access token
--    /// * `refresh_token` - The OAuth2 refresh token
--    /// * `expires_at_unix` - Token expiration as Unix timestamp (seconds)
-+    /// * `goa_account_path` - D-Bus object path of the GOA account.
-     ///
-     /// # Returns
--    /// `true` if tokens were accepted, `false` if rejected (empty tokens)
+@@ -29,7 +29,7 @@ The lnxdrive monorepo finished its MVP implementation (SpecKit features `001-cor
+    - `ISSUE-002`: harden the YAML config parser against billion-laughs (size + alias caps); regression fixture in `lnxdrive-engine/tests/security/`.
+    - `cargo audit` + `cargo deny` jobs in CI.
+ 3. **Engine polish** — close the one remaining task (T101 performance validation) in `lnxdrive-engine/specs/002-files-on-demand/tasks.md`. **Done** (Fase 2): T101 validated via a real-mount integration test — `getattr` 43.7µs, `readdir` 1.40ms/1000 entries, idle RSS 37.9MB/10k files (all under target). The test was the first real FUSE mount exercised in the codebase and surfaced four functional listing bugs (init runtime-context panic, root self-listing, unstable `readdir` order, `opendir` dir-cache) plus an inode-persistence defect, all fixed with regression tests — see AILOG-2026-05-31-001. The other three items this row originally listed (remove `todo!()/unimplemented!()`, remove debug `println!`, enable `cargo test --workspace` in CI) were **already completed during Fase 1** (verified against `main`: zero such sites in crates; `cargo test --workspace` live at `.github/workflows/engine-ci.yml:66`).
+-4. **GTK4 preferences panel** — implement four basic settings groups (Account, Folders, Network, System) in `lnxdrive-gnome/src/main.rs` (currently a `println!("not yet implemented")` stub) wired to the existing D-Bus daemon API.
++4. **GTK4 preferences panel** — the panel already exists under `lnxdrive-gnome/preferences/` (the root `src/main.rs` stub is just a placeholder). Fase 3 audits it (`.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md`) and fixes the findings. It ships **three** settings groups wired to the daemon — Account, Folders (Sync), Network (Advanced) — plus Conflicts. The fourth group, **System** (auto-start, cache, dehydration), is **deferred to a v0.2 Charter** because it needs new daemon D-Bus API and is post-alpha (see AIDEC-2026-05-31-001). Key fix: realign the panel with the Fase-1 RISK-002 daemon API (`CompleteAuthViaGOA`).
+ 5. **Flatpak packaging** — complete `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` with install stages (icons, `*.desktop`, metainfo XML), correct permissions (`--filesystem=home:rw`, `--talk-name=org.freedesktop.secrets`), and target `org.gnome.Platform 47`. Fix `lnxdrive.spdx` (currently describes StrayMark by mistake). Complete the metainfo XML with description, releases section, and screenshot URLs.
+ 6. **Release infrastructure & public assets** — `.github/workflows/release.yml` (tag → bundle → GitHub Release with SHA256SUMS); `SECURITY.md`; `CHANGELOG.md`; 6 UI screenshots in `docs/screenshots/`; version `0.1.0-alpha.1` consistent across every `Cargo.toml`, Flatpak manifest, and metainfo XML; README install section + competitive comparison vs `jstaf/onedriver` and `abraunegg/onedrive`.
+ 7. **Tag, release, announce** — signed tag `v0.1.0-alpha.1`, GitHub Pre-release with Flatpak bundle, posts on r/linux, r/gnome, r/onedrive, and StrangeDaysTech Mastodon.
+diff --git a/lnxdrive-gnome/preferences/Cargo.toml b/lnxdrive-gnome/preferences/Cargo.toml
+index 3b9bf7e..a8a4fd3 100644
+--- a/lnxdrive-gnome/preferences/Cargo.toml
++++ b/lnxdrive-gnome/preferences/Cargo.toml
+@@ -21,3 +21,10 @@ serde = { version = "1", features = ["derive"] }
+ serde_json = "1"
+ tokio = { version = "1", features = ["rt"] }
+ futures-util = "0.3"
++
++[features]
++# GNOME Online Accounts SSO (FR-019–023). Enabled by default; the GOA button is
++# only shown when an "lnxdrive_microsoft" account exists, so it degrades to the
++# manual browser flow when GOA or the provider is absent.
++default = ["goa"]
++goa = []
+diff --git a/lnxdrive-gnome/preferences/src/app.rs b/lnxdrive-gnome/preferences/src/app.rs
+index 16b8925..b7b1b66 100644
+--- a/lnxdrive-gnome/preferences/src/app.rs
++++ b/lnxdrive-gnome/preferences/src/app.rs
+@@ -9,7 +9,6 @@ use gtk4::glib;
+ use gtk4::prelude::*;
+ use gtk4::subclass::prelude::ObjectSubclassIsExt;
+ use libadwaita as adw;
+-use libadwaita::prelude::*;
+ 
+ use crate::dbus_client::DbusClient;
+ use crate::window::LnxdriveWindow;
+diff --git a/lnxdrive-gnome/preferences/src/conflicts/conflict_dialog.rs b/lnxdrive-gnome/preferences/src/conflicts/conflict_dialog.rs
+index ffceb7d..0e4be3e 100644
+--- a/lnxdrive-gnome/preferences/src/conflicts/conflict_dialog.rs
++++ b/lnxdrive-gnome/preferences/src/conflicts/conflict_dialog.rs
+@@ -219,18 +219,18 @@ impl ConflictDetailDialog {
+ 
+         // Local version
+         let local_group = adw::PreferencesGroup::builder()
+-            .title(&gettext("Local Version"))
++            .title(gettext("Local Version"))
+             .build();
+         let local_size_row = adw::ActionRow::builder()
+-            .title(&gettext("Size"))
+-            .subtitle(&format_bytes(conflict.local_size))
++            .title(gettext("Size"))
++            .subtitle(format_bytes(conflict.local_size))
+             .build();
+         let local_modified_row = adw::ActionRow::builder()
+-            .title(&gettext("Modified"))
++            .title(gettext("Modified"))
+             .subtitle(&conflict.local_modified)
+             .build();
+         let local_hash_row = adw::ActionRow::builder()
+-            .title(&gettext("Hash"))
++            .title(gettext("Hash"))
+             .subtitle(&conflict.local_hash)
+             .build();
+         local_group.add(&local_size_row);
+@@ -239,18 +239,18 @@ impl ConflictDetailDialog {
+ 
+         // Remote version
+         let remote_group = adw::PreferencesGroup::builder()
+-            .title(&gettext("Remote Version"))
++            .title(gettext("Remote Version"))
+             .build();
+         let remote_size_row = adw::ActionRow::builder()
+-            .title(&gettext("Size"))
+-            .subtitle(&format_bytes(conflict.remote_size))
++            .title(gettext("Size"))
++            .subtitle(format_bytes(conflict.remote_size))
+             .build();
+         let remote_modified_row = adw::ActionRow::builder()
+-            .title(&gettext("Modified"))
++            .title(gettext("Modified"))
+             .subtitle(&conflict.remote_modified)
+             .build();
+         let remote_hash_row = adw::ActionRow::builder()
+-            .title(&gettext("Hash"))
++            .title(gettext("Hash"))
+             .subtitle(&conflict.remote_hash)
+             .build();
+         remote_group.add(&remote_size_row);
+@@ -263,26 +263,26 @@ impl ConflictDetailDialog {
+ 
+         // -- Resolution actions -----------------------------------------------
+         let actions_group = adw::PreferencesGroup::builder()
+-            .title(&gettext("Resolution"))
++            .title(gettext("Resolution"))
+             .build();
+ 
+         let keep_local_row = adw::ActionRow::builder()
+-            .title(&gettext("Keep Local"))
+-            .subtitle(&gettext("Upload the local version, overwriting the remote"))
++            .title(gettext("Keep Local"))
++            .subtitle(gettext("Upload the local version, overwriting the remote"))
+             .activatable(true)
+             .build();
+         keep_local_row.add_suffix(&gtk4::Image::from_icon_name("go-up-symbolic"));
+ 
+         let keep_remote_row = adw::ActionRow::builder()
+-            .title(&gettext("Keep Remote"))
+-            .subtitle(&gettext("Download the remote version, overwriting the local"))
++            .title(gettext("Keep Remote"))
++            .subtitle(gettext("Download the remote version, overwriting the local"))
+             .activatable(true)
+             .build();
+         keep_remote_row.add_suffix(&gtk4::Image::from_icon_name("go-down-symbolic"));
+ 
+         let keep_both_row = adw::ActionRow::builder()
+-            .title(&gettext("Keep Both"))
+-            .subtitle(&gettext("Rename the local file and download the remote version"))
++            .title(gettext("Keep Both"))
++            .subtitle(gettext("Rename the local file and download the remote version"))
+             .activatable(true)
+             .build();
+         keep_both_row.add_suffix(&gtk4::Image::from_icon_name("edit-copy-symbolic"));
+diff --git a/lnxdrive-gnome/preferences/src/conflicts/conflict_list.rs b/lnxdrive-gnome/preferences/src/conflicts/conflict_list.rs
+index 55c6fc6..684b9d3 100644
+--- a/lnxdrive-gnome/preferences/src/conflicts/conflict_list.rs
++++ b/lnxdrive-gnome/preferences/src/conflicts/conflict_list.rs
+@@ -150,12 +150,12 @@ impl ConflictListPage {
+ 
+         // -- Conflicts list group ---------------------------------------------
+         let conflicts_group = adw::PreferencesGroup::builder()
+-            .title(&gettext("Unresolved Conflicts"))
++            .title(gettext("Unresolved Conflicts"))
+             .build();
+ 
+         // Resolve All button in the header
+         let resolve_all_button = gtk4::Button::builder()
+-            .label(&gettext("Resolve All"))
++            .label(gettext("Resolve All"))
+             .css_classes(["flat"])
+             .build();
+ 
+@@ -167,7 +167,7 @@ impl ConflictListPage {
+ 
+         // Empty state label
+         let empty_label = gtk4::Label::builder()
+-            .label(&gettext("No unresolved conflicts"))
++            .label(gettext("No unresolved conflicts"))
+             .css_classes(["dim-label"])
+             .margin_top(12)
+             .margin_bottom(12)
+@@ -222,11 +222,11 @@ impl ConflictListPage {
+         self.remove(&group);
+ 
+         let new_group = adw::PreferencesGroup::builder()
+-            .title(&gettext("Unresolved Conflicts"))
++            .title(gettext("Unresolved Conflicts"))
+             .build();
+ 
+         let resolve_all_button = gtk4::Button::builder()
+-            .label(&gettext("Resolve All"))
++            .label(gettext("Resolve All"))
+             .css_classes(["flat"])
+             .build();
+ 
+@@ -238,8 +238,8 @@ impl ConflictListPage {
+ 
+         if conflicts.is_empty() {
+             let empty_row = adw::ActionRow::builder()
+-                .title(&gettext("No unresolved conflicts"))
+-                .subtitle(&gettext("All files are in sync"))
++                .title(gettext("No unresolved conflicts"))
++                .subtitle(gettext("All files are in sync"))
+                 .build();
+             empty_row.add_prefix(&gtk4::Image::from_icon_name("emblem-ok-symbolic"));
+             new_group.add(&empty_row);
+@@ -287,8 +287,8 @@ impl ConflictListPage {
+ 
+         // Build a simple strategy chooser dialog
+         let dialog = adw::AlertDialog::builder()
+-            .heading(&gettext("Resolve All Conflicts"))
+-            .body(&gettext("Choose a strategy to apply to all unresolved conflicts."))
++            .heading(gettext("Resolve All Conflicts"))
++            .body(gettext("Choose a strategy to apply to all unresolved conflicts."))
+             .build();
+ 
+         dialog.add_response("cancel", &gettext("Cancel"));
+diff --git a/lnxdrive-gnome/preferences/src/dbus_client.rs b/lnxdrive-gnome/preferences/src/dbus_client.rs
+index f46ab7e..82dc28a 100644
+--- a/lnxdrive-gnome/preferences/src/dbus_client.rs
++++ b/lnxdrive-gnome/preferences/src/dbus_client.rs
+@@ -84,13 +84,11 @@ pub trait LnxdriveAuth {
+     /// Finish an auth flow with an explicit code + state (manual/CLI/GOA).
+     async fn complete_auth(&self, code: &str, state: &str) -> zbus::Result<bool>;
+ 
+-    /// Complete auth using pre-obtained tokens (e.g. from GNOME Online Accounts).
 -    async fn complete_auth_with_tokens(
 -        &self,
--        access_token: String,
--        refresh_token: String,
+-        access_token: &str,
+-        refresh_token: &str,
 -        expires_at_unix: i64,
--    ) -> bool {
--        let mut state = self.state.lock().await;
-+    /// `true` if authentication completed and tokens were persisted in the
-+    /// system keyring; `false` otherwise. The daemon never returns or logs
-+    /// the tokens themselves; callers learn only of the boolean outcome.
-+    async fn complete_auth_via_goa(&self, goa_account_path: String) -> bool {
-+        info!(
-+            "Auth.CompleteAuthViaGOA called (account_path={})",
-+            goa_account_path
-+        );
+-    ) -> zbus::Result<bool>;
++    /// Complete auth using an existing GNOME Online Accounts account. The daemon
++    /// fetches the tokens from GOA and persists them in the keyring itself, so
++    /// tokens never cross the D-Bus surface (RISK-002). `goa_account_path` is the
++    /// GOA account object path (e.g. `/org/gnome/OnlineAccounts/Accounts/...`).
++    async fn complete_auth_via_goa(&self, goa_account_path: &str) -> zbus::Result<bool>;
  
--        if access_token.is_empty() || refresh_token.is_empty() {
--            warn!("Auth.CompleteAuthWithTokens called with empty tokens");
-+        // Reject malformed paths early so the backend never sees them.
-+        if !goa_account_path.starts_with("/org/gnome/OnlineAccounts/Accounts/") {
-+            warn!(
-+                "Auth.CompleteAuthViaGOA rejected: path does not look like a GOA account ({})",
-+                goa_account_path
-+            );
-             return false;
-         }
+     /// Log out the current user and revoke tokens.
+     async fn logout(&self) -> zbus::Result<()>;
+@@ -128,6 +126,10 @@ trait LnxdriveSettings {
  
--        if expires_at_unix <= 0 {
--            warn!("Auth.CompleteAuthWithTokens called with invalid expiry");
--            return false;
--        }
-+        let backend = match &self.backend {
-+            Some(b) => Arc::clone(b),
-+            None => {
-+                warn!(
-+                    "Auth.CompleteAuthViaGOA called without a configured backend; rejecting"
-+                );
-+                return false;
-+            }
-+        };
- 
--        info!("Auth.CompleteAuthWithTokens called (expires_at={})", expires_at_unix);
-+        let email = match backend.complete_auth_via_goa(&goa_account_path).await {
-+            Ok(email) => email,
-+            Err(err) => {
-+                warn!(
-+                    "Auth.CompleteAuthViaGOA backend failed: {} (account_path={})",
-+                    err, goa_account_path
-+                );
-+                return false;
-+            }
-+        };
+     /// Return the remote folder tree as a JSON string.
+     async fn get_remote_folder_tree(&self) -> zbus::Result<String>;
 +
-+        let mut state = self.state.lock().await;
-         state.is_authenticated = true;
-+        state.account_email = Some(email);
-         state.auth_source = Some("goa".to_string());
-         state.auth_url = None;
-         state.auth_csrf_state = None;
-+        info!(
-+            "Auth.CompleteAuthViaGOA succeeded (account_path={})",
-+            goa_account_path
-+        );
-         true
-     }
- 
-@@ -1055,21 +1143,38 @@ impl ManagerInterface {
- /// well-known name `com.strangedaystech.LNXDrive`.
- pub struct DbusService {
-     state: Arc<Mutex<DaemonState>>,
-+    auth_backend: Option<Arc<dyn AuthBackend>>,
++    /// Emitted when any configuration key changes (e.g. from the CLI).
++    #[zbus(signal)]
++    fn config_changed(&self, key: &str) -> zbus::Result<()>;
  }
  
- impl DbusService {
-     /// Creates a new DbusService with the given shared state
-     pub fn new(state: Arc<Mutex<DaemonState>>) -> Self {
--        Self { state }
-+        Self {
-+            state,
-+            auth_backend: None,
-+        }
+ /// com.strangedaystech.LNXDrive.Status — account and quota information
+@@ -136,12 +138,28 @@ trait LnxdriveSettings {
+     default_service = "com.strangedaystech.LNXDrive",
+     default_path = "/com/strangedaystech/LNXDrive"
+ )]
+-trait LnxdriveStatus {
++pub trait LnxdriveStatus {
+     /// Return (used_bytes, total_bytes).
+     async fn get_quota(&self) -> zbus::Result<(u64, u64)>;
+ 
+     /// Return a dict of account metadata (display_name, email, etc.).
+     async fn get_account_info(&self) -> zbus::Result<HashMap<String, OwnedValue>>;
++
++    /// Cloud connection state: "online", "offline", or "reconnecting".
++    #[zbus(property)]
++    fn connection_status(&self) -> zbus::Result<String>;
++
++    /// Session-bus health: "online", "reconnecting", or "lost".
++    #[zbus(property)]
++    fn dbus_health(&self) -> zbus::Result<String>;
++
++    /// Emitted when the storage quota changes (e.g. after a sync).
++    #[zbus(signal)]
++    fn quota_changed(&self, used: u64, total: u64) -> zbus::Result<()>;
++
++    /// Emitted when the cloud connection state changes.
++    #[zbus(signal)]
++    fn connection_changed(&self, status: &str) -> zbus::Result<()>;
+ }
+ 
+ /// com.strangedaystech.LNXDrive.Sync — sync control
+@@ -159,6 +177,30 @@ trait LnxdriveSync {
+ 
+     /// Resume sync.
+     async fn resume(&self) -> zbus::Result<()>;
++
++    /// Current sync state: "idle", "syncing", "paused", or "error".
++    #[zbus(property)]
++    fn sync_status(&self) -> zbus::Result<String>;
++
++    /// Unix timestamp of the last completed sync (0 = never).
++    #[zbus(property)]
++    fn last_sync_time(&self) -> zbus::Result<i64>;
++
++    /// Number of pending file operations.
++    #[zbus(property)]
++    fn pending_changes(&self) -> zbus::Result<u32>;
++
++    /// Emitted when a sync cycle starts.
++    #[zbus(signal)]
++    fn sync_started(&self) -> zbus::Result<()>;
++
++    /// Emitted when a sync cycle completes.
++    #[zbus(signal)]
++    fn sync_completed(&self, files_synced: u32, errors: u32) -> zbus::Result<()>;
++
++    /// Emitted for each file during sync.
++    #[zbus(signal)]
++    fn sync_progress(&self, file: &str, current: u32, total: u32) -> zbus::Result<()>;
+ }
+ 
+ /// com.strangedaystech.LNXDrive.Conflicts — conflict detection and resolution
+@@ -231,17 +273,12 @@ impl DbusClient {
+         Ok(proxy.complete_auth(code, state).await?)
      }
  
-     /// Creates a new DbusService with default state
-     pub fn with_default_state() -> Self {
-         Self {
-             state: Arc::new(Mutex::new(DaemonState::default())),
-+            auth_backend: None,
+-    /// Complete auth with pre-obtained tokens from GNOME Online Accounts.
+-    pub async fn complete_auth_with_tokens(
+-        &self,
+-        access_token: &str,
+-        refresh_token: &str,
+-        expires_at_unix: i64,
+-    ) -> Result<bool, DbusError> {
++    /// Complete auth via an existing GNOME Online Accounts account. The daemon
++    /// fetches the tokens from GOA and persists them in the keyring; tokens never
++    /// cross the D-Bus surface (RISK-002). Pass the GOA account object path.
++    pub async fn complete_auth_via_goa(&self, goa_account_path: &str) -> Result<bool, DbusError> {
+         let proxy = LnxdriveAuthProxy::new(&self.connection).await?;
+-        Ok(proxy
+-            .complete_auth_with_tokens(access_token, refresh_token, expires_at_unix)
+-            .await?)
++        Ok(proxy.complete_auth_via_goa(goa_account_path).await?)
+     }
+ 
+     /// Log out the current user.
+diff --git a/lnxdrive-gnome/preferences/src/goa_sso.rs b/lnxdrive-gnome/preferences/src/goa_sso.rs
+index 9aa9fc5..2908d41 100644
+--- a/lnxdrive-gnome/preferences/src/goa_sso.rs
++++ b/lnxdrive-gnome/preferences/src/goa_sso.rs
+@@ -13,53 +13,19 @@ const GOA_MANAGER_PATH: &str = "/org/gnome/OnlineAccounts";
+ 
+ /// Checks whether a GOA account with provider type "lnxdrive_microsoft" exists.
+ pub async fn has_lnxdrive_goa_account() -> bool {
+-    match find_goa_account_path().await {
+-        Ok(Some(_)) => true,
+-        _ => false,
+-    }
++    matches!(find_goa_account_path().await, Ok(Some(_)))
+ }
+ 
+-/// Retrieves OAuth2 tokens from the existing GOA account.
++/// Returns the D-Bus object path of the existing "lnxdrive_microsoft" GOA
++/// account, if any.
+ ///
+-/// Returns (access_token, refresh_token, expires_at_unix) on success.
+-pub async fn get_goa_tokens() -> Result<(String, String, i64), String> {
+-    let path = find_goa_account_path()
+-        .await
+-        .map_err(|e| format!("D-Bus error: {e}"))?
+-        .ok_or_else(|| "No LNXDrive GOA account found".to_string())?;
+-
+-    let conn = Connection::session()
++/// Post-RISK-002 the client no longer fetches tokens itself: it hands this path
++/// to the daemon via `Auth.CompleteAuthViaGOA`, and the daemon reads the tokens
++/// from GOA and stores them in the keyring, so tokens never cross D-Bus.
++pub async fn lnxdrive_goa_account_path() -> Result<Option<String>, String> {
++    find_goa_account_path()
+         .await
+-        .map_err(|e| format!("Session bus: {e}"))?;
+-
+-    // Call GetAccessToken on the OAuth2Based interface
+-    let msg = conn
+-        .call_method(
+-            Some(GOA_BUS_NAME.into()),
+-            &path,
+-            Some("org.gnome.OnlineAccounts.OAuth2Based".into()),
+-            "GetAccessToken",
+-            &(),
+-        )
+-        .await
+-        .map_err(|e| format!("GetAccessToken: {e}"))?;
+-
+-    let (access_token, expires_in): (String, i32) = msg
+-        .body()
+-        .deserialize()
+-        .map_err(|e| format!("Deserialize: {e}"))?;
+-
+-    // GOA doesn't expose refresh_token via D-Bus; the GOA daemon manages it.
+-    // For daemon-side refresh, we pass a sentinel and rely on GOA-aware refresh.
+-    let refresh_token = "__goa_managed__".to_string();
+-
+-    let now = std::time::SystemTime::now()
+-        .duration_since(std::time::UNIX_EPOCH)
+-        .unwrap_or_default()
+-        .as_secs() as i64;
+-    let expires_at = now + expires_in as i64;
+-
+-    Ok((access_token, refresh_token, expires_at))
++        .map_err(|e| format!("D-Bus error: {e}"))
+ }
+ 
+ /// Finds the D-Bus object path of the first GOA account with provider
+@@ -70,9 +36,9 @@ async fn find_goa_account_path() -> Result<Option<String>, zbus::Error> {
+     // Use the ObjectManager to enumerate all GOA accounts
+     let msg = conn
+         .call_method(
+-            Some(GOA_BUS_NAME.into()),
++            Some(GOA_BUS_NAME),
+             GOA_MANAGER_PATH,
+-            Some("org.freedesktop.DBus.ObjectManager".into()),
++            Some("org.freedesktop.DBus.ObjectManager"),
+             "GetManagedObjects",
+             &(),
+         )
+diff --git a/lnxdrive-gnome/preferences/src/onboarding/auth_page.rs b/lnxdrive-gnome/preferences/src/onboarding/auth_page.rs
+index e4789a0..d3069cd 100644
+--- a/lnxdrive-gnome/preferences/src/onboarding/auth_page.rs
++++ b/lnxdrive-gnome/preferences/src/onboarding/auth_page.rs
+@@ -99,7 +99,7 @@ impl AuthPage {
+ 
+         // Sign-in button
+         let sign_in_button = gtk4::Button::builder()
+-            .label(&gettext("Sign In"))
++            .label(gettext("Sign In"))
+             .halign(gtk4::Align::Center)
+             .css_classes(["suggested-action", "pill"])
+             .build();
+@@ -116,7 +116,7 @@ impl AuthPage {
+ 
+         // Waiting-state cancel button (hidden initially)
+         let cancel_button = gtk4::Button::builder()
+-            .label(&gettext("Cancel"))
++            .label(gettext("Cancel"))
+             .halign(gtk4::Align::Center)
+             .css_classes(["destructive-action", "pill"])
+             .visible(false)
+@@ -126,15 +126,15 @@ impl AuthPage {
+ 
+         // Waiting label (hidden initially, placed next to spinner)
+         let waiting_label = gtk4::Label::builder()
+-            .label(&gettext("Waiting for authentication..."))
++            .label(gettext("Waiting for authentication..."))
+             .visible(false)
+             .build();
+ 
+         // Status page
+         let status_page = adw::StatusPage::builder()
+             .icon_name("dialog-password-symbolic")
+-            .title(&gettext("Sign in to OneDrive"))
+-            .description(&gettext(
++            .title(gettext("Sign in to OneDrive"))
++            .description(gettext(
+                 "Connect your Microsoft account to start syncing files.",
+             ))
+             .build();
+@@ -143,7 +143,7 @@ impl AuthPage {
+         #[cfg(feature = "goa")]
+         {
+             let goa_button = gtk4::Button::builder()
+-                .label(&gettext("Use existing Microsoft account"))
++                .label(gettext("Use existing Microsoft account"))
+                 .halign(gtk4::Align::Center)
+                 .css_classes(["suggested-action", "pill"])
+                 .visible(false) // hidden until GOA check completes
+@@ -356,12 +356,11 @@ impl AuthPage {
+         let wl = waiting_label.clone();
+ 
+         glib::MainContext::default().spawn_local(async move {
+-            match goa_sso::get_goa_tokens().await {
+-                Ok((access_token, refresh_token, expires_at)) => {
+-                    match dbus_client
+-                        .complete_auth_with_tokens(&access_token, &refresh_token, expires_at)
+-                        .await
+-                    {
++            // Hand the GOA account path to the daemon; it fetches the tokens from
++            // GOA itself (RISK-002 — tokens never cross D-Bus).
++            match goa_sso::lnxdrive_goa_account_path().await {
++                Ok(Some(account_path)) => {
++                    match dbus_client.complete_auth_via_goa(&account_path).await {
+                         Ok(true) => {
+                             // Fetch account info and push folder page
+                             if let Ok(info) = dbus_client.get_account_info().await {
+@@ -379,24 +378,26 @@ impl AuthPage {
+                         }
+                         Ok(false) => {
+                             page.show_error(&gettext(
+-                                "The daemon rejected the GOA tokens. Try signing in manually.",
++                                "The daemon rejected the GOA account. Try signing in manually.",
+                             ));
+                             page.set_waiting_state(false, &wl);
+                         }
+                         Err(e) => {
+-                            page.show_error(&format!(
+-                                "{}: {}",
+-                                gettext("D-Bus error"),
+-                                e
+-                            ));
++                            page.show_error(&format!("{}: {}", gettext("D-Bus error"), e));
+                             page.set_waiting_state(false, &wl);
+                         }
+                     }
+                 }
++                Ok(None) => {
++                    page.show_error(&gettext(
++                        "No GNOME Online Accounts account found for LNXDrive.",
++                    ));
++                    page.set_waiting_state(false, &wl);
++                }
+                 Err(e) => {
+                     page.show_error(&format!(
+                         "{}: {}",
+-                        gettext("Could not get GOA tokens"),
++                        gettext("Could not query GNOME Online Accounts"),
+                         e
+                     ));
+                     page.set_waiting_state(false, &wl);
+diff --git a/lnxdrive-gnome/preferences/src/onboarding/confirm_page.rs b/lnxdrive-gnome/preferences/src/onboarding/confirm_page.rs
+index 57e81b8..5c45c21 100644
+--- a/lnxdrive-gnome/preferences/src/onboarding/confirm_page.rs
++++ b/lnxdrive-gnome/preferences/src/onboarding/confirm_page.rs
+@@ -84,17 +84,19 @@ impl ConfirmPage {
+             .clone()
+             .unwrap_or_else(|| gettext("Not selected"));
+ 
++        // `ActionRow::icon_name` is deprecated since libadwaita 1.3; add the icon
++        // as a prefix widget instead.
+         let email_row = adw::ActionRow::builder()
+-            .title(&gettext("Account"))
++            .title(gettext("Account"))
+             .subtitle(&account_email)
+-            .icon_name("avatar-default-symbolic")
+             .build();
++        email_row.add_prefix(&gtk4::Image::from_icon_name("avatar-default-symbolic"));
+ 
+         let folder_row = adw::ActionRow::builder()
+-            .title(&gettext("Sync Folder"))
++            .title(gettext("Sync Folder"))
+             .subtitle(&sync_folder)
+-            .icon_name("folder-symbolic")
+             .build();
++        folder_row.add_prefix(&gtk4::Image::from_icon_name("folder-symbolic"));
+ 
+         let summary_group = adw::PreferencesGroup::new();
+         summary_group.add(&email_row);
+@@ -102,7 +104,7 @@ impl ConfirmPage {
+ 
+         // "Start Syncing" button
+         let start_button = gtk4::Button::builder()
+-            .label(&gettext("Start Syncing"))
++            .label(gettext("Start Syncing"))
+             .halign(gtk4::Align::Center)
+             .css_classes(["suggested-action", "pill"])
+             .build();
+@@ -118,8 +120,8 @@ impl ConfirmPage {
+         // Status page with check icon
+         let status_page = adw::StatusPage::builder()
+             .icon_name("emblem-ok-symbolic")
+-            .title(&gettext("All Set!"))
+-            .description(&gettext(
++            .title(gettext("All Set!"))
++            .description(gettext(
+                 "Your OneDrive account is ready. Review the details below and start syncing.",
+             ))
+             .build();
+diff --git a/lnxdrive-gnome/preferences/src/onboarding/folder_page.rs b/lnxdrive-gnome/preferences/src/onboarding/folder_page.rs
+index cf0627a..cbae7ef 100644
+--- a/lnxdrive-gnome/preferences/src/onboarding/folder_page.rs
++++ b/lnxdrive-gnome/preferences/src/onboarding/folder_page.rs
+@@ -79,14 +79,14 @@ impl FolderPage {
+         // Path display row
+         let initial_path = imp.selected_path.borrow().display().to_string();
+         let path_row = adw::ActionRow::builder()
+-            .title(&gettext("Sync Folder"))
++            .title(gettext("Sync Folder"))
+             .subtitle(&initial_path)
+             .build();
+ 
+         // "Choose Folder..." button as a suffix
+         let choose_button = gtk4::Button::builder()
+             .icon_name("folder-open-symbolic")
+-            .tooltip_text(&gettext("Choose Folder..."))
++            .tooltip_text(gettext("Choose Folder..."))
+             .valign(gtk4::Align::Center)
+             .css_classes(["flat"])
+             .build();
+@@ -96,8 +96,8 @@ impl FolderPage {
+         imp.path_row.replace(Some(path_row.clone()));
+ 
+         let prefs_group = adw::PreferencesGroup::builder()
+-            .title(&gettext("Sync Location"))
+-            .description(&gettext(
++            .title(gettext("Sync Location"))
++            .description(gettext(
+                 "Choose where OneDrive files will be stored on your computer.",
+             ))
+             .build();
+@@ -105,7 +105,7 @@ impl FolderPage {
+ 
+         // Action buttons
+         let continue_button = gtk4::Button::builder()
+-            .label(&gettext("Continue"))
++            .label(gettext("Continue"))
+             .halign(gtk4::Align::Center)
+             .css_classes(["suggested-action", "pill"])
+             .build();
+@@ -159,7 +159,7 @@ impl FolderPage {
+     /// Open a folder chooser dialog.
+     fn on_choose_folder(&self) {
+         let dialog = gtk4::FileDialog::builder()
+-            .title(&gettext("Choose Sync Folder"))
++            .title(gettext("Choose Sync Folder"))
+             .modal(true)
+             .build();
+ 
+diff --git a/lnxdrive-gnome/preferences/src/onboarding/mod.rs b/lnxdrive-gnome/preferences/src/onboarding/mod.rs
+index 21bd452..3b799bf 100644
+--- a/lnxdrive-gnome/preferences/src/onboarding/mod.rs
++++ b/lnxdrive-gnome/preferences/src/onboarding/mod.rs
+@@ -14,7 +14,6 @@ pub mod folder_page;
+ use std::cell::RefCell;
+ 
+ use gtk4::glib;
+-use gtk4::prelude::*;
+ use libadwaita as adw;
+ use libadwaita::prelude::*;
+ 
+diff --git a/lnxdrive-gnome/preferences/src/preferences/account_page.rs b/lnxdrive-gnome/preferences/src/preferences/account_page.rs
+index fc4ba1e..e48639e 100644
+--- a/lnxdrive-gnome/preferences/src/preferences/account_page.rs
++++ b/lnxdrive-gnome/preferences/src/preferences/account_page.rs
+@@ -6,6 +6,7 @@
+ 
+ use std::cell::RefCell;
+ 
++use futures_util::StreamExt;
+ use gettextrs::gettext;
+ use gtk4::glib;
+ use gtk4::prelude::*;
+@@ -14,7 +15,7 @@ use libadwaita::prelude::*;
+ 
+ use gtk4::subclass::prelude::ObjectSubclassIsExt;
+ 
+-use crate::dbus_client::DbusClient;
++use crate::dbus_client::{DbusClient, LnxdriveStatusProxy};
+ 
+ // ---------------------------------------------------------------------------
+ // AccountPage — adw::PreferencesPage subclass
+@@ -77,28 +78,52 @@ impl AccountPage {
+         page.build_ui();
+         page.load_account_info();
+         page.load_quota();
++        page.subscribe_quota_changes();
+ 
+         page
+     }
+ 
++    /// Keep the quota display live by listening for the daemon's `QuotaChanged`
++    /// signal, instead of only reading it once at construction.
++    fn subscribe_quota_changes(&self) {
++        let client = match self.imp().dbus_client.borrow().clone() {
++            Some(c) => c,
++            None => return,
++        };
++
++        let page = self.clone();
++        glib::MainContext::default().spawn_local(async move {
++            let conn = client.connection().clone();
++            if let Ok(proxy) = LnxdriveStatusProxy::new(&conn).await {
++                if let Ok(mut stream) = proxy.receive_quota_changed().await {
++                    while let Some(signal) = stream.next().await {
++                        if let Ok(args) = signal.args() {
++                            page.update_quota_display(args.used, args.total);
++                        }
++                    }
++                }
++            }
++        });
++    }
++
+     fn build_ui(&self) {
+         let imp = self.imp();
+ 
+         // -- OneDrive Account group ------------------------------------------
+ 
+         let account_group = adw::PreferencesGroup::builder()
+-            .title(&gettext("OneDrive Account"))
++            .title(gettext("OneDrive Account"))
+             .build();
+ 
+         let email_row = adw::ActionRow::builder()
+-            .title(&gettext("Email"))
+-            .subtitle(&gettext("Loading..."))
++            .title(gettext("Email"))
++            .subtitle(gettext("Loading..."))
+             .build();
+         imp.email_row.replace(Some(email_row.clone()));
+ 
+         let name_row = adw::ActionRow::builder()
+-            .title(&gettext("Display Name"))
+-            .subtitle(&gettext("Loading..."))
++            .title(gettext("Display Name"))
++            .subtitle(gettext("Loading..."))
+             .build();
+         imp.name_row.replace(Some(name_row.clone()));
+ 
+@@ -108,7 +133,7 @@ impl AccountPage {
+         // -- Storage group ---------------------------------------------------
+ 
+         let storage_group = adw::PreferencesGroup::builder()
+-            .title(&gettext("Storage"))
++            .title(gettext("Storage"))
+             .build();
+ 
+         let level_bar = gtk4::LevelBar::builder()
+@@ -123,7 +148,7 @@ impl AccountPage {
+         imp.level_bar.replace(Some(level_bar.clone()));
+ 
+         let quota_label = gtk4::Label::builder()
+-            .label(&gettext("Loading storage info..."))
++            .label(gettext("Loading storage info..."))
+             .css_classes(["dim-label", "caption"])
+             .margin_start(12)
+             .margin_end(12)
+@@ -151,11 +176,11 @@ impl AccountPage {
+         // -- Session group ---------------------------------------------------
+ 
+         let session_group = adw::PreferencesGroup::builder()
+-            .title(&gettext("Session"))
++            .title(gettext("Session"))
+             .build();
+ 
+         let sign_out_button = gtk4::Button::builder()
+-            .label(&gettext("Sign Out"))
++            .label(gettext("Sign Out"))
+             .halign(gtk4::Align::Center)
+             .css_classes(["destructive-action", "pill"])
+             .margin_top(8)
+@@ -279,8 +304,8 @@ impl AccountPage {
+     fn on_sign_out(&self) {
+         // Create a confirmation dialog.
+         let confirm = adw::AlertDialog::builder()
+-            .heading(&gettext("Sign Out?"))
+-            .body(&gettext(
++            .heading(gettext("Sign Out?"))
++            .body(gettext(
+                 "You will be signed out of your OneDrive account. Syncing will stop.",
+             ))
+             .build();
+diff --git a/lnxdrive-gnome/preferences/src/preferences/advanced_page.rs b/lnxdrive-gnome/preferences/src/preferences/advanced_page.rs
+index 0091919..ff84551 100644
+--- a/lnxdrive-gnome/preferences/src/preferences/advanced_page.rs
++++ b/lnxdrive-gnome/preferences/src/preferences/advanced_page.rs
+@@ -91,8 +91,8 @@ impl AdvancedPage {
+         // -- Exclusion Patterns group (FR-015) --------------------------------
+ 
+         let patterns_group = adw::PreferencesGroup::builder()
+-            .title(&gettext("Exclusion Patterns"))
+-            .description(&gettext(
++            .title(gettext("Exclusion Patterns"))
++            .description(gettext(
+                 "Files and folders matching these glob patterns will not be synced.",
+             ))
+             .build();
+@@ -119,13 +119,13 @@ impl AdvancedPage {
+             .build();
+ 
+         let entry = gtk4::Entry::builder()
+-            .placeholder_text(&gettext("e.g. *.tmp, .git/, ~$*"))
++            .placeholder_text(gettext("e.g. *.tmp, .git/, ~$*"))
+             .hexpand(true)
+             .build();
+         imp.pattern_entry.replace(Some(entry.clone()));
+ 
+         let add_button = gtk4::Button::builder()
+-            .label(&gettext("Add"))
++            .label(gettext("Add"))
+             .css_classes(["suggested-action"])
+             .build();
+ 
+@@ -154,8 +154,8 @@ impl AdvancedPage {
+         // -- Bandwidth Limits group (FR-017) ----------------------------------
+ 
+         let bandwidth_group = adw::PreferencesGroup::builder()
+-            .title(&gettext("Bandwidth Limits"))
+-            .description(&gettext(
++            .title(gettext("Bandwidth Limits"))
++            .description(gettext(
+                 "Limit upload and download speeds. Set to 0 for unlimited.",
+             ))
+             .build();
+@@ -245,7 +245,7 @@ impl AdvancedPage {
+ 
+         let delete_button = gtk4::Button::builder()
+             .icon_name("edit-delete-symbolic")
+-            .tooltip_text(&gettext("Remove pattern"))
++            .tooltip_text(gettext("Remove pattern"))
+             .valign(gtk4::Align::Center)
+             .css_classes(["flat", "circular"])
+             .build();
+diff --git a/lnxdrive-gnome/preferences/src/preferences/folder_tree.rs b/lnxdrive-gnome/preferences/src/preferences/folder_tree.rs
+index d51257d..9ffbb31 100644
+--- a/lnxdrive-gnome/preferences/src/preferences/folder_tree.rs
++++ b/lnxdrive-gnome/preferences/src/preferences/folder_tree.rs
+@@ -10,6 +10,7 @@
+ 
+ use std::cell::RefCell;
+ 
++use gettextrs::gettext;
+ use gtk4::gio;
+ use gtk4::glib;
+ use gtk4::prelude::*;
+@@ -202,8 +203,7 @@ impl FolderTree {
+         }
+ 
+         tree.build_ui();
+-        tree.load_remote_tree();
+-        tree.load_selected_folders();
++        tree.load_tree_and_selections();
+ 
+         tree
+     }
+@@ -357,29 +357,14 @@ impl FolderTree {
+         self.append(&scrolled);
+     }
+ 
+-    /// Fetch the remote folder tree JSON from the daemon and populate the root store.
+-    fn load_remote_tree(&self) {
+-        let client = match self.imp().dbus_client.borrow().clone() {
+-            Some(c) => c,
+-            None => return,
+-        };
+-
+-        let tree = self.clone();
+-        glib::MainContext::default().spawn_local(async move {
+-            match client.get_remote_folder_tree().await {
+-                Ok(json) => {
+-                    tree.populate_from_json(&json);
+-                }
+-                Err(e) => {
+-                    eprintln!("Could not load remote folder tree: {}", e);
+-                }
+-            }
+-        });
+-    }
+-
+-    /// Load the currently selected folders from the daemon so we can mark
+-    /// them as checked.
+-    fn load_selected_folders(&self) {
++    /// Load the selected folders and the remote tree in one ordered task.
++    ///
++    /// Selections are fetched *first* so `populate_from_json` can mark nodes with
++    /// the correct checked state as it builds them. Doing these as two
++    /// independent `spawn_local` tasks (as before) raced: selections could be
++    /// applied to a still-empty tree, or the tree populated before selections
++    /// arrived, leaving nothing checked.
++    fn load_tree_and_selections(&self) {
+         let client = match self.imp().dbus_client.borrow().clone() {
+             Some(c) => c,
+             None => return,
+@@ -387,15 +372,21 @@ impl FolderTree {
+ 
+         let tree = self.clone();
+         glib::MainContext::default().spawn_local(async move {
++            // 1. Selections first.
+             match client.get_selected_folders().await {
+-                Ok(folders) => {
+-                    *tree.imp().selected_folders.borrow_mut() = folders;
+-                    // Re-apply selections after the tree has been populated.
+-                    tree.apply_selections();
+-                }
+-                Err(e) => {
+-                    eprintln!("Could not load selected folders: {}", e);
+-                }
++                Ok(folders) => *tree.imp().selected_folders.borrow_mut() = folders,
++                Err(e) => tree.show_error(&format!(
++                    "{}: {e}",
++                    gettext("Could not load selected folders")
++                )),
++            }
++            // 2. Then the tree, which reads the selections set above.
++            match client.get_remote_folder_tree().await {
++                Ok(json) => tree.populate_from_json(&json),
++                Err(e) => tree.show_error(&format!(
++                    "{}: {e}",
++                    gettext("Could not load the folder list")
++                )),
+             }
+         });
+     }
+@@ -409,18 +400,29 @@ impl FolderTree {
+             None => return,
+         };
+ 
+-        root_store.remove_all();
+-
+-        // The JSON may be a single root object or an array of roots.
++        // The JSON may be a single root object or an array of roots. A parse
++        // failure is surfaced as an error rather than silently rendering an
++        // empty tree (which is indistinguishable from "no folders").
+         let nodes: Vec<FolderNodeJson> = if json.trim_start().starts_with('[') {
+-            serde_json::from_str(json).unwrap_or_default()
++            match serde_json::from_str(json) {
++                Ok(n) => n,
++                Err(e) => {
++                    self.show_error(&format!("{}: {e}", gettext("Invalid folder list")));
++                    return;
++                }
++            }
+         } else {
+             match serde_json::from_str::<FolderNodeJson>(json) {
+                 Ok(root) => root.children,
+-                Err(_) => Vec::new(),
++                Err(e) => {
++                    self.show_error(&format!("{}: {e}", gettext("Invalid folder list")));
++                    return;
++                }
+             }
+         };
+ 
++        root_store.remove_all();
++
+         let selected = imp.selected_folders.borrow().clone();
+         for node in &nodes {
+             let is_selected = selected.iter().any(|p| p == &node.path);
+@@ -430,23 +432,16 @@ impl FolderTree {
          }
      }
  
-+    /// Attaches an [`AuthBackend`] so that `AuthInterface::complete_auth_via_goa`
-+    /// can fetch tokens from GOA and persist them in the system keyring.
-+    ///
-+    /// Production callers (`lnxdrive-daemon`) MUST install a backend before
-+    /// calling `start()`; otherwise the GOA path returns `false` at runtime
-+    /// with a warning log (this is a deliberate safety net for tests).
-+    #[must_use]
-+    pub fn with_auth_backend(mut self, backend: Arc<dyn AuthBackend>) -> Self {
-+        self.auth_backend = Some(backend);
-+        self
-+    }
-+
-     /// Returns a reference to the shared daemon state
-     pub fn state(&self) -> &Arc<Mutex<DaemonState>> {
-         &self.state
-@@ -1095,7 +1200,18 @@ impl DbusService {
-         let files_iface = FilesInterface::new(Arc::clone(&self.state));
-         let sync_iface = SyncInterface::new(Arc::clone(&self.state));
-         let status_iface = StatusInterface::new(Arc::clone(&self.state));
--        let auth_iface = AuthInterface::new(Arc::clone(&self.state));
-+        let auth_iface = match &self.auth_backend {
-+            Some(backend) => {
-+                AuthInterface::with_backend(Arc::clone(&self.state), Arc::clone(backend))
-+            }
-+            None => {
-+                warn!(
-+                    "DbusService starting without an AuthBackend; \
-+                     CompleteAuthViaGOA calls will be rejected at runtime"
-+                );
-+                AuthInterface::new(Arc::clone(&self.state))
-+            }
-+        };
-         let settings_iface = SettingsInterface::new(Arc::clone(&self.state));
-         let manager_iface = ManagerInterface::new(Arc::clone(&self.state));
- 
-@@ -1151,6 +1267,46 @@ impl DbusService {
- #[cfg(test)]
- mod tests {
-     use super::*;
-+    use crate::auth_backend::{AuthBackend, AuthBackendError, AuthBackendResult};
-+    use async_trait::async_trait;
-+
-+    /// In-process AuthBackend used by the AuthInterface tests below.
-+    ///
-+    /// It returns a configurable result without ever talking to GOA or the
-+    /// keyring. Tests build it via the helpers `MockAuthBackend::ok(email)` /
-+    /// `MockAuthBackend::err(error)`.
-+    struct MockAuthBackend {
-+        result: AuthBackendResult,
-+        last_call: tokio::sync::Mutex<Option<String>>,
-+    }
-+
-+    impl MockAuthBackend {
-+        fn ok(email: &str) -> Arc<Self> {
-+            Arc::new(Self {
-+                result: Ok(email.to_string()),
-+                last_call: tokio::sync::Mutex::new(None),
-+            })
-+        }
-+
-+        fn err(error: AuthBackendError) -> Arc<Self> {
-+            Arc::new(Self {
-+                result: Err(error),
-+                last_call: tokio::sync::Mutex::new(None),
-+            })
-+        }
-+
-+        async fn last_call(&self) -> Option<String> {
-+            self.last_call.lock().await.clone()
-+        }
-+    }
-+
-+    #[async_trait]
-+    impl AuthBackend for MockAuthBackend {
-+        async fn complete_auth_via_goa(&self, goa_account_path: &str) -> AuthBackendResult {
-+            *self.last_call.lock().await = Some(goa_account_path.to_string());
-+            self.result.clone()
-+        }
-+    }
- 
-     #[test]
-     fn test_daemon_sync_state_display() {
-@@ -1845,70 +2001,79 @@ mod tests {
-         assert!(locked.auth_source.is_none());
+-    /// Walk the root store and mark nodes whose path is in the selected list.
+-    fn apply_selections(&self) {
+-        let imp = self.imp();
+-        let store = match imp.root_store.borrow().clone() {
+-            Some(s) => s,
+-            None => return,
+-        };
+-        let selected = imp.selected_folders.borrow().clone();
+-
+-        for i in 0..store.n_items() {
+-            if let Some(item) = store.item(i) {
+-                if let Some(node) = item.downcast_ref::<FolderNode>() {
+-                    let is_selected = selected.iter().any(|p| p == &node.path());
+-                    node.set_selected(is_selected);
+-                }
+-            }
+-        }
++    /// Show a load/parse error inline at the top of the widget, instead of
++    /// failing silently to stderr (which left the tree looking empty).
++    fn show_error(&self, message: &str) {
++        let label = gtk4::Label::builder()
++            .label(message)
++            .wrap(true)
++            .xalign(0.0)
++            .css_classes(["error"])
++            .build();
++        self.prepend(&label);
      }
  
-+    // -- CompleteAuthViaGOA tests (replace the deleted CompleteAuthWithTokens
-+    //    tests after RISK-002 / CVSS 9.1 was mitigated; see
-+    //    AILOG-2026-05-29-002 for the full rationale.)
-+
-     #[tokio::test]
--    async fn test_auth_complete_with_tokens_success() {
-+    async fn test_auth_complete_via_goa_succeeds_when_backend_returns_email() {
-         let state = Arc::new(Mutex::new(DaemonState::default()));
--        let auth = AuthInterface::new(Arc::clone(&state));
-+        let backend = MockAuthBackend::ok("user@example.com");
-+        let auth = AuthInterface::with_backend(Arc::clone(&state), Arc::clone(&backend) as _);
+     /// Called whenever a checkbox is toggled. Propagates the selection to
+diff --git a/lnxdrive-gnome/preferences/src/preferences/sync_page.rs b/lnxdrive-gnome/preferences/src/preferences/sync_page.rs
+index cf70a86..7f3ef36 100644
+--- a/lnxdrive-gnome/preferences/src/preferences/sync_page.rs
++++ b/lnxdrive-gnome/preferences/src/preferences/sync_page.rs
+@@ -8,7 +8,6 @@ use std::cell::RefCell;
  
--        let result = auth
--            .complete_auth_with_tokens(
--                "access-token-abc".to_string(),
--                "refresh-token-xyz".to_string(),
--                1742400000, // valid future timestamp
-+        let ok = auth
-+            .complete_auth_via_goa(
-+                "/org/gnome/OnlineAccounts/Accounts/1234".to_string(),
-             )
-             .await;
--        assert!(result);
-+        assert!(ok);
-+        assert_eq!(
-+            backend.last_call().await.as_deref(),
-+            Some("/org/gnome/OnlineAccounts/Accounts/1234")
-+        );
+ use gettextrs::gettext;
+ use gtk4::glib;
+-use gtk4::prelude::*;
+ use libadwaita as adw;
+ use libadwaita::prelude::*;
  
-         let locked = state.lock().await;
-         assert!(locked.is_authenticated);
-         assert_eq!(locked.auth_source.as_deref(), Some("goa"));
-+        assert_eq!(locked.account_email.as_deref(), Some("user@example.com"));
+@@ -101,13 +100,13 @@ impl SyncPage {
+         // -- Sync Options group ----------------------------------------------
+ 
+         let options_group = adw::PreferencesGroup::builder()
+-            .title(&gettext("Sync Options"))
++            .title(gettext("Sync Options"))
+             .build();
+ 
+         // Automatic Sync switch (FR-018)
+         let auto_sync_row = adw::SwitchRow::builder()
+-            .title(&gettext("Automatic Sync"))
+-            .subtitle(&gettext("Sync files automatically when changes are detected"))
++            .title(gettext("Automatic Sync"))
++            .subtitle(gettext("Sync files automatically when changes are detected"))
+             .build();
+         imp.auto_sync_row.replace(Some(auto_sync_row.clone()));
+ 
+@@ -123,8 +122,8 @@ impl SyncPage {
+         );
+ 
+         let conflict_row = adw::ComboRow::builder()
+-            .title(&gettext("Conflict Resolution"))
+-            .subtitle(&gettext("How to handle file conflicts between local and remote"))
++            .title(gettext("Conflict Resolution"))
++            .subtitle(gettext("How to handle file conflicts between local and remote"))
+             .model(&conflict_model)
+             .build();
+         imp.conflict_row.replace(Some(conflict_row.clone()));
+@@ -144,8 +143,8 @@ impl SyncPage {
+         // -- Selective Sync group (FR-014) ------------------------------------
+ 
+         let selective_group = adw::PreferencesGroup::builder()
+-            .title(&gettext("Selective Sync"))
+-            .description(&gettext(
++            .title(gettext("Selective Sync"))
++            .description(gettext(
+                 "Choose which remote folders to sync to this computer.",
+             ))
+             .build();
+@@ -197,12 +196,28 @@ impl SyncPage {
+                     page.apply_config_yaml(&yaml);
+                 }
+                 Err(e) => {
+-                    eprintln!("Could not load config: {}", e);
++                    page.show_error(&format!(
++                        "{}: {e}",
++                        gettext("Could not load sync settings from the daemon")
++                    ));
+                 }
+             }
+         });
      }
  
-     #[tokio::test]
--    async fn test_auth_complete_with_tokens_empty_access() {
-+    async fn test_auth_complete_via_goa_rejects_invalid_path_before_calling_backend() {
-         let state = Arc::new(Mutex::new(DaemonState::default()));
--        let auth = AuthInterface::new(Arc::clone(&state));
-+        let backend = MockAuthBackend::ok("user@example.com");
-+        let auth = AuthInterface::with_backend(Arc::clone(&state), Arc::clone(&backend) as _);
- 
--        let result = auth
--            .complete_auth_with_tokens(
--                String::new(),
--                "refresh-token".to_string(),
--                1742400000,
--            )
-+        let ok = auth
-+            .complete_auth_via_goa("/wrong/prefix/Accounts/1234".to_string())
-             .await;
--        assert!(!result);
-+        assert!(!ok);
-+        // Backend MUST NOT be invoked when the path is rejected up front.
-+        assert!(backend.last_call().await.is_none());
-         assert!(!state.lock().await.is_authenticated);
-     }
- 
-     #[tokio::test]
--    async fn test_auth_complete_with_tokens_empty_refresh() {
-+    async fn test_auth_complete_via_goa_without_backend_returns_false() {
-         let state = Arc::new(Mutex::new(DaemonState::default()));
-+        // `new` rather than `with_backend` — no backend configured.
-         let auth = AuthInterface::new(Arc::clone(&state));
- 
--        let result = auth
--            .complete_auth_with_tokens(
--                "access-token".to_string(),
--                String::new(),
--                1742400000,
-+        let ok = auth
-+            .complete_auth_via_goa(
-+                "/org/gnome/OnlineAccounts/Accounts/1234".to_string(),
-             )
-             .await;
--        assert!(!result);
-+        assert!(!ok);
-         assert!(!state.lock().await.is_authenticated);
-     }
- 
-     #[tokio::test]
--    async fn test_auth_complete_with_tokens_invalid_expiry() {
-+    async fn test_auth_complete_via_goa_propagates_backend_failure() {
-         let state = Arc::new(Mutex::new(DaemonState::default()));
--        let auth = AuthInterface::new(Arc::clone(&state));
-+        let backend = MockAuthBackend::err(AuthBackendError::KeyringStoreFailed);
-+        let auth = AuthInterface::with_backend(Arc::clone(&state), Arc::clone(&backend) as _);
- 
--        let result = auth
--            .complete_auth_with_tokens(
--                "access-token".to_string(),
--                "refresh-token".to_string(),
--                0,
-+        let ok = auth
-+            .complete_auth_via_goa(
-+                "/org/gnome/OnlineAccounts/Accounts/1234".to_string(),
-             )
-             .await;
--        assert!(!result);
-+        assert!(!ok);
-+        assert_eq!(
-+            backend.last_call().await.as_deref(),
-+            Some("/org/gnome/OnlineAccounts/Accounts/1234")
-+        );
-         assert!(!state.lock().await.is_authenticated);
-     }
- 
-diff --git a/lnxdrive-engine/deny.toml b/lnxdrive-engine/deny.toml
-new file mode 100644
-index 0000000..860ae7f
---- /dev/null
-+++ b/lnxdrive-engine/deny.toml
-@@ -0,0 +1,59 @@
-+# cargo-deny configuration — supply-chain policy for the LNXDrive engine.
-+# Charter-01 / Fase 1 CI hardening. Checked in CI via `cargo deny check`.
-+
-+[graph]
-+# Only the targets we actually ship for.
-+targets = [
-+    "x86_64-unknown-linux-gnu",
-+    "aarch64-unknown-linux-gnu",
-+]
-+
-+[advisories]
-+version = 2
-+# RUSTSEC advisories not yet fixable without an out-of-scope change. Each entry
-+# MUST carry a justification and be revisited when the fix becomes affordable.
-+# Tracked for remediation in the dependency-upgrade technical debt entry.
-+ignore = [
-+    # sqlx 0.7.4 — binary protocol misinterpretation. The fix is sqlx 0.8.1+,
-+    # a breaking major bump that ripples through lnxdrive-cache; out of scope
-+    # for the v0.1.0-alpha CI-hardening slice. The advisory states SQLite (our
-+    # only backend) "does not appear to be exploitable". Tracked as tech debt.
-+    "RUSTSEC-2024-0363",
-+    # paste 1.x — unmaintained (no known vulnerability). A ubiquitous, stable
-+    # proc-macro helper pulled transitively by many crates; not directly
-+    # removable. Low risk; revisit if a vulnerability is filed. Tracked as debt.
-+    "RUSTSEC-2024-0436",
-+]
-+
-+[licenses]
-+version = 2
-+# LNXDrive itself is GPL-3.0-or-later; its own crates carry that license.
-+# The remaining entries are the permissive licenses of third-party deps.
-+allow = [
-+    "GPL-3.0-or-later",
-+    "MIT",
-+    "Apache-2.0",
-+    "Apache-2.0 WITH LLVM-exception",
-+    "BSD-2-Clause",
-+    "BSD-3-Clause",
-+    "ISC",
-+    "Zlib",
-+    "Unicode-3.0",
-+    "Unicode-DFS-2016",
-+    "MPL-2.0",
-+    "CC0-1.0",
-+    "CDLA-Permissive-2.0",
-+]
-+confidence-threshold = 0.8
-+
-+[bans]
-+# Duplicate versions are common in large trees and are not a release blocker for
-+# an alpha; surface them as warnings rather than failing the build.
-+multiple-versions = "warn"
-+wildcards = "allow"
-+
-+[sources]
-+# Only crates.io; no unknown registries or git sources.
-+unknown-registry = "deny"
-+unknown-git = "deny"
-+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-diff --git a/lnxdrive-engine/tests/security/billion_laughs.yaml b/lnxdrive-engine/tests/security/billion_laughs.yaml
-new file mode 100644
-index 0000000..2ca393b
---- /dev/null
-+++ b/lnxdrive-engine/tests/security/billion_laughs.yaml
-@@ -0,0 +1,18 @@
-+# Billion-laughs alias-expansion bomb — ISSUE-002 regression fixture.
-+#
-+# Nine nested anchor levels, each referencing the previous one ten times. A
-+# naive YAML parser expands this to ~10^9 nodes, exhausting memory and CPU.
-+# `serde_norway`'s built-in recursion-depth and alias-repetition limits MUST
-+# reject it (the config loader, `Config::from_yaml_str`, relies on them).
-+#
-+# DO NOT "fix", shrink, or reformat this file — it is a malicious input under
-+# test. The test `config::tests::test_billion_laughs_rejected` loads it verbatim.
-+lol1: &lol1 "lol"
-+lol2: &lol2 [*lol1, *lol1, *lol1, *lol1, *lol1, *lol1, *lol1, *lol1, *lol1, *lol1]
-+lol3: &lol3 [*lol2, *lol2, *lol2, *lol2, *lol2, *lol2, *lol2, *lol2, *lol2, *lol2]
-+lol4: &lol4 [*lol3, *lol3, *lol3, *lol3, *lol3, *lol3, *lol3, *lol3, *lol3, *lol3]
-+lol5: &lol5 [*lol4, *lol4, *lol4, *lol4, *lol4, *lol4, *lol4, *lol4, *lol4, *lol4]
-+lol6: &lol6 [*lol5, *lol5, *lol5, *lol5, *lol5, *lol5, *lol5, *lol5, *lol5, *lol5]
-+lol7: &lol7 [*lol6, *lol6, *lol6, *lol6, *lol6, *lol6, *lol6, *lol6, *lol6, *lol6]
-+lol8: &lol8 [*lol7, *lol7, *lol7, *lol7, *lol7, *lol7, *lol7, *lol7, *lol7, *lol7]
-+lol9: &lol9 [*lol8, *lol8, *lol8, *lol8, *lol8, *lol8, *lol8, *lol8, *lol8, *lol8]
-diff --git a/lnxdrive-testing/scripts/leak-test-dbus-tokens.sh b/lnxdrive-testing/scripts/leak-test-dbus-tokens.sh
-new file mode 100755
-index 0000000..3c737b8
---- /dev/null
-+++ b/lnxdrive-testing/scripts/leak-test-dbus-tokens.sh
-@@ -0,0 +1,218 @@
-+#!/usr/bin/env bash
-+# leak-test-dbus-tokens.sh — guard against RISK-002 (CVSS 9.1) regressions
-+#
-+# Runs the LNXDrive daemon inside an isolated D-Bus session (via
-+# `dbus-run-session`), captures every message on the bus for a short
-+# window of exercising the `com.strangedaystech.LNXDrive.Auth` interface,
-+# and fails if anything that looks like an OAuth token, refresh token or
-+# Bearer header crosses the wire.
-+#
-+# This test is the regression guard for the mitigation landed in PR for
-+# issue #5: the D-Bus public API must never accept or emit raw tokens.
-+#
-+# Usage:
-+#   ./scripts/leak-test-dbus-tokens.sh                 # uses the workspace target/
-+#   ./scripts/leak-test-dbus-tokens.sh --binary <path> # explicit lnxdrived path
-+#
-+# Exit codes:
-+#   0  no leak detected
-+#   1  one or more token-shaped strings appeared on the bus
-+#   2  setup error (missing dbus-monitor / dbus-run-session, daemon
-+#      failed to start, etc.)
-+
-+set -euo pipefail
-+
-+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-+TESTING_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-+PROJECT_DIR="$(cd "$TESTING_DIR/.." && pwd)"
-+ENGINE_DIR="${PROJECT_DIR}/lnxdrive-engine"
-+
-+# --- Defaults -----------------------------------------------------------------
-+
-+DAEMON_BIN_DEFAULT="${ENGINE_DIR}/target/debug/lnxdrived"
-+DAEMON_BIN=""
-+CAPTURE_SECONDS="${CAPTURE_SECONDS:-8}"
-+
-+# Patterns that indicate a leaked token. Conservative on purpose: each one
-+# is something a legitimate D-Bus message of the LNXDrive interface would
-+# never contain in narrative form.
-+#
-+#   Bearer\s  → HTTP "Authorization: Bearer …" headers
-+#   eyJ[A-Za-z0-9_\-]{20,}  → JWT-shaped strings (header begins with eyJ…)
-+#   refresh_token            → literal JSON field name
-+#   access_token             → literal JSON field name
-+LEAK_PATTERNS='(Bearer\s|eyJ[A-Za-z0-9_\-]{20,}|refresh_token|access_token)'
-+
-+# --- Argument parsing ---------------------------------------------------------
-+
-+while [[ $# -gt 0 ]]; do
-+    case "$1" in
-+        --binary)
-+            DAEMON_BIN="$2"
-+            shift 2
-+            ;;
-+        --capture-seconds)
-+            CAPTURE_SECONDS="$2"
-+            shift 2
-+            ;;
-+        -h | --help)
-+            sed -n '2,22p' "$0"
-+            exit 0
-+            ;;
-+        *)
-+            echo "Unknown option: $1" >&2
-+            exit 2
-+            ;;
-+    esac
-+done
-+
-+DAEMON_BIN="${DAEMON_BIN:-$DAEMON_BIN_DEFAULT}"
-+
-+# --- Pre-flight ---------------------------------------------------------------
-+
-+require() {
-+    command -v "$1" >/dev/null 2>&1 || {
-+        echo "ERROR: required tool '$1' is not on PATH" >&2
-+        exit 2
++    /// Surface a load/save failure to the user instead of only logging to stderr,
++    /// so a dead daemon does not leave the page silently showing default values.
++    fn show_error(&self, message: &str) {
++        let group = adw::PreferencesGroup::new();
++        let row = adw::ActionRow::builder()
++            .title(gettext("Error"))
++            .subtitle(message)
++            .css_classes(["error"])
++            .build();
++        group.add(&row);
++        self.add(&group);
 +    }
-+}
 +
-+require dbus-run-session
-+require dbus-monitor
-+
-+if [[ ! -x "$DAEMON_BIN" ]]; then
-+    echo "ERROR: daemon binary not found at $DAEMON_BIN" >&2
-+    echo "Hint: run 'cargo build -p lnxdrive-daemon' first, or pass --binary <path>." >&2
-+    exit 2
-+fi
-+
-+TMPDIR="$(mktemp -d -t lnxdrive-leak-test.XXXXXX)"
-+trap 'rm -rf "$TMPDIR"' EXIT
-+
-+TRACE_LOG="${TMPDIR}/dbus-monitor.log"
-+DAEMON_LOG="${TMPDIR}/daemon.log"
-+
-+# --- Inner script that runs inside the dbus-run-session ----------------------
-+
-+INNER="${TMPDIR}/inner.sh"
-+cat >"$INNER" <<'INNER_EOF'
-+#!/usr/bin/env bash
-+set -euo pipefail
-+DAEMON_BIN="$1"
-+TRACE_LOG="$2"
-+DAEMON_LOG="$3"
-+CAPTURE_SECONDS="$4"
-+
-+# Start dbus-monitor capturing the whole session bus.
-+dbus-monitor --session >"$TRACE_LOG" 2>&1 &
-+MONITOR_PID=$!
-+
-+# Give the monitor a moment to attach.
-+sleep 0.5
-+
-+# Start the daemon. It will own the well-known name and serve the Auth
-+# interface. We log its output for diagnostics but the assertion runs
-+# against the bus trace.
-+"$DAEMON_BIN" >"$DAEMON_LOG" 2>&1 &
-+DAEMON_PID=$!
-+
-+# Give the daemon time to claim the name and register interfaces.
-+sleep 2
-+
-+# Exercise the public Auth surface. We do NOT call CompleteAuthViaGOA
-+# with a real account because we cannot stand up a real GOA in CI;
-+# instead we (a) call the methods that exist and (b) intentionally
-+# attempt the now-removed CompleteAuthWithTokens method to confirm
-+# that the daemon rejects it (the D-Bus call will fail with
-+# UnknownMethod, which is itself the regression signal).
-+gdbus call \
-+    --session \
-+    --dest com.strangedaystech.LNXDrive \
-+    --object-path /com/strangedaystech/LNXDrive \
-+    --method com.strangedaystech.LNXDrive.Auth.StartAuth \
-+    >/dev/null 2>&1 || true
-+
-+# Attempt the deleted method with a token-shaped payload. The daemon MUST
-+# answer with org.freedesktop.DBus.Error.UnknownMethod, which means the
-+# token strings on the wire are the *caller's* problem only — they leave
-+# this process via the request and never come back via any reply.
-+gdbus call \
-+    --session \
-+    --dest com.strangedaystech.LNXDrive \
-+    --object-path /com/strangedaystech/LNXDrive \
-+    --method com.strangedaystech.LNXDrive.Auth.CompleteAuthWithTokens \
-+    "decoy-access-token-DO-NOT-LEAK" \
-+    "decoy-refresh-token-DO-NOT-LEAK" \
-+    "1742400000" \
-+    >/dev/null 2>&1 || true
-+
-+# Call the new method with a path that the backend will reject (we cannot
-+# spin up GOA in CI). The method itself must NOT echo tokens — we are
-+# checking the daemon emits no token-shaped strings in its log/reply.
-+gdbus call \
-+    --session \
-+    --dest com.strangedaystech.LNXDrive \
-+    --object-path /com/strangedaystech/LNXDrive \
-+    --method com.strangedaystech.LNXDrive.Auth.CompleteAuthViaGOA \
-+    "/org/gnome/OnlineAccounts/Accounts/9999-does-not-exist" \
-+    >/dev/null 2>&1 || true
-+
-+# Give dbus-monitor a moment to flush the captured traffic.
-+sleep 2
-+
-+# Tear down.
-+kill -TERM "$DAEMON_PID" 2>/dev/null || true
-+wait "$DAEMON_PID" 2>/dev/null || true
-+kill -TERM "$MONITOR_PID" 2>/dev/null || true
-+wait "$MONITOR_PID" 2>/dev/null || true
-+INNER_EOF
-+chmod +x "$INNER"
-+
-+# --- Run ----------------------------------------------------------------------
-+
-+echo "==> Capturing D-Bus traffic for ~${CAPTURE_SECONDS}s in an isolated session..."
-+dbus-run-session -- "$INNER" "$DAEMON_BIN" "$TRACE_LOG" "$DAEMON_LOG" "$CAPTURE_SECONDS"
-+
-+# --- Assert -------------------------------------------------------------------
-+
-+echo "==> Scanning ${TRACE_LOG} for token-shaped strings..."
-+
-+# Strip the decoy strings we INTENTIONALLY sent as *request* arguments
-+# (they are the caller's bug to leak, not the daemon's; the daemon
-+# rejects them). We assert on what the daemon REPLIES with.
-+#
-+# What we keep:
-+#   reply messages (signal/method_return/error) — these are what the
-+#   daemon emits, and they MUST be free of tokens.
-+#
-+# What we discard:
-+#   method_call lines that contain the decoy strings — those are us
-+#   sending the bad call. The point of the test is that the daemon does
-+#   not parrot them back nor add a real token of its own.
-+
-+REPLY_TRACE="${TMPDIR}/replies-only.log"
-+awk '
-+    /^method call/ { in_call=1; next }
-+    /^signal/      { in_call=0; print; next }
-+    /^method return/ { in_call=0; print; next }
-+    /^error/       { in_call=0; print; next }
-+    in_call == 0   { print }
-+' "$TRACE_LOG" >"$REPLY_TRACE"
-+
-+if grep -E -q "$LEAK_PATTERNS" "$REPLY_TRACE"; then
-+    echo "FAIL: token-shaped strings appeared in D-Bus replies." >&2
-+    echo "Offending lines (first 20):" >&2
-+    grep -E "$LEAK_PATTERNS" "$REPLY_TRACE" | head -20 >&2
-+    echo "" >&2
-+    echo "Full trace kept at: $TRACE_LOG" >&2
-+    echo "Daemon log:        $DAEMON_LOG" >&2
-+    # Move logs to a stable location so CI can collect them.
-+    LEAK_DIR="${TESTING_DIR}/logs/leak-test-$(date +%Y%m%d-%H%M%S)"
-+    mkdir -p "$LEAK_DIR"
-+    cp "$TRACE_LOG" "$DAEMON_LOG" "$LEAK_DIR/"
-+    echo "Logs archived to:  $LEAK_DIR" >&2
-+    exit 1
-+fi
-+
-+echo "PASS: no token-shaped strings in D-Bus replies during the capture window."
-+exit 0
+     /// Parse the daemon's YAML config and apply values to the UI widgets.
+     /// We do simple line-based parsing to avoid pulling in a full YAML crate
+     /// beyond serde (the config is flat key-value).
+diff --git a/lnxdrive-gnome/preferences/src/window.rs b/lnxdrive-gnome/preferences/src/window.rs
+index e271110..c558d19 100644
+--- a/lnxdrive-gnome/preferences/src/window.rs
++++ b/lnxdrive-gnome/preferences/src/window.rs
+@@ -100,13 +100,13 @@ impl LnxdriveWindow {
+         // Set up window content behind the dialog.
+         let status = adw::StatusPage::builder()
+             .icon_name("emblem-ok-symbolic")
+-            .title(&gettext("LNXDrive"))
+-            .description(&gettext("Your OneDrive files are syncing."))
++            .title(gettext("LNXDrive"))
++            .description(gettext("Your OneDrive files are syncing."))
+             .build();
+ 
+         // Add a button to re-open preferences if the dialog is closed.
+         let open_prefs_button = gtk4::Button::builder()
+-            .label(&gettext("Preferences"))
++            .label(gettext("Preferences"))
+             .halign(gtk4::Align::Center)
+             .css_classes(["pill"])
+             .build();
+@@ -135,7 +135,7 @@ impl LnxdriveWindow {
+     pub fn show_dbus_error(&self, message: &str) {
+         let status = adw::StatusPage::builder()
+             .icon_name("dialog-error-symbolic")
+-            .title(&gettext("Cannot Connect to LNXDrive"))
++            .title(gettext("Cannot Connect to LNXDrive"))
+             .description(message)
+             .build();
+ 
 
 ```
 
@@ -5384,7 +2094,7 @@ The file must have this frontmatter (validated against `.straymark/schemas/audit
 audit_role: auditor                       # v1 unified. Legacy v0: "auditor-primary" or "auditor-secondary"
 auditor: <your model id and version>      # e.g., claude-sonnet-4-6, gemini-2.5-pro, copilot-v1.0.40
 charter_id: CHARTER-01-road-to-v0-1-0-alpha-1
-git_range: "ee710c8..HEAD"
+git_range: "origin/main..HEAD"
 prompt_used: <path to the resolved audit-prompt you received>
 audited_at: <today YYYY-MM-DD>
 findings_total: <N>

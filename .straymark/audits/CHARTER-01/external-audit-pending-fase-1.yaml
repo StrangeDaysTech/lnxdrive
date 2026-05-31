@@ -12,7 +12,7 @@ external_audit:
       real_debt: 0
       false_positive: 0
     audit_quality: "high"
-    audit_notes: "see .straymark/audits/CHARTER-01/report-gemini-3-1-pro-high.md"
+    audit_notes: "see .straymark/audits/CHARTER-01/report-gemini-3-1-pro-high-fase-1.md"
   - auditor: "gpt-5.2-codex"
     findings_total: 2
     findings_by_category:
@@ -21,4 +21,4 @@ external_audit:
       real_debt: 1
       false_positive: 0
     audit_quality: "high"
-    audit_notes: "see .straymark/audits/CHARTER-01/report-gpt-5-2-codex.md"
+    audit_notes: "see .straymark/audits/CHARTER-01/report-gpt-5-2-codex-fase-1.md"

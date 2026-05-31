@@ -3,11 +3,11 @@ audit_role: calibrator-reconciler
 calibrator: claude-opus-4-8
 charter_id: CHARTER-01-road-to-v0-1-0-alpha-1
 git_range: "ee710c8..HEAD"
-prompt_used: ../audit-prompt.md
+prompt_used: ../audit-prompt-fase-1.md
 calibrated_at: 2026-05-28
 auditors_reconciled:
-  - report-gemini-3-1-pro-high.md
-  - report-gpt-5-2-codex.md
+  - report-gemini-3-1-pro-high-fase-1.md
+  - report-gpt-5-2-codex-fase-1.md
 findings_consolidated: 3
 findings_by_status:
   agreed: 1
@@ -87,7 +87,7 @@ defects (missed the leak-test debt and the silent config-load).
 
 ### 3.2 gpt-5.2-codex (model: gpt-5.2-codex)
 
-> Filename/frontmatter slug discrepancy (cosmetic): file `report-gpt-5-2-codex.md`
+> Filename/frontmatter slug discrepancy (cosmetic): file `report-gpt-5-2-codex-fase-1.md`
 > vs `auditor: gpt-5.2-codex`. Normal dot→dash normalization; no action needed.
 
 | # | Finding | Reported severity | Verdict | Justification |
