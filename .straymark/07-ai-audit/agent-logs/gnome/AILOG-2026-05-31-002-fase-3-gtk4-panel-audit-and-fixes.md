@@ -83,10 +83,29 @@ cargo check                              # clean
 cargo clippy --all-targets -- -D warnings  # clean (first time for the panel)
 ```
 
-Runtime verification (panel launches, authenticates against a live daemon, pages
-load/save over D-Bus, GOA flow) is **manual** — it needs a GTK display and an
-authenticated daemon, the same constraint class as the FUSE mount test; recorded
-as a follow-up, not run in this environment.
+### Runtime verification (Nivel-5 VM, 2026-05-31)
+
+Run end-to-end in the `lnxdrive-testing` QEMU/libvirt VM (Fedora + GNOME Wayland),
+which compiled the daemon and panel from this branch over the 9p mount and ran
+the mock daemon (`--authenticated`, updated this session with `CompleteAuthViaGOA`
+— it carried the same RISK-002 drift). Captured over SSH:
+
+- **Panel launches and stays alive** in real GNOME Wayland (no panic; survives a
+  5s liveness probe). The `libEGL/MESA ZINK` warnings are the VM's lack of a GPU
+  (software render), not a panel fault.
+- **All pages load and exercise the full D-Bus contract with zero failed calls**
+  (no `UnknownMethod`): `IsAuthenticated`, `GetAccountInfo`, `GetQuota`,
+  `GetConfig`, `GetSelectedFolders`, `GetRemoteFolderTree`, `GetExclusionPatterns`,
+  `Conflicts.List` — confirming the H1/H2 client↔daemon contract is sound at
+  runtime, not just at compile time.
+- **H2 confirmed live:** the panel received a `QuotaChanged` signal (the
+  AccountPage subscription added in H2 fires against a real bus).
+
+Not exercised by this pass (require UI interaction / specific state, deferred to
+manual visual check via `virt-viewer`): the GOA onboarding flow
+(`CompleteAuthViaGOA`, needs a non-authenticated mock + a GOA account) and the M1
+nested-selection toggle UX. A screenshot was not capturable (GNOME 4x blocks the
+D-Bus screenshot method; no screenshot tool installed).
 
 ## Drift
 
