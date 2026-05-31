@@ -101,11 +101,30 @@ the mock daemon (`--authenticated`, updated this session with `CompleteAuthViaGO
 - **H2 confirmed live:** the panel received a `QuotaChanged` signal (the
   AccountPage subscription added in H2 fires against a real bus).
 
-Not exercised by this pass (require UI interaction / specific state, deferred to
-manual visual check via `virt-viewer`): the GOA onboarding flow
-(`CompleteAuthViaGOA`, needs a non-authenticated mock + a GOA account) and the M1
-nested-selection toggle UX. A screenshot was not capturable (GNOME 4x blocks the
-D-Bus screenshot method; no screenshot tool installed).
+A screenshot was not capturable by the agent (GNOME 4x blocks the D-Bus
+screenshot method; no screenshot tool installed), so the operator connected via
+`virt-viewer` and captured the UI directly (8 screenshots, 2026-05-31).
+
+**Visual verification (operator, via virt-viewer) — all pages render correctly:**
+
+- Shell indicator shows live daemon state — Idle, 7 pending changes, last sync,
+  2 conflicts (budget.xlsx, team-notes.docx), Online, 5.0/15.0 GB quota bar
+  (confirms H2 end-to-end into the Shell extension too).
+- Account page: email, display name, quota bar, Sign Out.
+- Sync page: auto-sync, conflict-resolution combo, interval, and the selective
+  folder tree with **Photos expanded → "Vacation" subfolder shown checked** —
+  the nested-selection display that M1 fixes.
+- Conflicts page + "Resolve Conflict" dialog (local vs remote size/mtime/hash,
+  Keep Local/Remote).
+- Advanced page: exclusion patterns + Add, bandwidth limits.
+
+**Minor cosmetic observation (non-blocking, logged, not fixed):** the "Conflicts"
+view-switcher tab is truncated to "Conflicts …" while the other tabs fit — a
+`ViewSwitcher` width issue, not a functional defect. Candidate follow-up polish.
+
+Still not exercised (needs non-authenticated mock + a real GOA account): the GOA
+onboarding flow `CompleteAuthViaGOA`. Contract is verified (mock + panel + real
+daemon agree); the interactive flow is a future check.
 
 ## Drift
 
