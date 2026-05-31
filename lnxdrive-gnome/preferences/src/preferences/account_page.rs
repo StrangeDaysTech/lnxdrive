@@ -6,6 +6,7 @@
 
 use std::cell::RefCell;
 
+use futures_util::StreamExt;
 use gettextrs::gettext;
 use gtk4::glib;
 use gtk4::prelude::*;
@@ -14,7 +15,7 @@ use libadwaita::prelude::*;
 
 use gtk4::subclass::prelude::ObjectSubclassIsExt;
 
-use crate::dbus_client::DbusClient;
+use crate::dbus_client::{DbusClient, LnxdriveStatusProxy};
 
 // ---------------------------------------------------------------------------
 // AccountPage — adw::PreferencesPage subclass
@@ -77,8 +78,32 @@ impl AccountPage {
         page.build_ui();
         page.load_account_info();
         page.load_quota();
+        page.subscribe_quota_changes();
 
         page
+    }
+
+    /// Keep the quota display live by listening for the daemon's `QuotaChanged`
+    /// signal, instead of only reading it once at construction.
+    fn subscribe_quota_changes(&self) {
+        let client = match self.imp().dbus_client.borrow().clone() {
+            Some(c) => c,
+            None => return,
+        };
+
+        let page = self.clone();
+        glib::MainContext::default().spawn_local(async move {
+            let conn = client.connection().clone();
+            if let Ok(proxy) = LnxdriveStatusProxy::new(&conn).await {
+                if let Ok(mut stream) = proxy.receive_quota_changed().await {
+                    while let Some(signal) = stream.next().await {
+                        if let Ok(args) = signal.args() {
+                            page.update_quota_display(args.used, args.total);
+                        }
+                    }
+                }
+            }
+        });
     }
 
     fn build_ui(&self) {
@@ -87,18 +112,18 @@ impl AccountPage {
         // -- OneDrive Account group ------------------------------------------
 
         let account_group = adw::PreferencesGroup::builder()
-            .title(&gettext("OneDrive Account"))
+            .title(gettext("OneDrive Account"))
             .build();
 
         let email_row = adw::ActionRow::builder()
-            .title(&gettext("Email"))
-            .subtitle(&gettext("Loading..."))
+            .title(gettext("Email"))
+            .subtitle(gettext("Loading..."))
             .build();
         imp.email_row.replace(Some(email_row.clone()));
 
         let name_row = adw::ActionRow::builder()
-            .title(&gettext("Display Name"))
-            .subtitle(&gettext("Loading..."))
+            .title(gettext("Display Name"))
+            .subtitle(gettext("Loading..."))
             .build();
         imp.name_row.replace(Some(name_row.clone()));
 
@@ -108,7 +133,7 @@ impl AccountPage {
         // -- Storage group ---------------------------------------------------
 
         let storage_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Storage"))
+            .title(gettext("Storage"))
             .build();
 
         let level_bar = gtk4::LevelBar::builder()
@@ -123,7 +148,7 @@ impl AccountPage {
         imp.level_bar.replace(Some(level_bar.clone()));
 
         let quota_label = gtk4::Label::builder()
-            .label(&gettext("Loading storage info..."))
+            .label(gettext("Loading storage info..."))
             .css_classes(["dim-label", "caption"])
             .margin_start(12)
             .margin_end(12)
@@ -151,11 +176,11 @@ impl AccountPage {
         // -- Session group ---------------------------------------------------
 
         let session_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Session"))
+            .title(gettext("Session"))
             .build();
 
         let sign_out_button = gtk4::Button::builder()
-            .label(&gettext("Sign Out"))
+            .label(gettext("Sign Out"))
             .halign(gtk4::Align::Center)
             .css_classes(["destructive-action", "pill"])
             .margin_top(8)
@@ -279,8 +304,8 @@ impl AccountPage {
     fn on_sign_out(&self) {
         // Create a confirmation dialog.
         let confirm = adw::AlertDialog::builder()
-            .heading(&gettext("Sign Out?"))
-            .body(&gettext(
+            .heading(gettext("Sign Out?"))
+            .body(gettext(
                 "You will be signed out of your OneDrive account. Syncing will stop.",
             ))
             .build();

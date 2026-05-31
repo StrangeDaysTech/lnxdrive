@@ -13,10 +13,7 @@ const GOA_MANAGER_PATH: &str = "/org/gnome/OnlineAccounts";
 
 /// Checks whether a GOA account with provider type "lnxdrive_microsoft" exists.
 pub async fn has_lnxdrive_goa_account() -> bool {
-    match find_goa_account_path().await {
-        Ok(Some(_)) => true,
-        _ => false,
-    }
+    matches!(find_goa_account_path().await, Ok(Some(_)))
 }
 
 /// Returns the D-Bus object path of the existing "lnxdrive_microsoft" GOA

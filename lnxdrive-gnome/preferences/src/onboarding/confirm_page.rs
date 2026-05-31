@@ -87,13 +87,13 @@ impl ConfirmPage {
         // `ActionRow::icon_name` is deprecated since libadwaita 1.3; add the icon
         // as a prefix widget instead.
         let email_row = adw::ActionRow::builder()
-            .title(&gettext("Account"))
+            .title(gettext("Account"))
             .subtitle(&account_email)
             .build();
         email_row.add_prefix(&gtk4::Image::from_icon_name("avatar-default-symbolic"));
 
         let folder_row = adw::ActionRow::builder()
-            .title(&gettext("Sync Folder"))
+            .title(gettext("Sync Folder"))
             .subtitle(&sync_folder)
             .build();
         folder_row.add_prefix(&gtk4::Image::from_icon_name("folder-symbolic"));
@@ -104,7 +104,7 @@ impl ConfirmPage {
 
         // "Start Syncing" button
         let start_button = gtk4::Button::builder()
-            .label(&gettext("Start Syncing"))
+            .label(gettext("Start Syncing"))
             .halign(gtk4::Align::Center)
             .css_classes(["suggested-action", "pill"])
             .build();
@@ -120,8 +120,8 @@ impl ConfirmPage {
         // Status page with check icon
         let status_page = adw::StatusPage::builder()
             .icon_name("emblem-ok-symbolic")
-            .title(&gettext("All Set!"))
-            .description(&gettext(
+            .title(gettext("All Set!"))
+            .description(gettext(
                 "Your OneDrive account is ready. Review the details below and start syncing.",
             ))
             .build();

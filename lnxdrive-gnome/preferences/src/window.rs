@@ -100,13 +100,13 @@ impl LnxdriveWindow {
         // Set up window content behind the dialog.
         let status = adw::StatusPage::builder()
             .icon_name("emblem-ok-symbolic")
-            .title(&gettext("LNXDrive"))
-            .description(&gettext("Your OneDrive files are syncing."))
+            .title(gettext("LNXDrive"))
+            .description(gettext("Your OneDrive files are syncing."))
             .build();
 
         // Add a button to re-open preferences if the dialog is closed.
         let open_prefs_button = gtk4::Button::builder()
-            .label(&gettext("Preferences"))
+            .label(gettext("Preferences"))
             .halign(gtk4::Align::Center)
             .css_classes(["pill"])
             .build();
@@ -135,7 +135,7 @@ impl LnxdriveWindow {
     pub fn show_dbus_error(&self, message: &str) {
         let status = adw::StatusPage::builder()
             .icon_name("dialog-error-symbolic")
-            .title(&gettext("Cannot Connect to LNXDrive"))
+            .title(gettext("Cannot Connect to LNXDrive"))
             .description(message)
             .build();
 

@@ -150,12 +150,12 @@ impl ConflictListPage {
 
         // -- Conflicts list group ---------------------------------------------
         let conflicts_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Unresolved Conflicts"))
+            .title(gettext("Unresolved Conflicts"))
             .build();
 
         // Resolve All button in the header
         let resolve_all_button = gtk4::Button::builder()
-            .label(&gettext("Resolve All"))
+            .label(gettext("Resolve All"))
             .css_classes(["flat"])
             .build();
 
@@ -167,7 +167,7 @@ impl ConflictListPage {
 
         // Empty state label
         let empty_label = gtk4::Label::builder()
-            .label(&gettext("No unresolved conflicts"))
+            .label(gettext("No unresolved conflicts"))
             .css_classes(["dim-label"])
             .margin_top(12)
             .margin_bottom(12)
@@ -222,11 +222,11 @@ impl ConflictListPage {
         self.remove(&group);
 
         let new_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Unresolved Conflicts"))
+            .title(gettext("Unresolved Conflicts"))
             .build();
 
         let resolve_all_button = gtk4::Button::builder()
-            .label(&gettext("Resolve All"))
+            .label(gettext("Resolve All"))
             .css_classes(["flat"])
             .build();
 
@@ -238,8 +238,8 @@ impl ConflictListPage {
 
         if conflicts.is_empty() {
             let empty_row = adw::ActionRow::builder()
-                .title(&gettext("No unresolved conflicts"))
-                .subtitle(&gettext("All files are in sync"))
+                .title(gettext("No unresolved conflicts"))
+                .subtitle(gettext("All files are in sync"))
                 .build();
             empty_row.add_prefix(&gtk4::Image::from_icon_name("emblem-ok-symbolic"));
             new_group.add(&empty_row);
@@ -287,8 +287,8 @@ impl ConflictListPage {
 
         // Build a simple strategy chooser dialog
         let dialog = adw::AlertDialog::builder()
-            .heading(&gettext("Resolve All Conflicts"))
-            .body(&gettext("Choose a strategy to apply to all unresolved conflicts."))
+            .heading(gettext("Resolve All Conflicts"))
+            .body(gettext("Choose a strategy to apply to all unresolved conflicts."))
             .build();
 
         dialog.add_response("cancel", &gettext("Cancel"));

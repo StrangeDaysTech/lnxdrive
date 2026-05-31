@@ -126,6 +126,10 @@ trait LnxdriveSettings {
 
     /// Return the remote folder tree as a JSON string.
     async fn get_remote_folder_tree(&self) -> zbus::Result<String>;
+
+    /// Emitted when any configuration key changes (e.g. from the CLI).
+    #[zbus(signal)]
+    fn config_changed(&self, key: &str) -> zbus::Result<()>;
 }
 
 /// com.strangedaystech.LNXDrive.Status — account and quota information
@@ -134,12 +138,28 @@ trait LnxdriveSettings {
     default_service = "com.strangedaystech.LNXDrive",
     default_path = "/com/strangedaystech/LNXDrive"
 )]
-trait LnxdriveStatus {
+pub trait LnxdriveStatus {
     /// Return (used_bytes, total_bytes).
     async fn get_quota(&self) -> zbus::Result<(u64, u64)>;
 
     /// Return a dict of account metadata (display_name, email, etc.).
     async fn get_account_info(&self) -> zbus::Result<HashMap<String, OwnedValue>>;
+
+    /// Cloud connection state: "online", "offline", or "reconnecting".
+    #[zbus(property)]
+    fn connection_status(&self) -> zbus::Result<String>;
+
+    /// Session-bus health: "online", "reconnecting", or "lost".
+    #[zbus(property)]
+    fn dbus_health(&self) -> zbus::Result<String>;
+
+    /// Emitted when the storage quota changes (e.g. after a sync).
+    #[zbus(signal)]
+    fn quota_changed(&self, used: u64, total: u64) -> zbus::Result<()>;
+
+    /// Emitted when the cloud connection state changes.
+    #[zbus(signal)]
+    fn connection_changed(&self, status: &str) -> zbus::Result<()>;
 }
 
 /// com.strangedaystech.LNXDrive.Sync — sync control
@@ -157,6 +177,30 @@ trait LnxdriveSync {
 
     /// Resume sync.
     async fn resume(&self) -> zbus::Result<()>;
+
+    /// Current sync state: "idle", "syncing", "paused", or "error".
+    #[zbus(property)]
+    fn sync_status(&self) -> zbus::Result<String>;
+
+    /// Unix timestamp of the last completed sync (0 = never).
+    #[zbus(property)]
+    fn last_sync_time(&self) -> zbus::Result<i64>;
+
+    /// Number of pending file operations.
+    #[zbus(property)]
+    fn pending_changes(&self) -> zbus::Result<u32>;
+
+    /// Emitted when a sync cycle starts.
+    #[zbus(signal)]
+    fn sync_started(&self) -> zbus::Result<()>;
+
+    /// Emitted when a sync cycle completes.
+    #[zbus(signal)]
+    fn sync_completed(&self, files_synced: u32, errors: u32) -> zbus::Result<()>;
+
+    /// Emitted for each file during sync.
+    #[zbus(signal)]
+    fn sync_progress(&self, file: &str, current: u32, total: u32) -> zbus::Result<()>;
 }
 
 /// com.strangedaystech.LNXDrive.Conflicts — conflict detection and resolution

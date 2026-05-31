@@ -99,7 +99,7 @@ impl AuthPage {
 
         // Sign-in button
         let sign_in_button = gtk4::Button::builder()
-            .label(&gettext("Sign In"))
+            .label(gettext("Sign In"))
             .halign(gtk4::Align::Center)
             .css_classes(["suggested-action", "pill"])
             .build();
@@ -116,7 +116,7 @@ impl AuthPage {
 
         // Waiting-state cancel button (hidden initially)
         let cancel_button = gtk4::Button::builder()
-            .label(&gettext("Cancel"))
+            .label(gettext("Cancel"))
             .halign(gtk4::Align::Center)
             .css_classes(["destructive-action", "pill"])
             .visible(false)
@@ -126,15 +126,15 @@ impl AuthPage {
 
         // Waiting label (hidden initially, placed next to spinner)
         let waiting_label = gtk4::Label::builder()
-            .label(&gettext("Waiting for authentication..."))
+            .label(gettext("Waiting for authentication..."))
             .visible(false)
             .build();
 
         // Status page
         let status_page = adw::StatusPage::builder()
             .icon_name("dialog-password-symbolic")
-            .title(&gettext("Sign in to OneDrive"))
-            .description(&gettext(
+            .title(gettext("Sign in to OneDrive"))
+            .description(gettext(
                 "Connect your Microsoft account to start syncing files.",
             ))
             .build();
@@ -143,7 +143,7 @@ impl AuthPage {
         #[cfg(feature = "goa")]
         {
             let goa_button = gtk4::Button::builder()
-                .label(&gettext("Use existing Microsoft account"))
+                .label(gettext("Use existing Microsoft account"))
                 .halign(gtk4::Align::Center)
                 .css_classes(["suggested-action", "pill"])
                 .visible(false) // hidden until GOA check completes
