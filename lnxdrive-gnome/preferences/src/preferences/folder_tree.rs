@@ -217,6 +217,7 @@ impl FolderTree {
 
         // Tree list model: the create_model closure returns a child ListStore
         // when a row is expanded, populated from the FolderNode's children_json.
+        let tree_self = self.clone();
         let tree_model = gtk4::TreeListModel::new(
             root_store.clone(),
             false,  // passthrough = false (we want TreeListRow wrappers)
@@ -231,13 +232,21 @@ impl FolderTree {
                     return None;
                 }
 
-                let child_store = gio::ListStore::new::<FolderNode>();
+                // A child is checked if its parent is selected (recursive sync)
+                // OR it is explicitly in the selected set. Reading the selected
+                // set here — not just inheriting the parent flag — is what
+                // restores an explicitly-chosen subfolder when its row is
+                // materialised on expand (audit finding M1 / completes H4).
                 let parent_selected = node.selected();
+                let selected = tree_self.imp().selected_folders.borrow();
+                let child_store = gio::ListStore::new::<FolderNode>();
                 for child in &children {
+                    let is_selected =
+                        parent_selected || selected.iter().any(|p| p == &child.path);
                     let child_node = FolderNode::new(
                         &child.name,
                         &child.path,
-                        parent_selected,
+                        is_selected,
                         child.children.clone(),
                     );
                     child_store.append(&child_node);
@@ -326,7 +335,7 @@ impl FolderTree {
             check.connect_toggled(move |btn| {
                 let new_val = btn.is_active();
                 node_ref.set_selected(new_val);
-                tree_ref.on_selection_changed();
+                tree_ref.set_path_selected(&node_ref.path(), new_val);
             });
         });
 
@@ -444,47 +453,41 @@ impl FolderTree {
         self.prepend(&label);
     }
 
-    /// Called whenever a checkbox is toggled. Propagates the selection to
-    /// children and then sends the full list of selected paths to the daemon.
-    fn on_selection_changed(&self) {
-        let imp = self.imp();
+    /// Update the selection set for a single toggled path and persist the full
+    /// set to the daemon.
+    ///
+    /// Tracking selections by path here — rather than re-scanning the root store
+    /// on every change — is what makes nested selections correct (audit finding
+    /// M1 / completes H4): lazily-materialised child rows never live in the root
+    /// store, so a store scan dropped any expanded-subfolder choice. The
+    /// `selected_folders` set is the single source of truth; `create_model`
+    /// reads it back when it builds child rows.
+    fn set_path_selected(&self, path: &str, selected: bool) {
+        {
+            let mut sel = self.imp().selected_folders.borrow_mut();
+            if selected {
+                if !sel.iter().any(|p| p == path) {
+                    sel.push(path.to_string());
+                }
+            } else {
+                sel.retain(|p| p != path);
+            }
+        }
 
-        // Collect all selected paths from the root store.
-        let store = match imp.root_store.borrow().clone() {
-            Some(s) => s,
-            None => return,
-        };
-
-        let mut selected_paths = Vec::new();
-        self.collect_selected(&store, &mut selected_paths);
-
-        *imp.selected_folders.borrow_mut() = selected_paths.clone();
-
-        // Send to daemon.
-        let client = match imp.dbus_client.borrow().clone() {
+        let paths = self.imp().selected_folders.borrow().clone();
+        let client = match self.imp().dbus_client.borrow().clone() {
             Some(c) => c,
             None => return,
         };
 
+        let tree = self.clone();
         glib::MainContext::default().spawn_local(async move {
-            if let Err(e) = client.set_selected_folders(&selected_paths).await {
-                eprintln!("Could not save selected folders: {}", e);
+            if let Err(e) = client.set_selected_folders(&paths).await {
+                tree.show_error(&format!(
+                    "{}: {e}",
+                    gettext("Could not save folder selection")
+                ));
             }
         });
-    }
-
-    /// Recursively collect the paths of selected FolderNodes from a ListStore.
-    fn collect_selected(&self, store: &gio::ListStore, out: &mut Vec<String>) {
-        for i in 0..store.n_items() {
-            if let Some(item) = store.item(i) {
-                if let Some(node) = item.downcast_ref::<FolderNode>() {
-                    if node.selected() {
-                        out.push(node.path());
-                    }
-                    // Note: children are only materialised when expanded;
-                    // we rely on the user expanding and toggling them.
-                }
-            }
-        }
     }
 }

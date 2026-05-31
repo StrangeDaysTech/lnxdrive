@@ -128,7 +128,13 @@ that per-run heterogeneity, not a fixed "best model", is what pays off.)
 ## 7. Conclusion
 
 Fase 3 is **clean on security and correct on the RISK-002 realignment**, with one
-VALID Medium functional defect (M1) that completes the H4 fix. Recommended next
-step: fix M1 (low–medium effort, isolated to `folder_tree.rs`), then open the
-Fase-3 PR. The external-audit telemetry for this phase is emitted to
+VALID Medium functional defect (M1) that completes the H4 fix.
+
+**M1 remediated post-audit** (in this branch): `folder_tree` now tracks the
+selection set by path (mutated on each toggle, read back by `create_model` when
+child rows materialise), so nested/expanded subfolder selections persist and
+restore. `cargo clippy -- -D warnings` clean. Runtime verification of the tree UX
+remains manual (needs a display + live daemon).
+
+Next step: open the Fase-3 PR. The external-audit telemetry for this phase is in
 `external-audit-pending.yaml` for Charter close.
