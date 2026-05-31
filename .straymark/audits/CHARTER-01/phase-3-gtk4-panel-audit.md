@@ -147,11 +147,12 @@ this environment) — deferred to manual verification.
   has Account, Sync (≈Folders), Advanced (≈Network), Conflicts — but **no
   "System" group**, and the daemon exposes **no D-Bus API** for its candidate
   settings (auto-start, cache, dehydration policy).
-- **Remediation (decision required):** auto-start is implementable without new
-  D-Bus API (manage a systemd user unit / autostart `.desktop`); cache and
-  dehydration controls need daemon API and are **deferred to v0.2**. Either ship
-  a "System" page with only the implementable controls, or document the group as
-  deferred. To be decided during remediation.
+- **Resolution — DEFERRED to v0.2** (see [[AIDEC-2026-05-31-001]]): the whole
+  "System" group is deferred to a future v0.2 Charter rather than implemented
+  partially in the alpha. Cache and dehydration controls need new daemon D-Bus
+  API; auto-start alone would be a one-toggle group mixing v0.1/v0.2 scope. Fase 3
+  ships three wired groups (Account, Folders/Sync, Network/Advanced) + Conflicts;
+  the "System" group is out of alpha scope by that decision.
 
 ## 4. Rejected (agent over-classifications)
 
