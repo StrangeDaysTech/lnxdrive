@@ -16,7 +16,13 @@ language: en
 #             GB/T 45652, CSL 2026 incident reporting
 #
 # Default if omitted: [global, eu]
+# Add "china" only if your project operates in mainland China.
 # regional_scope:
 #   - global
 #   - eu
 #   # - china
+
+# Complexity analysis settings (used by: straymark analyze)
+# Uncomment to override the default cognitive complexity threshold
+# complexity:
+#   threshold: 8
