@@ -84,6 +84,20 @@ if the CLI prompts for a location.
 
 **Conventional Commits:** `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `test:`.
 
+### Issue tracking & linking
+
+GitHub **Issues** are this project's **public risk backlog** (created in Charter-01
+Fase 0 from `.straymark/02-design/risk-analysis/`). There is **no GitHub Project** —
+it was removed as redundant (single-operator; process tracking already lives in
+StrayMark Charters/AILOGs). Do not recreate it unless collaborators are added.
+
+- When a PR resolves a tracked issue, put **`Closes #N`** (or `Fixes #N`) in the
+  **PR description** so the issue closes automatically on merge. This is what keeps
+  Issues current without manual pairing — its absence is why #6/#10 sat open after
+  being fixed in Fase 1.
+- When closing a Charter phase, **reconcile the affected issues** (close any resolved
+  ones whose PR lacked a `Closes #N`).
+
 > **Full details:** `.straymark/00-governance/GIT-BRANCHING-STRATEGY.md`
 
 ---
