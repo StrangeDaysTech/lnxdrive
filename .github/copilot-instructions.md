@@ -4,7 +4,6 @@
 > **Read and follow the rules in [../STRAYMARK.md](../STRAYMARK.md).**
 > That file contains all StrayMark documentation governance rules for this project.
 <!-- straymark:end -->
-
 ---
 
 ## StrayMark Rules for Copilot

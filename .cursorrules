@@ -478,7 +478,6 @@ StrayMark uses HTML comment markers to manage injected content in agent configur
 *StrayMark | [GitHub](https://github.com/StrangeDaysTech/straymark)*
 *[Strange Days Tech](https://strangedays.tech) — Because every change tells a story.*
 <!-- straymark:end -->
-
 ## StrayMark Documentation Rules
 
 Identity: Use `cursor-v{version}` in the `agent:` field.

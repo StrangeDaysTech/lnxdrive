@@ -4,7 +4,6 @@
 > **Read and follow the rules in [STRAYMARK.md](STRAYMARK.md).**
 > That file contains all StrayMark documentation governance rules for this project.
 <!-- straymark:end -->
-
 > This file is automatically loaded by Gemini CLI.
 > It contains **monorepo-specific** navigation and conventions that complement
 > the StrayMark governance rules. For documentation rules, templates, autonomy
