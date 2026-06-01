@@ -79,14 +79,14 @@ impl FolderPage {
         // Path display row
         let initial_path = imp.selected_path.borrow().display().to_string();
         let path_row = adw::ActionRow::builder()
-            .title(&gettext("Sync Folder"))
+            .title(gettext("Sync Folder"))
             .subtitle(&initial_path)
             .build();
 
         // "Choose Folder..." button as a suffix
         let choose_button = gtk4::Button::builder()
             .icon_name("folder-open-symbolic")
-            .tooltip_text(&gettext("Choose Folder..."))
+            .tooltip_text(gettext("Choose Folder..."))
             .valign(gtk4::Align::Center)
             .css_classes(["flat"])
             .build();
@@ -96,8 +96,8 @@ impl FolderPage {
         imp.path_row.replace(Some(path_row.clone()));
 
         let prefs_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Sync Location"))
-            .description(&gettext(
+            .title(gettext("Sync Location"))
+            .description(gettext(
                 "Choose where OneDrive files will be stored on your computer.",
             ))
             .build();
@@ -105,7 +105,7 @@ impl FolderPage {
 
         // Action buttons
         let continue_button = gtk4::Button::builder()
-            .label(&gettext("Continue"))
+            .label(gettext("Continue"))
             .halign(gtk4::Align::Center)
             .css_classes(["suggested-action", "pill"])
             .build();
@@ -159,7 +159,7 @@ impl FolderPage {
     /// Open a folder chooser dialog.
     fn on_choose_folder(&self) {
         let dialog = gtk4::FileDialog::builder()
-            .title(&gettext("Choose Sync Folder"))
+            .title(gettext("Choose Sync Folder"))
             .modal(true)
             .build();
 

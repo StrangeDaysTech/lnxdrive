@@ -219,18 +219,18 @@ impl ConflictDetailDialog {
 
         // Local version
         let local_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Local Version"))
+            .title(gettext("Local Version"))
             .build();
         let local_size_row = adw::ActionRow::builder()
-            .title(&gettext("Size"))
-            .subtitle(&format_bytes(conflict.local_size))
+            .title(gettext("Size"))
+            .subtitle(format_bytes(conflict.local_size))
             .build();
         let local_modified_row = adw::ActionRow::builder()
-            .title(&gettext("Modified"))
+            .title(gettext("Modified"))
             .subtitle(&conflict.local_modified)
             .build();
         let local_hash_row = adw::ActionRow::builder()
-            .title(&gettext("Hash"))
+            .title(gettext("Hash"))
             .subtitle(&conflict.local_hash)
             .build();
         local_group.add(&local_size_row);
@@ -239,18 +239,18 @@ impl ConflictDetailDialog {
 
         // Remote version
         let remote_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Remote Version"))
+            .title(gettext("Remote Version"))
             .build();
         let remote_size_row = adw::ActionRow::builder()
-            .title(&gettext("Size"))
-            .subtitle(&format_bytes(conflict.remote_size))
+            .title(gettext("Size"))
+            .subtitle(format_bytes(conflict.remote_size))
             .build();
         let remote_modified_row = adw::ActionRow::builder()
-            .title(&gettext("Modified"))
+            .title(gettext("Modified"))
             .subtitle(&conflict.remote_modified)
             .build();
         let remote_hash_row = adw::ActionRow::builder()
-            .title(&gettext("Hash"))
+            .title(gettext("Hash"))
             .subtitle(&conflict.remote_hash)
             .build();
         remote_group.add(&remote_size_row);
@@ -263,26 +263,26 @@ impl ConflictDetailDialog {
 
         // -- Resolution actions -----------------------------------------------
         let actions_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Resolution"))
+            .title(gettext("Resolution"))
             .build();
 
         let keep_local_row = adw::ActionRow::builder()
-            .title(&gettext("Keep Local"))
-            .subtitle(&gettext("Upload the local version, overwriting the remote"))
+            .title(gettext("Keep Local"))
+            .subtitle(gettext("Upload the local version, overwriting the remote"))
             .activatable(true)
             .build();
         keep_local_row.add_suffix(&gtk4::Image::from_icon_name("go-up-symbolic"));
 
         let keep_remote_row = adw::ActionRow::builder()
-            .title(&gettext("Keep Remote"))
-            .subtitle(&gettext("Download the remote version, overwriting the local"))
+            .title(gettext("Keep Remote"))
+            .subtitle(gettext("Download the remote version, overwriting the local"))
             .activatable(true)
             .build();
         keep_remote_row.add_suffix(&gtk4::Image::from_icon_name("go-down-symbolic"));
 
         let keep_both_row = adw::ActionRow::builder()
-            .title(&gettext("Keep Both"))
-            .subtitle(&gettext("Rename the local file and download the remote version"))
+            .title(gettext("Keep Both"))
+            .subtitle(gettext("Rename the local file and download the remote version"))
             .activatable(true)
             .build();
         keep_both_row.add_suffix(&gtk4::Image::from_icon_name("edit-copy-symbolic"));

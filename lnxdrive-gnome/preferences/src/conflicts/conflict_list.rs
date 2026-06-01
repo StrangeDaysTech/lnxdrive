@@ -150,12 +150,12 @@ impl ConflictListPage {
 
         // -- Conflicts list group ---------------------------------------------
         let conflicts_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Unresolved Conflicts"))
+            .title(gettext("Unresolved Conflicts"))
             .build();
 
         // Resolve All button in the header
         let resolve_all_button = gtk4::Button::builder()
-            .label(&gettext("Resolve All"))
+            .label(gettext("Resolve All"))
             .css_classes(["flat"])
             .build();
 
@@ -167,7 +167,7 @@ impl ConflictListPage {
 
         // Empty state label
         let empty_label = gtk4::Label::builder()
-            .label(&gettext("No unresolved conflicts"))
+            .label(gettext("No unresolved conflicts"))
             .css_classes(["dim-label"])
             .margin_top(12)
             .margin_bottom(12)
@@ -209,24 +209,26 @@ impl ConflictListPage {
             None => return,
         };
 
-        // Update page title with conflict count
+        // Keep the page/tab title fixed at "Conflicts" so the view-switcher tab
+        // doesn't truncate to "Conflicts …". Surface the count in the group
+        // header instead (the Shell indicator also shows it).
         let count = conflicts.len();
-        if count > 0 {
-            self.set_title(&format!("{} ({})", gettext("Conflicts"), count));
-        } else {
-            self.set_title(&gettext("Conflicts"));
-        }
 
         // Rebuild the group each time. For small conflict counts (<100)
         // this is perfectly fine.
         self.remove(&group);
 
+        let group_title = if count > 0 {
+            format!("{} ({})", gettext("Unresolved Conflicts"), count)
+        } else {
+            gettext("Unresolved Conflicts")
+        };
         let new_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Unresolved Conflicts"))
+            .title(group_title)
             .build();
 
         let resolve_all_button = gtk4::Button::builder()
-            .label(&gettext("Resolve All"))
+            .label(gettext("Resolve All"))
             .css_classes(["flat"])
             .build();
 
@@ -238,8 +240,8 @@ impl ConflictListPage {
 
         if conflicts.is_empty() {
             let empty_row = adw::ActionRow::builder()
-                .title(&gettext("No unresolved conflicts"))
-                .subtitle(&gettext("All files are in sync"))
+                .title(gettext("No unresolved conflicts"))
+                .subtitle(gettext("All files are in sync"))
                 .build();
             empty_row.add_prefix(&gtk4::Image::from_icon_name("emblem-ok-symbolic"));
             new_group.add(&empty_row);
@@ -287,8 +289,8 @@ impl ConflictListPage {
 
         // Build a simple strategy chooser dialog
         let dialog = adw::AlertDialog::builder()
-            .heading(&gettext("Resolve All Conflicts"))
-            .body(&gettext("Choose a strategy to apply to all unresolved conflicts."))
+            .heading(gettext("Resolve All Conflicts"))
+            .body(gettext("Choose a strategy to apply to all unresolved conflicts."))
             .build();
 
         dialog.add_response("cancel", &gettext("Cancel"));

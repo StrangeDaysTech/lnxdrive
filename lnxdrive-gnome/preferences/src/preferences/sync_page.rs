@@ -8,7 +8,6 @@ use std::cell::RefCell;
 
 use gettextrs::gettext;
 use gtk4::glib;
-use gtk4::prelude::*;
 use libadwaita as adw;
 use libadwaita::prelude::*;
 
@@ -101,13 +100,13 @@ impl SyncPage {
         // -- Sync Options group ----------------------------------------------
 
         let options_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Sync Options"))
+            .title(gettext("Sync Options"))
             .build();
 
         // Automatic Sync switch (FR-018)
         let auto_sync_row = adw::SwitchRow::builder()
-            .title(&gettext("Automatic Sync"))
-            .subtitle(&gettext("Sync files automatically when changes are detected"))
+            .title(gettext("Automatic Sync"))
+            .subtitle(gettext("Sync files automatically when changes are detected"))
             .build();
         imp.auto_sync_row.replace(Some(auto_sync_row.clone()));
 
@@ -123,8 +122,8 @@ impl SyncPage {
         );
 
         let conflict_row = adw::ComboRow::builder()
-            .title(&gettext("Conflict Resolution"))
-            .subtitle(&gettext("How to handle file conflicts between local and remote"))
+            .title(gettext("Conflict Resolution"))
+            .subtitle(gettext("How to handle file conflicts between local and remote"))
             .model(&conflict_model)
             .build();
         imp.conflict_row.replace(Some(conflict_row.clone()));
@@ -144,8 +143,8 @@ impl SyncPage {
         // -- Selective Sync group (FR-014) ------------------------------------
 
         let selective_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Selective Sync"))
-            .description(&gettext(
+            .title(gettext("Selective Sync"))
+            .description(gettext(
                 "Choose which remote folders to sync to this computer.",
             ))
             .build();
@@ -197,10 +196,26 @@ impl SyncPage {
                     page.apply_config_yaml(&yaml);
                 }
                 Err(e) => {
-                    eprintln!("Could not load config: {}", e);
+                    page.show_error(&format!(
+                        "{}: {e}",
+                        gettext("Could not load sync settings from the daemon")
+                    ));
                 }
             }
         });
+    }
+
+    /// Surface a load/save failure to the user instead of only logging to stderr,
+    /// so a dead daemon does not leave the page silently showing default values.
+    fn show_error(&self, message: &str) {
+        let group = adw::PreferencesGroup::new();
+        let row = adw::ActionRow::builder()
+            .title(gettext("Error"))
+            .subtitle(message)
+            .css_classes(["error"])
+            .build();
+        group.add(&row);
+        self.add(&group);
     }
 
     /// Parse the daemon's YAML config and apply values to the UI widgets.

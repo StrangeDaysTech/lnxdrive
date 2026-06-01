@@ -582,7 +582,28 @@ class AuthInterface(ServiceInterface):
         return True
 
     @method()
+    def CompleteAuthViaGOA(self, goa_account_path: "s") -> "b":
+        # Mirrors the real daemon's RISK-002 method: the client hands over the
+        # GOA account object path and the daemon fetches/stores the tokens
+        # itself; tokens never cross D-Bus. This replaced CompleteAuthWithTokens
+        # in Fase 1 — the mock had not been updated until Fase 3 verification.
+        if not goa_account_path.startswith("/org/gnome/OnlineAccounts/Accounts/"):
+            log.warning(
+                "Auth.CompleteAuthViaGOA rejected: not a GOA account path (%s) -> false",
+                goa_account_path,
+            )
+            return False
+        log.info("Auth.CompleteAuthViaGOA(account_path=%s) -> true", goa_account_path)
+        self._authenticated = True
+        self._auth_source = "goa"
+        self.AuthStateChanged("authenticated")
+        return True
+
+    @method()
     def CompleteAuthWithTokens(self, access_token: "s", refresh_token: "s", expires_at_unix: "x") -> "b":
+        # DEPRECATED — removed from the real daemon in Fase 1 (RISK-002). Kept
+        # here only so older callers/tests do not break; new clients use
+        # CompleteAuthViaGOA above.
         if not access_token or not refresh_token:
             log.warning("Auth.CompleteAuthWithTokens called with empty tokens -> false")
             return False

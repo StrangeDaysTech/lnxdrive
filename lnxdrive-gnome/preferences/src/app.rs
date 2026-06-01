@@ -9,7 +9,6 @@ use gtk4::glib;
 use gtk4::prelude::*;
 use gtk4::subclass::prelude::ObjectSubclassIsExt;
 use libadwaita as adw;
-use libadwaita::prelude::*;
 
 use crate::dbus_client::DbusClient;
 use crate::window::LnxdriveWindow;

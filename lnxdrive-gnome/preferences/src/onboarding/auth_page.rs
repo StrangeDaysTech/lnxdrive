@@ -99,7 +99,7 @@ impl AuthPage {
 
         // Sign-in button
         let sign_in_button = gtk4::Button::builder()
-            .label(&gettext("Sign In"))
+            .label(gettext("Sign In"))
             .halign(gtk4::Align::Center)
             .css_classes(["suggested-action", "pill"])
             .build();
@@ -116,7 +116,7 @@ impl AuthPage {
 
         // Waiting-state cancel button (hidden initially)
         let cancel_button = gtk4::Button::builder()
-            .label(&gettext("Cancel"))
+            .label(gettext("Cancel"))
             .halign(gtk4::Align::Center)
             .css_classes(["destructive-action", "pill"])
             .visible(false)
@@ -126,15 +126,15 @@ impl AuthPage {
 
         // Waiting label (hidden initially, placed next to spinner)
         let waiting_label = gtk4::Label::builder()
-            .label(&gettext("Waiting for authentication..."))
+            .label(gettext("Waiting for authentication..."))
             .visible(false)
             .build();
 
         // Status page
         let status_page = adw::StatusPage::builder()
             .icon_name("dialog-password-symbolic")
-            .title(&gettext("Sign in to OneDrive"))
-            .description(&gettext(
+            .title(gettext("Sign in to OneDrive"))
+            .description(gettext(
                 "Connect your Microsoft account to start syncing files.",
             ))
             .build();
@@ -143,7 +143,7 @@ impl AuthPage {
         #[cfg(feature = "goa")]
         {
             let goa_button = gtk4::Button::builder()
-                .label(&gettext("Use existing Microsoft account"))
+                .label(gettext("Use existing Microsoft account"))
                 .halign(gtk4::Align::Center)
                 .css_classes(["suggested-action", "pill"])
                 .visible(false) // hidden until GOA check completes
@@ -356,12 +356,11 @@ impl AuthPage {
         let wl = waiting_label.clone();
 
         glib::MainContext::default().spawn_local(async move {
-            match goa_sso::get_goa_tokens().await {
-                Ok((access_token, refresh_token, expires_at)) => {
-                    match dbus_client
-                        .complete_auth_with_tokens(&access_token, &refresh_token, expires_at)
-                        .await
-                    {
+            // Hand the GOA account path to the daemon; it fetches the tokens from
+            // GOA itself (RISK-002 — tokens never cross D-Bus).
+            match goa_sso::lnxdrive_goa_account_path().await {
+                Ok(Some(account_path)) => {
+                    match dbus_client.complete_auth_via_goa(&account_path).await {
                         Ok(true) => {
                             // Fetch account info and push folder page
                             if let Ok(info) = dbus_client.get_account_info().await {
@@ -379,24 +378,26 @@ impl AuthPage {
                         }
                         Ok(false) => {
                             page.show_error(&gettext(
-                                "The daemon rejected the GOA tokens. Try signing in manually.",
+                                "The daemon rejected the GOA account. Try signing in manually.",
                             ));
                             page.set_waiting_state(false, &wl);
                         }
                         Err(e) => {
-                            page.show_error(&format!(
-                                "{}: {}",
-                                gettext("D-Bus error"),
-                                e
-                            ));
+                            page.show_error(&format!("{}: {}", gettext("D-Bus error"), e));
                             page.set_waiting_state(false, &wl);
                         }
                     }
                 }
+                Ok(None) => {
+                    page.show_error(&gettext(
+                        "No GNOME Online Accounts account found for LNXDrive.",
+                    ));
+                    page.set_waiting_state(false, &wl);
+                }
                 Err(e) => {
                     page.show_error(&format!(
                         "{}: {}",
-                        gettext("Could not get GOA tokens"),
+                        gettext("Could not query GNOME Online Accounts"),
                         e
                     ));
                     page.set_waiting_state(false, &wl);

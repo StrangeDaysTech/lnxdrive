@@ -91,8 +91,8 @@ impl AdvancedPage {
         // -- Exclusion Patterns group (FR-015) --------------------------------
 
         let patterns_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Exclusion Patterns"))
-            .description(&gettext(
+            .title(gettext("Exclusion Patterns"))
+            .description(gettext(
                 "Files and folders matching these glob patterns will not be synced.",
             ))
             .build();
@@ -119,13 +119,13 @@ impl AdvancedPage {
             .build();
 
         let entry = gtk4::Entry::builder()
-            .placeholder_text(&gettext("e.g. *.tmp, .git/, ~$*"))
+            .placeholder_text(gettext("e.g. *.tmp, .git/, ~$*"))
             .hexpand(true)
             .build();
         imp.pattern_entry.replace(Some(entry.clone()));
 
         let add_button = gtk4::Button::builder()
-            .label(&gettext("Add"))
+            .label(gettext("Add"))
             .css_classes(["suggested-action"])
             .build();
 
@@ -154,8 +154,8 @@ impl AdvancedPage {
         // -- Bandwidth Limits group (FR-017) ----------------------------------
 
         let bandwidth_group = adw::PreferencesGroup::builder()
-            .title(&gettext("Bandwidth Limits"))
-            .description(&gettext(
+            .title(gettext("Bandwidth Limits"))
+            .description(gettext(
                 "Limit upload and download speeds. Set to 0 for unlimited.",
             ))
             .build();
@@ -245,7 +245,7 @@ impl AdvancedPage {
 
         let delete_button = gtk4::Button::builder()
             .icon_name("edit-delete-symbolic")
-            .tooltip_text(&gettext("Remove pattern"))
+            .tooltip_text(gettext("Remove pattern"))
             .valign(gtk4::Align::Center)
             .css_classes(["flat", "circular"])
             .build();

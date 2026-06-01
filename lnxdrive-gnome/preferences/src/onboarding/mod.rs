@@ -14,7 +14,6 @@ pub mod folder_page;
 use std::cell::RefCell;
 
 use gtk4::glib;
-use gtk4::prelude::*;
 use libadwaita as adw;
 use libadwaita::prelude::*;
 

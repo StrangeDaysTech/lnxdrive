@@ -2,165 +2,139 @@
 audit_role: calibrator-reconciler
 calibrator: claude-opus-4-8
 charter_id: CHARTER-01-road-to-v0-1-0-alpha-1
-git_range: "ee710c8..HEAD"
+phase: "Fase 3 — GTK4 preferences panel"
+git_range: "origin/main..HEAD"
 prompt_used: ../audit-prompt.md
-calibrated_at: 2026-05-28
+calibrated_at: 2026-05-31
 auditors_reconciled:
   - report-gemini-3-1-pro-high.md
   - report-gpt-5-2-codex.md
-findings_consolidated: 3
+findings_consolidated: 1
 findings_by_status:
-  agreed: 1
+  agreed: 0
   disputed: 0
-  unique_gemini-3-1-pro-high: 0
   unique_gpt-5-2-codex: 1
-  missed_by_auditors: 1
+  unique_gemini-3-1-pro-high: 0
+  missed_by_auditors: 0
   rejected: 0
 ---
 
-# Consolidated audit review — CHARTER-01-road-to-v0-1-0-alpha-1
+# Consolidated audit review — CHARTER-01 (Fase 3)
 
 **Reviewer:** claude-opus-4-8
-**Date:** 2026-05-28
+**Date:** 2026-05-31
 **Confidence:** High
 
 ## 1. Executive summary
 
-Two heterogeneous auditors (gemini-3-1-pro-high, gpt-5.2-codex) reviewed the
-integrated pre-merge state of **Fase 1** (security hardening) over `ee710c8..HEAD`
-— RISK-002, RISK-003, RISK-001, ISSUE-002, and the CI-hardening slice. Both
-conclude Fase 1 is implemented and the four P0 risks are effectively mitigated;
-neither found a Critical or High security/logic bug. `cargo test --workspace`
-passes (confirmed independently by gemini).
+Two heterogeneous auditors reviewed the Fase-3 GTK4 preferences-panel work over
+`origin/main..HEAD` (the six panel-fix commits resolving audit findings H1–H5 and
+the G1 deferral). One substantive finding survives calibration: **M1
+(gpt-5.2-codex, Medium)** — nested/selective-sync folder selections are not
+persisted or restored. It is **VALID** and confirmed against the code; notably it
+is the *recursive* half of the internal-audit finding H4 that the remediation
+fixed only partially (the load race was fixed; the recursive child selection was
+not). No Critical/High findings; no security regressions — both auditors
+independently confirm the Fase-1 RISK-002 realignment (`CompleteAuthViaGOA`,
+tokens off the bus) is correctly wired in the panel.
 
-The substantive findings are **governance and robustness**, not vulnerabilities.
-The single point both auditors converge on is a **documented-but-not-backported
-drift in RISK-002**: the Charter still scopes "opaque `SessionHandle` IDs" and
-names files (`auth.rs`, `dbus_iface.rs`) that do not exist; the shipped mitigation
-(`CompleteAuthViaGOA` + keyring via `goa_auth_backend.rs`/`service.rs`) is
-security-equivalent and was deliberately chosen, but the Charter `## Files to
-modify` table was never updated to match. This is a **VALID** governance gap.
+The two auditors diverged sharply in quality this round (inverting their Fase-1
+ranking). **gpt-5.2-codex** focused on the actual diff, traced UI→D-Bus, and
+found the real bug. **gemini-3-1-pro-high** returned a clean verdict but (a)
+audited well outside the Fase-3 diff (FUSE/RISK code from already-merged phases)
+and (b) marked Fases 4–7 — Flatpak, release, tag — as "Implemented" with
+"Implementation read: No / Assumed", which is **false**: those phases do not
+exist yet. It missed M1 (deflation) and asserted state it never verified.
 
-Code verification against the source confirmed the security-critical paths are
-sound: the FUSE write-during-hydration lock has no residual TOCTOU or deadlock,
-no OAuth token reaches any log, the billion-laughs/size-cap defenses hold, and
-the health-monitor backoff cannot overflow. The most material item neither
-auditor caught is a **silent config-load failure in the daemon**
-(`load_or_default` swallows parse errors), calibrated to Medium — it does not
-defeat the DoS mitigation but hides a malformed/malicious config behind a
-"Loaded configuration" success log.
-
-**Overall verdict: PASS_WITH_RESERVATIONS.** No blocker for the security goals;
-three documentation/robustness items to address before Charter closure.
+**Overall verdict: PASS_WITH_ONE_MEDIUM.** Fase 3 is sound and security-clean;
+M1 should be fixed to complete H4 before the phase PR merges.
 
 ## 2. Scope definition
 
-Audited unit: **Fase 1 only** (the operator scoped Fases 2-6 out; both auditors
-correctly marked them NOT_IN_SCOPE_YET). The audit range `ee710c8..HEAD` spans
-the Charter declaration boundary through the integrated pre-merge tip on branch
-`fix/ci-hardening-cargo-deny`.
-
-| Charter task (Fase 1) | In scope | Status |
-|---|---|---|
-| RISK-002 — tokens off D-Bus (keyring) | ✅ | Implemented (PR #32) |
-| RISK-003 — FUSE write-during-hydration lock | ✅ | Implemented (PR #33) |
-| RISK-001 — D-Bus health monitor + reconnect | ✅ | Implemented (PR #35) |
-| ISSUE-002 — YAML billion-laughs hardening | ✅ | Implemented (PR #36) |
-| CI hardening — cargo-deny + relocate workflow | ✅ | Implemented (PR #37) |
-| Fases 2-6 (engine polish, GTK4, Flatpak, release, announce) | ❌ | Not started — out of audit scope |
-
-Closing criterion for the audited slice: the four P0 risks mitigated with tests,
-governance docs (AILOG/AIDEC/TDE) accurate, and CI gates green.
+Audited unit: **Fase 3 only** — the `lnxdrive-gnome/preferences/` panel changes
+in `origin/main..HEAD`. The Charter's closure criterion is the full v0.1.0-alpha.1
+(Fases 0–6); Fases 0–2 are merged (outside this diff), Fases 4–6 are not yet
+started. Findings are evaluated against the **Fase-3 panel scope**, not the whole
+Charter. gpt's task table correctly reports the later phases as absent from this
+range (it labels them "Not implemented", which reads as range-relative, not a
+claim they were skipped); gemini's "Implemented/Assumed" for those same phases is
+the inaccurate reading.
 
 ## 3. Per-auditor evaluation
 
-### 3.1 gemini-3-1-pro-high (model: gemini-3-1-pro-high)
+### 3.1 gpt-5.2-codex (model: gpt-5.2-codex)
 
-| # | Finding | Reported severity | Verdict | Justification |
-|---|---|---|---|---|
-| F1 | Charter drift for RISK-002 — table still names `auth.rs`/`dbus_iface.rs`/`SessionHandle`; real impl is `goa_auth_backend.rs`/`service.rs`/`CompleteAuthViaGOA`, not backported | Medium | **VALID** | Confirmed: Charter `01-...md:60-61` unchanged; `dbus_iface.rs` and type `SessionHandle` do not exist (`grep` empty). RISK-001/ISSUE-002 rows were updated atomically this session; RISK-002 (from #32) was not. |
+| # | Finding | Reported sev | Verdict | Justification |
+|---|---------|:---:|:---:|---|
+| M1 | Nested folder selections not persisted/restored (`folder_tree.rs`) | Medium | **VALID** | Confirmed: `:235` children inherit `parent_selected` not the selected list; `collect_selected` (`:477`) iterates only the root store despite its "recursively" doc-comment. Selective-sync (FR-014) drops subfolder choices on save/reload. Medium is correct (functional UX defect, no security/crash). |
 
-**Summary:** Ran `cargo test --workspace`, did clean task-by-task traceability,
-and correctly scoped Fases 2-6 out. One valid governance finding, zero false
-positives — but stayed at the governance layer and did not dig for code-level
-defects (missed the leak-test debt and the silent config-load).
+**Summary:** Accurate, well-cited (16 citations), correctly severized, zero false
+positives. Found the one real defect in the diff — the recursive gap H4's fix
+left open. Minor weakness: the task table labels merged Fases 0–2 "Not
+implemented", which is range-relative but could read as a coverage claim.
 
-### 3.2 gpt-5.2-codex (model: gpt-5.2-codex)
+### 3.2 gemini-3-1-pro-high (model: gemini-3-1-pro-high)
 
-> Filename/frontmatter slug discrepancy (cosmetic): file `report-gpt-5-2-codex.md`
-> vs `auditor: gpt-5.2-codex`. Normal dot→dash normalization; no action needed.
+| # | Finding | Reported sev | Verdict | Justification |
+|---|---------|:---:|:---:|---|
+| — | (none) | — | — | Clean verdict. Correctly confirmed the RISK-002/GOA realignment and `serde_norway`, but those are mostly **out of the Fase-3 diff** (already-merged phases). Missed M1 (deflation). Asserted Fases 4–7 "Implemented (Assumed)" — factually wrong; those phases do not exist. |
 
-| # | Finding | Reported severity | Verdict | Justification |
-|---|---|---|---|---|
-| F1 | Charter §Scope requires opaque `SessionHandle` IDs; impl only provides `CompleteAuthViaGOA(goa_account_path) → bool` | Medium | **PARTIALLY VALID** | Technical fact correct (no SessionHandle). But the deviation IS documented in AILOG-2026-05-29-002 (Context: "minimum viable" GOA choice; Out-of-scope: TokenSource→TDE-001). Gap is the missing explicit `## Drift` note + un-updated Charter — same root as gemini F1. |
-| F2 | `leak-test-dbus-tokens.sh` exposes `--capture-seconds`/`CAPTURE_SECONDS` but never uses it; window is hard-coded sleeps | Low | **VALID** | Confirmed: parsed at `:34,54-57`, passed to inner script at `:104,174`, but the window is fixed `sleep` at `:111,120,161`; the variable only appears in an echo. Dead flag. |
-
-**Summary:** Strongest report — 25 evidence citations, traced auth→backend→keyring
-and FUSE→hydration flows, and caught the leak-test dead-flag that gemini missed.
-F1 slightly inflated ("not implemented" reads as a gap when it was a documented,
-security-equivalent deviation), hence PARTIALLY VALID.
+**Summary:** Disciplined tone but poor scope control: it audited beyond the diff,
+verified nothing for Fases 4–7 yet declared them implemented, and missed the one
+real bug a focused read of `folder_tree.rs` would have surfaced.
 
 ## 4. Remediation plan — VALID and PARTIALLY VALID findings
 
-### P1 — Integrity / Robustness
-- **Files:** `lnxdrive-engine/crates/lnxdrive-daemon/src/main.rs:65` (+ `lnxdrive-engine/crates/lnxdrive-core/src/config.rs:146-148`)
-- **Problem:** `Config::load_or_default()` does `Self::load(path).unwrap_or_default()`, silently discarding any error — including a rejected billion-laughs bomb, an over-`MAX_CONFIG_BYTES` file, or invalid YAML — and the daemon then logs `"Loaded configuration"` as if it succeeded. The DoS itself is still mitigated (the parser rejects the bomb fast; no OOM/hang), so this is **not** a defeat of ISSUE-002, but a malformed or malicious config silently degrades the daemon to defaults with no audit trail.
-- **Remediation:** In `load_or_default`, log the underlying error at `warn` before falling back (e.g. `Self::load(path).unwrap_or_else(|e| { warn!(error = %e, "config load failed; using defaults"); Self::default() })`), or make the daemon fail loudly on a present-but-unparseable file (distinguish "missing" from "malformed"). Minimal fix = the warn log.
-- **Complexity:** Low
-- **Detected by:** **Missed by all auditors** (calibrator).
+### P3 — Robustness
+- **M1 — nested selective-sync selections lost** (completes H4)
+  - **Files:** `lnxdrive-gnome/preferences/src/preferences/folder_tree.rs:235` (child init), `:477-489` (`collect_selected`)
+  - **Problem:** child `FolderNode`s inherit `parent_selected` instead of being
+    matched against `selected_folders`; `collect_selected` walks only the root
+    store, so expanded-subfolder selections are neither restored on load nor
+    gathered on save. Selective sync (FR-014) silently drops nested choices.
+  - **Remediation:** in the `create_model` closure, set each child's selected
+    state from membership in `selected_folders` (not the parent's flag); make
+    `collect_selected` actually recurse into materialised child stores (or
+    collect from the `TreeListModel` rows), and persist the full set.
+  - **Complexity:** Low–Medium.
+  - **Detected by:** gpt-5.2-codex.
 
-### P3 — Robustness / tooling
-- **Files:** `lnxdrive-testing/scripts/leak-test-dbus-tokens.sh:34,104,111,120,161,174`
-- **Problem:** `--capture-seconds` is accepted, parsed, forwarded to the inner script, and printed — but the actual capture window is fixed by hard-coded `sleep` calls (~5 s total). The flag is dead; an operator setting it gets no effect.
-- **Remediation:** Drive the capture window from `CAPTURE_SECONDS` (use it in the monitor sleep/timeout), or remove the flag to avoid a misleading interface.
-- **Complexity:** Low
-- **Detected by:** gpt-5.2-codex (F2).
-
-### P4 — Documentation / governance
-- **Files:** `.straymark/charters/01-road-to-v0-1-0-alpha-1.md:60-61` (RISK-002 rows) + `.straymark/07-ai-audit/agent-logs/daemon/AILOG-2026-05-29-002-*.md`
-- **Problem:** The Charter `## Files to modify` table for RISK-002 still names `auth.rs`/`dbus_iface.rs` (non-existent) and "opaque `SessionHandle`" (never built). The shipped, security-equivalent mitigation (`CompleteAuthViaGOA` + keyring, in `service.rs`/`goa_auth_backend.rs`) was a deliberate operator decision documented in AILOG-2026-05-29-002's Context/Out-of-scope sections — but it was never atomically backported to the Charter table, and the AILOG has no explicit `## Drift` entry naming the SessionHandle→GOA deviation. Violates the R4 atomic-update discipline the Charter itself mandates.
-- **Remediation:** (1) Rewrite the two RISK-002 rows to the real files + `CompleteAuthViaGOA` strategy, referencing AILOG-2026-05-29-002. (2) Add a one-paragraph `## Drift` note to AILOG-2026-05-29-002 explicitly recording "SessionHandle (scoped) → GOA path + internal keyring (built); security-equivalent; broader token abstraction deferred to TDE-001". Resolves gemini-F1 (VALID) and gpt-F1 (PARTIALLY VALID) together.
-- **Complexity:** Low
-- **Detected by:** gemini-3-1-pro-high (F1), gpt-5.2-codex (F1).
+No P0/P1/P2/P4 findings.
 
 ## 5. Discarded findings — misattributions and false positives
 
-None. No false positives across either report. gpt-F1 is retained as PARTIALLY
-VALID (not discarded): the underlying scope-vs-impl gap is real; only its framing
-as "undocumented / not implemented" is over-stated given the AILOG record.
+None. gemini reported no findings (so none to discard); its out-of-scope
+"Implemented (Assumed)" task rows are evaluation noise, not findings.
 
 ## 6. Auditor ratings
 
-| Auditor | Scope precision (25%) | Technical depth (25%) | Bug detection (30%) | False positive rate (20%) | **Overall** |
+| Auditor | Scope precision (25%) | Technical depth (25%) | Bug detection (30%) | False-positive rate (20%) | **Overall** |
 |---|:-:|:-:|:-:|:-:|:-:|
-| gemini-3-1-pro-high | 8/10 | 6/10 | 5/10 | 10/10 | **7.0/10** |
-| gpt-5.2-codex | 8/10 | 9/10 | 7/10 | 8/10 | **8.0/10** |
+| gpt-5.2-codex | 7/10 | 8/10 | 9/10 | 10/10 | **8.4/10** |
+| gemini-3-1-pro-high | 3/10 | 5/10 | 2/10 | 7/10 | **3.9/10** |
 
 ### Justifications
 
-**gemini-3-1-pro-high — 7.0/10**: Disciplined traceability, executed the test
-suite, perfectly clean on scope (Fase 2-6 correctly excluded) and zero false
-positives. Lost points on depth and bug detection — it found the governance
-drift but stayed at the document layer and missed both code-level items (the
-leak-test dead flag and the silent config-load).
+**gpt-5.2-codex — 8.4/10:** Found the only real defect in the diff, cited it
+precisely, severized it correctly, and reported zero false positives. Lost a
+little on scope wording (merged phases labelled "Not implemented").
 
-**gpt-5.2-codex — 8.0/10**: The deeper of the two — 25 evidence citations, real
-flow tracing, and the only auditor to catch the leak-test dead flag. Slightly
-over-flagged the SessionHandle item as a gap when the deviation was already a
-documented decision (PARTIALLY VALID), costing a little on FP rate. Also missed
-the silent config-load.
+**gemini-3-1-pro-high — 3.9/10:** A clean verdict that was wrong — it missed a
+confirmable Medium and, more seriously, asserted that unimplemented Fases 4–7 were
+"Implemented" without reading them. Confident-but-unverified state claims are
+worse than silence in an auditor. (Inverts its strong Fase-1 showing — a reminder
+that per-run heterogeneity, not a fixed "best model", is what pays off.)
 
 ## 7. Conclusion
 
-**State of the Charter (Fase 1 slice): clean on security, partial on governance.**
-Zero Critical/High findings; the four P0 risks are genuinely mitigated and the
-security-critical code paths verified sound. No blocker to merging the Fase-1 PRs.
+Fase 3 is **clean on security and correct on the RISK-002 realignment**, with one
+VALID Medium functional defect (M1) that completes the H4 fix.
 
-Before Charter closure, address the three items above — all Low complexity:
-1. **P1** — log the error in `load_or_default` (or fail loud on a malformed config).
-2. **P4** — backport the RISK-002 drift to the Charter table + add the explicit `## Drift` note to AILOG-2026-05-29-002.
-3. **P3** — wire or remove `--capture-seconds` in the leak-test script.
+**M1 remediated post-audit** (in this branch): `folder_tree` now tracks the
+selection set by path (mutated on each toggle, read back by `create_model` when
+child rows materialise), so nested/expanded subfolder selections persist and
+restore. `cargo clippy -- -D warnings` clean. Runtime verification of the tree UX
+remains manual (needs a display + live daemon).
 
-Because this was a **pre-merge** audit, the recommended next step is to apply
-P1/P3/P4 on the open Fase-1 branches (so findings are fixed before landing on
-`main`), then merge #36 → #37 and proceed to Fase 2.
+Next step: open the Fase-3 PR. The external-audit telemetry for this phase is in
+`external-audit-pending.yaml` for Charter close.
