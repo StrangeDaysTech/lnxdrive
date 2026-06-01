@@ -118,9 +118,12 @@ screenshot method; no screenshot tool installed), so the operator connected via
   Keep Local/Remote).
 - Advanced page: exclusion patterns + Add, bandwidth limits.
 
-**Minor cosmetic observation (non-blocking, logged, not fixed):** the "Conflicts"
-view-switcher tab is truncated to "Conflicts …" while the other tabs fit — a
-`ViewSwitcher` width issue, not a functional defect. Candidate follow-up polish.
+**Minor cosmetic finding — fixed & re-verified:** the "Conflicts" view-switcher
+tab truncated to "Conflicts …" because `populate_list` rewrote the page title to
+`"Conflicts (N)"` (longer than the other tabs). Fixed by keeping the tab title
+fixed at "Conflicts" and moving the count into the group header
+("Unresolved Conflicts (N)"). Rebuilt in the VM and the operator confirmed via
+virt-viewer that all four tabs now render in full. clippy `-D warnings` clean.
 
 Still not exercised (needs non-authenticated mock + a real GOA account): the GOA
 onboarding flow `CompleteAuthViaGOA`. Contract is verified (mock + panel + real

@@ -209,20 +209,22 @@ impl ConflictListPage {
             None => return,
         };
 
-        // Update page title with conflict count
+        // Keep the page/tab title fixed at "Conflicts" so the view-switcher tab
+        // doesn't truncate to "Conflicts …". Surface the count in the group
+        // header instead (the Shell indicator also shows it).
         let count = conflicts.len();
-        if count > 0 {
-            self.set_title(&format!("{} ({})", gettext("Conflicts"), count));
-        } else {
-            self.set_title(&gettext("Conflicts"));
-        }
 
         // Rebuild the group each time. For small conflict counts (<100)
         // this is perfectly fine.
         self.remove(&group);
 
+        let group_title = if count > 0 {
+            format!("{} ({})", gettext("Unresolved Conflicts"), count)
+        } else {
+            gettext("Unresolved Conflicts")
+        };
         let new_group = adw::PreferencesGroup::builder()
-            .title(gettext("Unresolved Conflicts"))
+            .title(group_title)
             .build();
 
         let resolve_all_button = gtk4::Button::builder()
