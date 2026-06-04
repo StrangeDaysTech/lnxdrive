@@ -121,6 +121,42 @@ expected effort estimate is **L** (large, multi-week, multi-batch).
   SHA256SUMS, announcement on r/linux, r/gnome, r/onedrive and
   StrangeDaysTech Mastodon. Charter closes with telemetry.
 
+## Batch Ledger
+
+> Backfilled on 2026-06-04 (Fase 5 PR): the Charter §Tasks mandated
+> `straymark charter batch-complete` after each phase merge, but this section
+> was never scaffolded at declaration time, so Fases 0–4 are recorded
+> retroactively from the merge history (process drift, documented in
+> AILOG-2026-06-04-002). Batch N = Fase N−1.
+
+### Batch 1 — Fase 0: governance foundation + public backlog
+
+Merged 2026-05-28 — PR #4 (declare Charter-01, archive non-MVP UIs, governance foundation). Part 2 (GitHub-side): 24 backlog issues created from risk-analysis on 2026-05-28; GitHub Project later removed as redundant (see CLAUDE.md §3).
+
+### Batch 2 — Fase 1: P0 risk mitigation + CI hardening
+
+Merged 2026-05-28→30 — PRs #32 (RISK-002 OAuth off D-Bus), #33 (RISK-003 FUSE write-during-hydration), #35 (RISK-001 D-Bus health monitor), #36 (ISSUE-002 YAML billion-laughs), #34 (config path fix), #39 (CI hardening + external audit, lands #37/#38), #40 (audit drafts). External pre-merge audit consolidated.
+
+### Batch 3 — Fase 2: engine polish (T101 + FUSE listing repair)
+
+Merged 2026-05-31 — PR #41: T101 closed via real-mount integration test (getattr 43.7µs, readdir 1.40ms/1000, RSS 37.9MB/10k); 4 FUSE listing bugs + inode-persistence defect fixed. See AILOG-2026-05-31-001.
+
+### Batch 4 — Fase 3: GTK4 preferences panel audit + remediation
+
+Merged 2026-05-31 — PR #42: panel audit (6 findings) + remediation; H1 RISK-002 drift fixed (CompleteAuthViaGOA); G1 System group deferred (AIDEC-2026-05-31-001). E2E verified in Nivel-5 VM. See AILOG-2026-05-31-002.
+
+### Batch 5 — Fase 4: Flatpak packaging + SPDX fix + metainfo
+
+Merged 2026-06-04 — PR #48: Flatpak manifest rewrite (runtime 49, dir sources, meson module, scoped bus), SPDX fix (LNXDrive/GPL-3.0-or-later), metainfo completed. Bundle builds+installs clean via org.flatpak.Builder. Drift R8 (runtime 47→49 EOL, metainfo path). See AILOG-2026-06-04-001 + AIDEC-2026-06-04-001.
+
+### Batch 6 — Fase 5: release infrastructure & public assets
+
+(pending)
+
+### Batch 7 — Fase 6: tag, release, announce + Charter close
+
+(pending)
+
 ## Out of scope (recorded ex-ante so the drift gate ignores them)
 
 - GTK4 preferences panel beyond the four basic groups → v0.2.
