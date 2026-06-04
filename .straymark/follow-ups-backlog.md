@@ -1,9 +1,9 @@
 ---
 last_scan: 2026-06-04
 schema_version: v1
-total_open: 2
+total_open: 0
 total_promoted: 0
-total_closed_in_session: 0
+total_closed_in_session: 2
 total_phase_blocked: 0
 total_suspected_closed: 0
 buckets:
