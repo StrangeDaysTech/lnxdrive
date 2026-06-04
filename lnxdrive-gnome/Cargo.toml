@@ -1,6 +1,6 @@
 [package]
 name = "lnxdrive-gnome"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 edition = "2021"
 authors = ["Strange Days Tech, S.A.S. <contact@strangedays.tech>"]
 license = "GPL-3.0-or-later"

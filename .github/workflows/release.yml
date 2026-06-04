@@ -1,0 +1,75 @@
+# Release pipeline (Charter-01 Fase 5)
+#
+# Trigger: push of a `v*` tag (e.g. v0.1.0-alpha.1).
+# Builds the Flatpak bundle from lnxdrive-packaging/flatpak/ and publishes a
+# GitHub Release (pre-release when the tag carries a pre-release suffix) with
+# the bundle + SHA256SUMS.
+#
+# Production smoke (Charter-01 §Verification) installs from:
+#   https://github.com/StrangeDaysTech/lnxdrive/releases/download/<tag>/lnxdrive.flatpak
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  flatpak-bundle:
+    name: Build Flatpak bundle & publish release
+    runs-on: ubuntu-latest
+    env:
+      APP_ID: com.strangedaystech.LNXDrive
+      MANIFEST: lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install flatpak-builder
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends flatpak flatpak-builder
+
+      - name: Install GNOME runtime + Rust SDK extension
+        run: |
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive flathub \
+            org.gnome.Platform//49 \
+            org.gnome.Sdk//49 \
+            org.freedesktop.Sdk.Extension.rust-stable//25.08
+
+      - name: Verify tag matches the declared version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          DECLARED=$(grep -m1 '^version = ' lnxdrive-engine/Cargo.toml | cut -d'"' -f2)
+          if [ "$TAG" != "$DECLARED" ]; then
+            echo "::error::Tag v$TAG does not match workspace version $DECLARED"
+            exit 1
+          fi
+
+      - name: Build bundle
+        run: |
+          flatpak-builder --user --force-clean --repo=repo build-dir "$MANIFEST"
+          flatpak build-bundle repo lnxdrive.flatpak "$APP_ID" \
+            --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+
+      - name: Generate SHA256SUMS
+        run: sha256sum lnxdrive.flatpak > SHA256SUMS
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PRERELEASE_FLAG=""
+          case "$GITHUB_REF_NAME" in
+            *-*) PRERELEASE_FLAG="--prerelease" ;;
+          esac
+          gh release create "$GITHUB_REF_NAME" \
+            --title "LNXDrive $GITHUB_REF_NAME" \
+            --generate-notes \
+            $PRERELEASE_FLAG \
+            lnxdrive.flatpak SHA256SUMS

@@ -8,7 +8,7 @@ Created: 2026-06-04T00:00:00Z
 
 PackageName: lnxdrive
 SPDXID: SPDXRef-Package
-PackageVersion: 0.1.0
+PackageVersion: 0.1.0-alpha.1
 PackageSupplier: Organization: Strange Days Tech, S.A.S.
 PackageDownloadLocation: https://github.com/StrangeDaysTech/lnxdrive
 PackageHomePage: https://github.com/StrangeDaysTech/lnxdrive
