@@ -9,8 +9,26 @@
     <p>
       LNXDrive Preferences lets you manage your cloud synchronization settings
       directly from GNOME. Configure your OneDrive accounts, choose which folders
-      to sync, set bandwidth limits, and control files-on-demand behavior -- all
+      to sync, set bandwidth limits, and control files-on-demand behavior — all
       from a single, native desktop application.
+    </p>
+    <p>
+      LNXDrive is a OneDrive synchronization client for Linux built around a
+      background daemon with files-on-demand support: your cloud files appear in
+      the file manager and download only when you open them. The preferences
+      panel talks to the daemon over D-Bus and covers the full day-to-day
+      configuration surface:
+    </p>
+    <ul>
+      <li>Account: sign in with Microsoft via GNOME Online Accounts or the browser flow, see quota usage live, and sign out safely</li>
+      <li>Folders: pick which OneDrive folders sync to your computer, including nested selective sync</li>
+      <li>Network: cap upload and download bandwidth so syncing never gets in your way</li>
+      <li>Conflicts: review files changed both locally and in the cloud, and resolve them side by side</li>
+    </ul>
+    <p>
+      OAuth tokens are stored in the system keyring (Secret Service), never on
+      disk in cleartext. This alpha release targets GNOME on Wayland and ships
+      as a Flatpak.
     </p>
   </description>
 
@@ -21,12 +39,40 @@
     <name>Strange Days Tech</name>
   </developer>
 
-  <url type="homepage">https://github.com/strangedaystech/lnxdrive-gnome</url>
+  <url type="homepage">https://github.com/StrangeDaysTech/lnxdrive</url>
+  <url type="bugtracker">https://github.com/StrangeDaysTech/lnxdrive/issues</url>
+  <url type="vcs-browser">https://github.com/StrangeDaysTech/lnxdrive</url>
 
   <content_rating type="oars-1.1" />
 
+  <!-- Screenshot PNGs land in docs/screenshots/ in Charter-01 Fase 5; the
+       file names below are the canonical ones Fase 5 must produce. -->
+  <screenshots>
+    <screenshot type="default">
+      <caption>Preferences window with account and quota overview</caption>
+      <image>https://raw.githubusercontent.com/StrangeDaysTech/lnxdrive/main/docs/screenshots/preferences-window.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Onboarding wizard: connect your OneDrive account</caption>
+      <image>https://raw.githubusercontent.com/StrangeDaysTech/lnxdrive/main/docs/screenshots/onboarding-wizard.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Side-by-side conflict resolution dialog</caption>
+      <image>https://raw.githubusercontent.com/StrangeDaysTech/lnxdrive/main/docs/screenshots/conflict-dialog.png</image>
+    </screenshot>
+  </screenshots>
+
   <releases>
-    <release version="0.1.0" date="2026-02-05" />
+    <release version="0.1.0-alpha.1" date="2026-06-04" type="development">
+      <description>
+        <p>
+          First public alpha for GNOME early adopters: daemon with
+          files-on-demand (FUSE), CLI, GTK4 preferences panel, GNOME Shell
+          indicator, Nautilus sync-state overlays and GOA single sign-on.
+          Distributed as a Flatpak bundle on GitHub Releases.
+        </p>
+      </description>
+    </release>
   </releases>
 
   <launchable type="desktop-id">com.strangedaystech.LNXDrive.Preferences.desktop</launchable>

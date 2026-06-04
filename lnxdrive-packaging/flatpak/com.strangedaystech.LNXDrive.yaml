@@ -1,46 +1,88 @@
-# Flatpak manifest for LNXDrive
-# Build with: flatpak-builder --user --install builddir com.strangedaystech.LNXDrive.yaml
+# Flatpak manifest for LNXDrive (v0.1.0-alpha — Charter-01 Fase 4)
+#
+# Build & install (from the monorepo root):
+#   flatpak run org.flatpak.Builder --user --install --force-clean build-dir \
+#     lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml
+#
+# Ships: lnxdrived (daemon), lnxdrive (CLI), lnxdrive-preferences (GTK4 panel),
+# app icons, desktop entry, AppStream metainfo and GSettings schema.
+# NOT shipped (host-side components, cannot live inside the sandbox):
+#   - Nautilus extension (loads into the host Nautilus process)
+#   - GNOME Shell extension (loads into the host gnome-shell process)
+#   - GOA provider (system-level GOA backend)
+#
+# Sources are `dir` type (relative to this manifest) so the bundle always
+# builds from the local monorepo checkout — both for the operator's local
+# verification and for the release workflow (Charter-01 Fase 5).
+#
+# NOTE (Flathub): cargo fetches crates.io during build via
+# `build-args: --share=network`. A Flathub submission would require vendored
+# sources (flatpak-cargo-generator); deferred — GitHub Releases bundle only
+# for the alpha.
 
 app-id: com.strangedaystech.LNXDrive
 runtime: org.gnome.Platform
-runtime-version: '45'
+# GNOME 47 (Charter target) reached EOL in 2025; 49 is the oldest runtime that
+# is both supported in mid-2026 and satisfies the panel's gtk4 v4_14 +
+# libadwaita v1_6 feature gates. See AIDEC-2026-06-04-001.
+runtime-version: '49'
 sdk: org.gnome.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
-command: lnxdrive-gnome
+command: lnxdrive-preferences
 
 finish-args:
-  - --share=ipc
-  - --share=network
-  - --socket=fallback-x11
+  # Wayland first, X11 fallback
   - --socket=wayland
-  - --socket=session-bus
+  - --socket=fallback-x11
+  - --share=ipc
+  # Sync engine talks to Microsoft Graph
+  - --share=network
+  # Sync root lives in the user's home (Charter-01 scope item 5)
   - --filesystem=home
+  # The daemon owns the well-known bus name; the panel and CLI talk to it.
+  # Scoped names instead of --socket=session-bus, in line with the RISK-002
+  # posture of keeping the D-Bus surface minimal.
+  - --own-name=com.strangedaystech.LNXDrive
+  # OAuth tokens at rest in the keyring (RISK-002 mitigation)
   - --talk-name=org.freedesktop.secrets
+  # GOA single sign-on (CompleteAuthViaGOA)
   - --talk-name=org.gnome.OnlineAccounts
+  # /dev/fuse for the files-on-demand mount (no finer-grained device class
+  # exists; Charter-01 R2 plans the VM smoke-test of FUSE under the sandbox)
+  - --device=all
+
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+  build-args:
+    - --share=network
 
 modules:
-  - name: lnxdrive
+  # Core engine: daemon + CLI (Cargo workspace, 12 crates)
+  - name: lnxdrive-engine
     buildsystem: simple
-    build-options:
-      append-path: /usr/lib/sdk/rust-stable/bin
     build-commands:
-      - cargo build --release
+      - cargo build --release --locked -p lnxdrive-daemon -p lnxdrive-cli
       - install -Dm755 target/release/lnxdrived -t /app/bin
       - install -Dm755 target/release/lnxdrive -t /app/bin
     sources:
-      - type: git
-        url: https://github.com/strangedaystech/lnxdrive.git
-        tag: v0.1.0
+      - type: dir
+        path: ../../lnxdrive-engine
+        skip:
+          - target
 
+  # GNOME integration: GTK4/libadwaita preferences panel + icons + i18n.
+  # Nautilus/Shell/GOA modules are host-side and stay disabled (see header).
   - name: lnxdrive-gnome
-    buildsystem: simple
-    build-options:
-      append-path: /usr/lib/sdk/rust-stable/bin
-    build-commands:
-      - cargo build --release
-      - install -Dm755 target/release/lnxdrive-gnome -t /app/bin
+    buildsystem: meson
+    config-opts:
+      - -Denable_nautilus=false
+      - -Denable_shell=false
+      - -Denable_preferences=true
+      - -Denable_goa=false
     sources:
-      - type: git
-        url: https://github.com/strangedaystech/lnxdrive-gnome.git
-        tag: v0.1.0
+      - type: dir
+        path: ../../lnxdrive-gnome
+        skip:
+          - target
+          - preferences/target
