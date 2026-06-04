@@ -1,7 +1,7 @@
 ---
 last_scan: 2026-06-04
 schema_version: v1
-total_open: 0
+total_open: 3
 total_promoted: 0
 total_closed_in_session: 2
 total_phase_blocked: 0
@@ -15,6 +15,7 @@ buckets:
 fully_extracted_ailogs:
   - AILOG-2026-05-28-001
   - AILOG-2026-05-28-002
+  - AILOG-2026-06-04-001
 ---
 
 # Follow-ups Backlog
@@ -58,6 +59,30 @@ Entry shape (v1 — optional fields marked):
 - **Destination**: CHARTER-01
 - **Cost**: 0 (resolved at source)
 - **Notes**: Charter drift already remediated atomically in the source PR — the `## Files to modify` row for RISK-001 (only `health.rs`) was extended to `lnxdrive-daemon/src/main.rs` and cross-crate `lnxdrive-ipc/src/service.rs` (`dbus_health` state field + property). Closed at registry adoption (2026-06-04); no pending work.
+
+### FU-003 — **Vendoring de crates para Flathub**: el manifiesto usa `build-args:
+- **Origin**: AILOG-2026-06-04-001 §Follow-ups
+- **Status**: open
+- **Trigger**: TBD
+- **Destination**: TBD
+- **Cost**: TBD
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-06-04.
+
+### FU-004 — **`lnxdrive-packaging/README.md` desactualizado**: promete subdirectorios
+- **Origin**: AILOG-2026-06-04-001 §Follow-ups
+- **Status**: open
+- **Trigger**: TBD
+- **Destination**: TBD
+- **Cost**: TBD
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-06-04.
+
+### FU-005 — **Nombres canónicos de screenshots para Fase 5**: el metainfo referencia
+- **Origin**: AILOG-2026-06-04-001 §Follow-ups
+- **Status**: open
+- **Trigger**: TBD
+- **Destination**: TBD
+- **Cost**: TBD
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-06-04.
 ## Bucket: time-triggered
 
 ## Bucket: charter-triggered
