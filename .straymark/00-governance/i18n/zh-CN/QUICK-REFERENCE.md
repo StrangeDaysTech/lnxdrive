@@ -67,6 +67,20 @@ Charter **不是**文档类型——它包裹一个跨多个会话的实施块�
 
 > 参见 `STRAYMARK.md` 第 15 节及 `.straymark/00-governance/SPECKIT-CHARTER-BRIDGE.md`，了解粒度启发式、生命周期与 SpecKit ↔ Charter 桥接。
 
+### 一等公民注册表 — Follow-ups Backlog *(fw-4.21.0+)*
+
+follow-ups backlog 同样**不是**文档类型 —— 它是一个单文件注册表,聚合跨 AILOG 的 `§Follow-ups` / `R<N> (new)` 条目。条目 id 为 `FU-NNN`;按触发类型分为五个 bucket;状态为 `open | in-progress | suspected-closed | closed | superseded | promoted`。计数器为 CLI-owned。
+
+| 概念 | 文件 | 代理自主权 |
+|------|------|-----------|
+| `Follow-ups registry` | `.straymark/follow-ups-backlog.md`（schema: `follow-ups-backlog.schema.v1.json`,实验性） | 代理通过 `followups drift --apply` 提取（pre-commit）;操作者拥有 triage 与提升批准 |
+
+```bash
+straymark followups list / status / drift [--apply] / promote FU-NNN
+```
+
+> 参见 `STRAYMARK.md` 第 16 节、`FOLLOW-UPS-BACKLOG-PATTERN.md` 及 AGENT-RULES.md §13,了解随框架发布的代理指令。
+
 ---
 
 ## 何时编写文档
@@ -82,6 +96,7 @@ Charter **不是**文档类型——它包裹一个跨多个会话的实施块�
 | OTel 埋点变更 | AILOG + 标签 `observabilidad` |
 | 跨多个会话的实施块（>1 天，跨多个阶段 >5 个任务） | 声明一个 **Charter**（`straymark charter new`） |
 | 横向技术债务（先前 Charter 的遗留、横跨多个模块、需要专用 Charter、需要人工优先级） | **TDE** —— 与单 Charter 的 `R<N>` 不同；参见 AGENT-RULES.md §3 |
+| 创建或修改了带有 `## Follow-ups` 或 `R<N> (new, not in Charter)` 条目的 AILOG | 在同一个 commit 中运行 `straymark followups drift --apply` —— 参见 AGENT-RULES.md §13 |
 
 **不要记录**：凭据、令牌、PII、机密信息。
 
@@ -141,7 +156,8 @@ risk_level: low | medium | high | critical
 ├── 08-security/                 ← SEC
 ├── 09-ai-models/                ← MCARD
 ├── charters/                    ← Charter（NN-slug.md + NN-slug.telemetry.yaml）
-└── templates/                   ← 模板（包括 charter/ 子目录）
+├── follow-ups-backlog.md        ← Follow-ups 注册表（FU-NNN 条目,自 fw-4.21.0 起为一等公民）
+└── templates/                   ← 模板（包括 charter/ 子目录 + follow-ups-backlog.md）
 ```
 
 ---
@@ -202,6 +218,7 @@ risk_level: low | medium | high | critical
 | `/straymark-ailog` / `/straymark-aidec` / `/straymark-adr` | AILOG / AIDEC / ADR 的快速快捷方式 |
 | `/straymark-mcard` / `/straymark-sec` | Model Card / SEC 评估的交互流程 |
 | `/straymark-charter-new` | 搭建一个 Charter（声明式事前工作单元） |
+| `/straymark-followups` *(fw-4.22.0+)* | 维护 follow-ups backlog 注册表 —— “有什么待办？”、提交前 drift、关闭后分诊/promote |
 | `/straymark-audit-prompt CHARTER-XX` *(fw-4.9.0+，在 fw-4.9.0 中重构)* | 外部多模型审计 — 在规范路径写入统一 prompt |
 | `/straymark-audit-execute [CHARTER-XX]` *(fw-4.9.0+)* | 在审计员 CLI 中运行 — 读取 prompt，使用 tool use 审计，写入 report |
 | `/straymark-audit-review CHARTER-XX` *(fw-4.9.0+，在 fw-4.9.0 中扩展)* | 合并 N 个 reports 为 review.md（6 节）+ YAML 合并入遥测 |
@@ -212,9 +229,9 @@ risk_level: low | medium | high | critical
 
 | 模式 | 文档 |
 |------|------|
-| Follow-ups backlog(中央注册表 + drift 检测) *(fw-4.10.0+)* | [FOLLOW-UPS-BACKLOG-PATTERN.md](FOLLOW-UPS-BACKLOG-PATTERN.md) |
+| Follow-ups backlog（一等公民注册表 + 原生 `followups` CLI） *(fw-4.10.0+,自 fw-4.21.0+ 起为一等公民)* | [FOLLOW-UPS-BACKLOG-PATTERN.md](FOLLOW-UPS-BACKLOG-PATTERN.md) |
 | Polish Charter 作为债务检测("声明了表层但未接线"反模式) *(fw-4.18.0+)* | [POLISH-CHARTER-PATTERN.md](POLISH-CHARTER-PATTERN.md) |
 
 ---
 
-*StrayMark fw-4.20.0 | [Strange Days Tech](https://strangedays.tech)*
+*StrayMark fw-4.22.0 | [Strange Days Tech](https://strangedays.tech)*
