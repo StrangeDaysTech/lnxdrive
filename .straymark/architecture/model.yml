@@ -1,0 +1,150 @@
+# StrayMark architecture model (Loom Spec 002) — EXPERIMENTAL.
+# Refined by hand from the codebase seed: layers mapped to the project's
+# hexagonal architecture (ports & adapters) per
+# lnxdrive-guide/03-Arquitectura/01-arquitectura-hexagonal.md.
+#   - presentation .. infrastructure replace the seeded .straymark stage layers;
+#   - the lnxdrive-engine crate is split into its 11 workspace crates;
+#   - experimental/ is split into its three alternative UIs.
+# Scope: this map models the SOURCE-CODE graph (hexagonal architecture). The
+# packaging / guide / testing dirs are intentionally out of scope — Loom counts
+# only source files, so they would raise `empty` signals; they are meta, not
+# application architecture.
+version: 0
+layers:
+  - { id: "presentation",      label: "Adaptadores de Entrada (UI / CLI / D-Bus)", order: 1 }
+  - { id: "application",       label: "Aplicación / Orquestación",                 order: 2 }
+  - { id: "domain",            label: "Dominio (Core)",                            order: 3 }
+  - { id: "outbound-adapters", label: "Adaptadores de Salida (Driven)",            order: 4 }
+  - { id: "infrastructure",    label: "Infraestructura / Transversal",             order: 5 }
+components:
+  # ── Presentation — driving adapters ──────────────────────────────────────
+  - id: "lnxdrive-cli"
+    label: "CLI / TUI"
+    layer: "presentation"
+    globs: ["lnxdrive-engine/crates/lnxdrive-cli/**"]
+    links: ["lnxdrive-ipc"]
+    docs: []
+    external: false
+  - id: "lnxdrive-ipc"
+    label: "D-Bus IPC Service"
+    layer: "presentation"
+    globs: ["lnxdrive-engine/crates/lnxdrive-ipc/**"]
+    links: ["lnxdrive-daemon"]
+    docs: []
+    external: false
+  - id: "gnome-preferences"
+    label: "GNOME Preferences (GTK4)"
+    layer: "presentation"
+    globs: ["lnxdrive-gnome/preferences/**"]
+    links: ["lnxdrive-ipc"]
+    docs: []
+    external: false
+  - id: "gnome-goa-provider"
+    label: "GOA Provider (OAuth)"
+    layer: "presentation"
+    globs: ["lnxdrive-gnome/goa-provider/**"]
+    links: ["lnxdrive-ipc"]
+    docs: []
+    external: false
+  - id: "gnome-nautilus"
+    label: "Nautilus Extension"
+    layer: "presentation"
+    globs: ["lnxdrive-gnome/nautilus-extension/**"]
+    links: ["lnxdrive-ipc"]
+    docs: []
+    external: false
+  - id: "gnome-shell-extension"
+    label: "GNOME Shell Extension"
+    layer: "presentation"
+    globs: ["lnxdrive-gnome/shell-extension/**"]
+    links: ["lnxdrive-ipc"]
+    docs: []
+    external: false
+  - id: "ui-gtk3"
+    label: "GTK3 UI (XFCE/MATE) — experimental"
+    layer: "presentation"
+    globs: ["experimental/lnxdrive-gtk3/**"]
+    links: ["lnxdrive-ipc"]
+    docs: []
+    external: false
+  - id: "ui-plasma"
+    label: "KDE Plasma UI — experimental"
+    layer: "presentation"
+    globs: ["experimental/lnxdrive-plasma/**"]
+    links: ["lnxdrive-ipc"]
+    docs: []
+    external: false
+  - id: "ui-cosmic"
+    label: "COSMIC UI — experimental"
+    layer: "presentation"
+    globs: ["experimental/lnxdrive-cosmic/**"]
+    links: ["lnxdrive-ipc"]
+    docs: []
+    external: false
+  # ── Application — orchestration / use cases ──────────────────────────────
+  - id: "lnxdrive-daemon"
+    label: "Daemon (lnxdrived)"
+    layer: "application"
+    globs: ["lnxdrive-engine/crates/lnxdrive-daemon/**"]
+    links: ["lnxdrive-sync", "lnxdrive-core", "lnxdrive-audit", "lnxdrive-telemetry"]
+    docs: []
+    external: false
+  - id: "lnxdrive-sync"
+    label: "Sync Engine (delta bidireccional)"
+    layer: "application"
+    globs: ["lnxdrive-engine/crates/lnxdrive-sync/**"]
+    links: ["lnxdrive-core", "lnxdrive-graph", "lnxdrive-cache", "lnxdrive-fuse", "lnxdrive-conflict"]
+    docs: []
+    external: false
+  # ── Domain — core entities, use cases, ports ─────────────────────────────
+  - id: "lnxdrive-core"
+    label: "Core (entidades · casos de uso · puertos)"
+    layer: "domain"
+    globs: ["lnxdrive-engine/crates/lnxdrive-core/**"]
+    links: ["lnxdrive-conflict"]
+    docs: []
+    external: false
+  - id: "lnxdrive-conflict"
+    label: "Conflict Resolution"
+    layer: "domain"
+    globs: ["lnxdrive-engine/crates/lnxdrive-conflict/**"]
+    links: []
+    docs: []
+    external: false
+  # ── Outbound adapters — driven ───────────────────────────────────────────
+  - id: "lnxdrive-graph"
+    label: "MS Graph Adapter (ICloudProvider)"
+    layer: "outbound-adapters"
+    globs: ["lnxdrive-engine/crates/lnxdrive-graph/**"]
+    links: []
+    docs: []
+    external: false
+  - id: "lnxdrive-cache"
+    label: "SQLite State Repo (IStateRepository)"
+    layer: "outbound-adapters"
+    globs: ["lnxdrive-engine/crates/lnxdrive-cache/**"]
+    links: []
+    docs: []
+    external: false
+  - id: "lnxdrive-fuse"
+    label: "FUSE Filesystem (Files-on-Demand)"
+    layer: "outbound-adapters"
+    globs: ["lnxdrive-engine/crates/lnxdrive-fuse/**"]
+    links: []
+    docs: []
+    external: false
+  # ── Infrastructure — cross-cutting ───────────────────────────────────────
+  - id: "lnxdrive-audit"
+    label: "Audit Trail"
+    layer: "infrastructure"
+    globs: ["lnxdrive-engine/crates/lnxdrive-audit/**"]
+    links: []
+    docs: []
+    external: false
+  - id: "lnxdrive-telemetry"
+    label: "Telemetry / Metrics"
+    layer: "infrastructure"
+    globs: ["lnxdrive-engine/crates/lnxdrive-telemetry/**"]
+    links: []
+    docs: []
+    external: false

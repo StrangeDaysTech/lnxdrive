@@ -1,0 +1,121 @@
+<mxfile host="straymark" type="device">
+  <diagram name="Architecture" id="straymark-architecture">
+    <mxGraphModel dx="1024" dy="768" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="860" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="band-presentation" value="Adaptadores de Entrada (UI / CLI / D-Bus)" style="text;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;verticalAlign=middle;fontStyle=1;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="20" y="40" width="2160" height="30" as="geometry" />
+        </mxCell>
+        <object label="CLI / TUI" straymark_component_id="lnxdrive-cli" id="comp-lnxdrive-cli">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+            <mxGeometry x="40" y="80" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+        <object label="D-Bus IPC Service" straymark_component_id="lnxdrive-ipc" id="comp-lnxdrive-ipc">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+            <mxGeometry x="270" y="80" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+        <object label="GNOME Preferences (GTK4)" straymark_component_id="gnome-preferences" id="comp-gnome-preferences">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+            <mxGeometry x="500" y="80" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+        <object label="GOA Provider (OAuth)" straymark_component_id="gnome-goa-provider" id="comp-gnome-goa-provider">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+            <mxGeometry x="730" y="80" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+        <object label="Nautilus Extension" straymark_component_id="gnome-nautilus" id="comp-gnome-nautilus">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+            <mxGeometry x="960" y="80" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+        <object label="GNOME Shell Extension" straymark_component_id="gnome-shell-extension" id="comp-gnome-shell-extension">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+            <mxGeometry x="1190" y="80" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+        <object label="GTK3 UI (XFCE/MATE) — experimental" straymark_component_id="ui-gtk3" id="comp-ui-gtk3">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;" vertex="1" parent="1">
+            <mxGeometry x="1420" y="80" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+        <object label="KDE Plasma UI — experimental" straymark_component_id="ui-plasma" id="comp-ui-plasma">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;" vertex="1" parent="1">
+            <mxGeometry x="1650" y="80" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+        <object label="COSMIC UI — experimental" straymark_component_id="ui-cosmic" id="comp-ui-cosmic">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;" vertex="1" parent="1">
+            <mxGeometry x="1880" y="80" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+
+        <mxCell id="band-application" value="Aplicación / Orquestación" style="text;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;verticalAlign=middle;fontStyle=1;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="20" y="200" width="2160" height="30" as="geometry" />
+        </mxCell>
+        <object label="Daemon (lnxdrived)" straymark_component_id="lnxdrive-daemon" id="comp-lnxdrive-daemon">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+            <mxGeometry x="40" y="240" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+        <object label="Sync Engine (delta bidireccional)" straymark_component_id="lnxdrive-sync" id="comp-lnxdrive-sync">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+            <mxGeometry x="270" y="240" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+
+        <mxCell id="band-domain" value="Dominio (Core)" style="text;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;verticalAlign=middle;fontStyle=1;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="20" y="360" width="2160" height="30" as="geometry" />
+        </mxCell>
+        <object label="Core (entidades · casos de uso · puertos)" straymark_component_id="lnxdrive-core" id="comp-lnxdrive-core">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+            <mxGeometry x="40" y="400" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+        <object label="Conflict Resolution" straymark_component_id="lnxdrive-conflict" id="comp-lnxdrive-conflict">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+            <mxGeometry x="270" y="400" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+
+        <mxCell id="band-outbound" value="Adaptadores de Salida (Driven)" style="text;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;verticalAlign=middle;fontStyle=1;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="20" y="520" width="2160" height="30" as="geometry" />
+        </mxCell>
+        <object label="MS Graph Adapter (ICloudProvider)" straymark_component_id="lnxdrive-graph" id="comp-lnxdrive-graph">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+            <mxGeometry x="40" y="560" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+        <object label="SQLite State Repo (IStateRepository)" straymark_component_id="lnxdrive-cache" id="comp-lnxdrive-cache">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+            <mxGeometry x="270" y="560" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+        <object label="FUSE Filesystem (Files-on-Demand)" straymark_component_id="lnxdrive-fuse" id="comp-lnxdrive-fuse">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+            <mxGeometry x="500" y="560" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+
+        <mxCell id="band-infra" value="Infraestructura / Transversal" style="text;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;verticalAlign=middle;fontStyle=1;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="20" y="680" width="2160" height="30" as="geometry" />
+        </mxCell>
+        <object label="Audit Trail" straymark_component_id="lnxdrive-audit" id="comp-lnxdrive-audit">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+            <mxGeometry x="40" y="720" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+        <object label="Telemetry / Metrics" straymark_component_id="lnxdrive-telemetry" id="comp-lnxdrive-telemetry">
+          <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+            <mxGeometry x="270" y="720" width="210" height="70" as="geometry" />
+          </mxCell>
+        </object>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
