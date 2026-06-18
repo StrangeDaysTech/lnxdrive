@@ -10,7 +10,8 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg" alt="License"></a>
-  <a href="https://github.com/StrangeDaysTech/lnxdrive"><img src="https://img.shields.io/badge/status-early%20development-orange.svg" alt="Status"></a>
+  <a href="https://github.com/StrangeDaysTech/lnxdrive/releases"><img src="https://img.shields.io/badge/status-alpha-orange.svg" alt="Status"></a>
+  <a href="https://github.com/StrangeDaysTech/lnxdrive/releases"><img src="https://img.shields.io/badge/release-v0.1.0--alpha.1-blue.svg" alt="Release"></a>
   <a href="https://rust-lang.org"><img src="https://img.shields.io/badge/rust-1.75%2B-orange.svg" alt="Rust"></a>
 </p>
 
@@ -25,7 +26,7 @@ LNXDrive is a cloud storage synchronization client for Linux designed from scrat
 - **Explainable sync** -- You always know *why* something failed or didn't sync. No more cryptic "sync error" messages.
 - **Files-on-Demand** -- A robust FUSE-based virtual filesystem with clear file states (online-only, locally available, always-keep). See your cloud files without downloading them.
 - **Native desktop integration** -- Purpose-built UI for GNOME, KDE Plasma, COSMIC, and GTK3-based desktops (XFCE, MATE). Not a generic tray icon -- real shell extensions, file manager overlays, and system settings panels.
-- **Multi-provider, multi-account** -- Connect OneDrive, Google Drive, Dropbox, and more. Unlimited account namespaces (`onedrive:work`, `gdrive:personal`).
+- **Multi-provider, multi-account** *(roadmap)* -- The provider port is designed for OneDrive, Google Drive, Dropbox, and more. The alpha ships **Microsoft OneDrive** support.
 - **Declarative configuration** -- Versionable YAML config, not scattered dotfiles and CLI flags.
 - **Full observability** -- Structured JSON logs, Prometheus metrics, and a complete audit trail.
 
@@ -46,53 +47,103 @@ Cloud Providers          LNXDrive Engine              Desktop
 
 ---
 
+## Screenshots
+
+| | | |
+|:---:|:---:|:---:|
+| ![Preferences window](docs/screenshots/preferences-window.png) | ![Onboarding wizard](docs/screenshots/onboarding-wizard.png) | ![Conflict dialog](docs/screenshots/conflict-dialog.png) |
+| *Preferences: account & quota* | *Onboarding wizard* | *Conflict resolution* |
+| ![Shell indicator](docs/screenshots/shell-indicator.png) | ![Status menu](docs/screenshots/status-menu.png) | ![Nautilus overlays](docs/screenshots/nautilus-overlays.png) |
+| *GNOME Shell indicator* | *Status menu* | *Nautilus sync overlays* |
+
+---
+
 ## Getting Started
 
-> LNXDrive is in **early development**. The instructions below describe the intended installation flow. Pre-built packages are not yet available.
+> LNXDrive is in **alpha** (`v0.1.0-alpha.1`), aimed at Linux power users and GNOME enthusiasts willing to [report bugs](https://github.com/StrangeDaysTech/lnxdrive/issues). The alpha is **GNOME-only** and supports **Microsoft OneDrive**.
 
 ### Requirements
 
-- Linux with kernel 5.15+ and FUSE 3 support
-- systemd (user session)
-- A supported desktop environment (GNOME 45+, KDE Plasma 6, COSMIC, XFCE 4.18+, or MATE 1.26+)
+- Linux with FUSE 3 support and Flatpak ≥ 1.12
+- GNOME (Wayland recommended) — the bundle pulls the `org.gnome.Platform//49` runtime automatically
 
-### Installation
+### Installation (Flatpak)
 
-Pre-built packages will be available for:
+```bash
+flatpak install --user \
+  https://github.com/StrangeDaysTech/lnxdrive/releases/download/v0.1.0-alpha.1/lnxdrive.flatpak
+```
 
-| Format | Desktop | Status |
-|--------|---------|--------|
-| Flatpak | All | Planned |
-| AppImage | All | Planned |
-| `.deb` | Debian/Ubuntu | Planned |
-| AUR | Arch Linux | Planned |
+Verify the download against the `SHA256SUMS` file published with each
+[release](https://github.com/StrangeDaysTech/lnxdrive/releases).
+
+Other formats (RPM, DEB, AUR, AppImage, Flathub) are planned for `v0.2.0-beta`.
 
 ### First steps
 
-1. **Install LNXDrive** using your preferred package format
-2. **Launch the setup wizard** from your application menu or run `lnxdrive setup`
-3. **Add a cloud account** -- the wizard will guide you through OAuth authentication
-4. **Choose your sync mode** -- select which folders to sync and whether to use files-on-demand
-5. **Start syncing** -- LNXDrive runs automatically as a systemd user service
+1. **Launch LNXDrive** from your application menu (or `flatpak run com.strangedaystech.LNXDrive`) — the onboarding wizard opens on first run
+2. **Sign in to OneDrive** — via GNOME Online Accounts or the browser OAuth flow; tokens are stored in the system keyring, never on disk
+3. **Choose what to sync** — pick OneDrive folders (nested selective sync supported)
+4. **Start the daemon**: `flatpak run --command=lnxdrived com.strangedaystech.LNXDrive`
+
+> **Alpha limitations**: the Flatpak bundle does not include the Nautilus
+> overlay extension, the GNOME Shell indicator, or the GOA provider — these
+> load into host processes and can't ship inside the sandbox. They are
+> available when [building from source](#building-from-source). See
+> [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ### CLI quick start
 
 ```bash
-# Check daemon status
+alias lnxdrive='flatpak run --command=lnxdrive com.strangedaystech.LNXDrive'
+
+# Check daemon and sync status
 lnxdrive status
 
-# Add a OneDrive account
-lnxdrive account add onedrive:work
+# Authenticate with OneDrive
+lnxdrive auth login
 
-# List synced files
-lnxdrive ls /
+# Mount the files-on-demand filesystem
+lnxdrive mount
 
-# Force sync a specific path
-lnxdrive sync ~/OneDrive/Documents
+# Keep a folder always available offline
+lnxdrive pin ~/OneDrive/Documents
 
-# View sync activity
-lnxdrive log --follow
+# Free local space (file stays visible, downloads on next open)
+lnxdrive dehydrate ~/OneDrive/Videos
+
+# Why is this file in its current state?
+lnxdrive explain ~/OneDrive/report.xlsx
 ```
+
+---
+
+## How does it compare?
+
+Both alternatives are mature, actively maintained projects — credit where due.
+LNXDrive is the **alpha** newcomer betting on deep desktop integration and
+explainability:
+
+| | **LNXDrive** (alpha) | [jstaf/onedriver](https://github.com/jstaf/onedriver) | [abraunegg/onedrive](https://github.com/abraunegg/onedrive) |
+|---|---|---|---|
+| Approach | Background sync **+** FUSE files-on-demand | Pure on-demand FUSE filesystem (no offline sync) | Full bidirectional sync client |
+| Maturity | **Alpha** | Stable | Stable, very featureful |
+| Language | Rust | Go | D |
+| Files-on-demand | ✅ FUSE, with pin/unpin/hydrate states | ✅ FUSE (cache-based) | ❌ (downloads everything selected) |
+| Selective sync | ✅ nested folder picker (GUI) | — (on-demand by nature) | ✅ (config file: `sync_list`) |
+| Native settings GUI | ✅ GTK4/libadwaita panel | Minimal launcher GUI | ❌ CLI (third-party GUIs exist) |
+| File manager integration | ✅ Nautilus sync-state overlays* | ❌ | ❌ |
+| Desktop SSO | ✅ GNOME Online Accounts | ❌ (own OAuth flow) | ❌ (own OAuth flow) |
+| Explainability | ✅ `lnxdrive explain <file>`, audit log | ❌ | Verbose logs |
+| Token storage | System keyring (Secret Service) | System keyring | Config dir file |
+| OneDrive Business / SharePoint | Not yet (alpha) | ✅ | ✅ |
+| Packaging | Flatpak bundle | distro packages (COPR, etc.) | distro packages, Docker |
+
+<sub>*From source on the host; not included in the Flatpak sandbox (alpha).</sub>
+
+If you need OneDrive **Business/SharePoint today**, use one of the
+alternatives. If you want native GNOME integration with files-on-demand and
+explainable sync — that's the gap LNXDrive exists to fill.
 
 ---
 
@@ -157,23 +208,14 @@ This project uses [StrayMark](https://github.com/StrangeDaysTech/straymark) to m
 
 ## Roadmap
 
-LNXDrive development is organized in phases:
+| Milestone | Scope | Status |
+|-----------|-------|--------|
+| `v0.1.0-alpha.1` | OneDrive engine (sync, delta, FUSE files-on-demand), CLI, GNOME stack (GTK4 panel, Shell indicator, Nautilus overlays, GOA SSO), Flatpak bundle | **Current** |
+| `v0.2.0-beta` | System settings group (auto-start, cache, dehydration), RPM/DEB/AUR/AppImage, Flathub submission, D-Bus Unix-socket fallback, i18n structure, telemetry opt-in | Planned |
+| `v1.0.0` | KDE Plasma, COSMIC and GTK3 (XFCE/MATE) front-ends, multi-provider (Google Drive, Dropbox), 5+ languages | Planned |
 
-| Phase | Milestone | Status |
-|-------|-----------|--------|
-| 0 | Testing infrastructure (containers, CI/CD, mock servers) | In progress |
-| 1 | Core engine + CLI (sync, delta, rate limiting, systemd service) | Planned |
-| 2 | Files-on-Demand (FUSE, placeholders, hydration) | Planned |
-| 3 | GNOME integration (Shell extension, Nautilus overlays, GOA) | Planned |
-| 4 | Conflict resolution UI and declarative policies | Planned |
-| 5 | KDE Plasma integration | Planned |
-| 6 | Multi-provider support (Google Drive, Dropbox) | Planned |
-| 7 | COSMIC desktop integration | Planned |
-| 8 | GTK3 integration (XFCE/MATE) | Planned |
-| 9 | Packaging and distribution | Planned |
-| 10 | Observability and advanced features | Planned |
-
-For the full roadmap with detailed deliverables, see [the roadmap document](lnxdrive-guide/09-Referencia/02-hoja-de-ruta.md).
+Work is tracked publicly in [GitHub Issues](https://github.com/StrangeDaysTech/lnxdrive/issues)
+and milestones; for detailed deliverables see [the roadmap document](lnxdrive-guide/09-Referencia/02-hoja-de-ruta.md).
 
 ---
 
