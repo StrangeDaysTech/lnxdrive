@@ -1,9 +1,9 @@
 ---
 last_scan: 2026-06-04
 schema_version: v1
-total_open: 3
+total_open: 2
 total_promoted: 0
-total_closed_in_session: 3
+total_closed_in_session: 4
 total_phase_blocked: 0
 total_suspected_closed: 0
 buckets:
@@ -79,11 +79,11 @@ Entry shape (v1 — optional fields marked):
 
 ### FU-005 — **Nombres canónicos de screenshots para Fase 5**: el metainfo referencia
 - **Origin**: AILOG-2026-06-04-001 §Follow-ups
-- **Status**: open
-- **Trigger**: TBD
-- **Destination**: TBD
-- **Cost**: TBD
-- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-06-04.
+- **Status**: closed
+- **Trigger**: Fase 5 release assets
+- **Destination**: docs/screenshots/ (PR #49)
+- **Cost**: S
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-06-04. Closed 2026-06-17: los 6 PNG con nombres canónicos (preferences-window, onboarding-wizard, conflict-dialog, shell-indicator, status-menu, nautilus-overlays) capturados en VM Nivel-5 (GNOME Wayland, mock daemon) y añadidos a `docs/screenshots/`; coinciden con README raíz y metainfo AppStream.
 
 ### FU-006 — **`lnxdrive-engine/config/lnxdrive-autostart.desktop` apunta a
 - **Origin**: AILOG-2026-06-04-002 §Follow-ups
