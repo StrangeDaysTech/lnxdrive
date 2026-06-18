@@ -46,11 +46,13 @@ For each `.straymark/audits/<CHARTER-ID>/report-*.md`:
 
 Build a **master finding list** — every unique claim across all auditors, deduplicated when two auditors clearly describe the same thing.
 
+**Independence check (contamination guard).** Before you trust any convergence between auditors, scan each report for signs it read the *other* auditors' reports instead of auditing independently: explicit references to another `report-*.md`, another auditor named by model, a "comparison table of auditors", or language like "I independently verified all N findings from the prior <model> audit". A report that consolidates or cross-checks against its siblings is **contaminated** — its agreement is copied, not independent signal. Flag it, exclude it from the convergence/dedup math and from the auditor rating (step 5), and note the contamination in the review. The audit prompt forbids reading sibling reports, but a prompt rule is weak — verify it here.
+
 ### 3. Verify every finding against actual code
 
 This is the substantive step. For EACH finding in the master list:
 
-**Launch Explore agents in parallel** (up to 3 at a time) to verify findings. Group findings by the file they reference and send related findings to the same agent.
+**Verify findings against the code.** If your runtime provides parallel read-only subagents (e.g. an `Explore`-style primitive), launch them — up to ~3 at a time — grouping findings by the file they reference so related findings go to the same agent. If your runtime has no subagent primitive, verify the findings yourself directly, in bounded groups by file. Either way the verification answers the same four questions below.
 
 For each finding, the verification answers four questions:
 
@@ -244,7 +246,7 @@ Run `git diff` to review the changes before commit.
 - **Heterogeneity inter-family is for the auditor pair, not the calibrator.** The calibrator (this skill, running in the main agent) may be of any family — even the same family as one of the auditors — because its task is definitional (apply the schema to already-produced verdicts), not discovery.
 - **The review.md is the human-readable delivery; the YAML block is the machine-readable input to telemetry.** Both coexist by design. The operator reads `review.md`; `straymark metrics` and the Phase 2 telemetry aggregation read the YAML.
 - **Re-running the skill** overwrites `review.md`. If the operator wants to keep the previous review (e.g., after a re-audit cycle), instruct them to copy it manually before re-running.
-- **No HTTP API calls.** The skill runs the CLI's `--merge-reports` (which validates schemas and emits YAML), invokes Explore agents internally for code verification (which run in the main agent's context, not external APIs), and writes markdown. StrayMark does not invoke LLM APIs at any point.
+- **No HTTP API calls.** The skill runs the CLI's `--merge-reports` (which validates schemas and emits YAML), verifies findings against code in-conversation (using the runtime's own read-only subagents when available, otherwise directly — never external APIs), and writes markdown. StrayMark does not invoke LLM APIs at any point.
 
 ## Credit
 
