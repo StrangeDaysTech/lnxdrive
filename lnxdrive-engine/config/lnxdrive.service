@@ -7,7 +7,7 @@ Wants=network-online.target
 [Service]
 Type=dbus
 BusName=com.strangedaystech.LNXDrive
-ExecStart=/usr/bin/lnxdrive-daemon
+ExecStart=/usr/bin/lnxdrived
 Restart=on-failure
 RestartSec=5
 Environment=RUST_LOG=info
