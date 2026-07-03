@@ -65,11 +65,16 @@ modules:
       - cargo build --release --locked -p lnxdrive-daemon -p lnxdrive-cli
       - install -Dm755 target/release/lnxdrived -t /app/bin
       - install -Dm755 target/release/lnxdrive -t /app/bin
+      # D-Bus activation: lets the panel/CLI auto-start the daemon on first
+      # connect (the bus name == app-id, so flatpak exports+activates it).
+      - install -Dm644 com.strangedaystech.LNXDrive.service -t /app/share/dbus-1/services
     sources:
       - type: dir
         path: ../../lnxdrive-engine
         skip:
           - target
+      - type: file
+        path: com.strangedaystech.LNXDrive.service
 
   # GNOME integration: GTK4/libadwaita preferences panel + icons + i18n.
   # Nautilus/Shell/GOA modules are host-side and stay disabled (see header).

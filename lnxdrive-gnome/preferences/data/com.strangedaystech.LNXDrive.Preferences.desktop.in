@@ -1,10 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=LNXDrive Preferences
-GenericName=Cloud Sync Settings
-Comment=Configure LNXDrive cloud synchronization
+Name=LNXDrive
+GenericName=Cloud Storage Sync
+Comment=Sync your OneDrive files with files-on-demand
 Exec=lnxdrive-preferences
 Icon=com.strangedaystech.LNXDrive
-Categories=Settings;GTK;
+Categories=Network;FileTransfer;GTK;
 StartupNotify=true
 Terminal=false

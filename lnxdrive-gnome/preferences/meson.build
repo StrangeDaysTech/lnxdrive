@@ -28,6 +28,9 @@ cargo_build_target = custom_target(
 # Desktop file
 i18n.merge_file(
   input: 'data' / 'com.strangedaystech.LNXDrive.Preferences.desktop.in',
+  # Basename matches the panel's GtkApplication id (app.rs APP_ID) so GNOME
+  # associates the window with this launcher. It is NOT the bare app-id
+  # because the daemon owns the `com.strangedaystech.LNXDrive` D-Bus name.
   output: 'com.strangedaystech.LNXDrive.Preferences.desktop',
   type: 'desktop',
   po_dir: meson.project_source_root() / 'po',
