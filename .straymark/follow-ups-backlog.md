@@ -1,7 +1,7 @@
 ---
 last_scan: 2026-07-03
 schema_version: v1
-total_open: 7
+total_open: 9
 total_promoted: 0
 total_closed_in_session: 5
 total_phase_blocked: 0
@@ -18,6 +18,7 @@ fully_extracted_ailogs:
   - AILOG-2026-06-04-001
   - AILOG-2026-06-04-002
   - AILOG-2026-07-03-001
+  - AILOG-2026-07-03-002
 ---
 
 # Follow-ups Backlog
@@ -148,6 +149,23 @@ Entry shape (v1 — optional fields marked):
 - **Cost**: TBD
 - **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
 
+### FU-013 — **La extensión de GNOME Shell no está en el build de Meson ni se instala vía
+- **Origin**: AILOG-2026-07-03-002 §Follow-ups
+- **Source-hash**: 4ee94a61be90
+- **Status**: open
+- **Trigger**: TBD
+- **Destination**: TBD
+- **Cost**: TBD
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
+
+### FU-014 — **`metadata.json` declara `settings-schema: com.strangedaystech.LNXDrive.Indicator`
+- **Origin**: AILOG-2026-07-03-002 §Follow-ups
+- **Source-hash**: a23bd62d0851
+- **Status**: open
+- **Trigger**: TBD
+- **Destination**: TBD
+- **Cost**: TBD
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
 ## Bucket: time-triggered
 
 ## Bucket: charter-triggered
