@@ -1,0 +1,36 @@
+# external_audit block for CHARTER-01 — round Fases 4–5 (packaging + release infra).
+# Emitted by `straymark charter audit --merge-reports` (schema-validated), audit_notes
+# corrected to the real round files. Paste the `external_audit:` array into
+# charter_telemetry when running `straymark charter close CHARTER-01-road-to-v0-1-0-alpha-1`.
+#
+# Calibrator (claude-opus-4-8) verdict: all 7 auditor findings VALID (0 false positives,
+# 0 misattributions) + 1 missed-by-all found by the calibrator = 8 consolidated.
+# Round: fases-4-5, range 31482c7..ae5a27d. Full analysis: review.md (this directory).
+external_audit:
+  - auditor: "gemini-3.1-pro-high"
+    findings_total: 0
+    findings_by_category:
+      hallucination: 0
+      implementation_gap: 0
+      real_debt: 0
+      false_positive: 0
+    audit_quality: "high"
+    audit_notes: "fases-4-5 round; report-gemini-3-1-pro-high.md; declared round clean, missed H1 (High) + 2 Medium — calibrator rating 4.6/10 (see review.md §6)"
+  - auditor: "gpt-5-codex"
+    findings_total: 3
+    findings_by_category:
+      hallucination: 1
+      implementation_gap: 2
+      real_debt: 0
+      false_positive: 0
+    audit_quality: "high"
+    audit_notes: "fases-4-5 round; report-gpt-5-codex.md; H1(High)+M1+M2 all VALID — calibrator rating 9.2/10 (see review.md §6)"
+  - auditor: "qwen3.7-plus"
+    findings_total: 4
+    findings_by_category:
+      hallucination: 0
+      implementation_gap: 0
+      real_debt: 4
+      false_positive: 0
+    audit_quality: "medium"
+    audit_notes: "fases-4-5 round; report-qwen3-7-plus.md; RD-1..RD-4 all VALID (Low) — calibrator rating 7.0/10 (see review.md §6)"
