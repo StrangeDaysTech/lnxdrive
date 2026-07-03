@@ -56,6 +56,7 @@ Specifically, you are FORBIDDEN from:
 - Running code generators (`go generate`, `sqlc generate`, `wire`, `cargo build` with filesystem effects, `npm install`, etc.).
 - Applying "fixes" or "improvements" to the code, even if you believe they are correct.
 - Reformatting, renaming, or reorganizing existing files.
+- Reading, opening, grepping, or referencing **another auditor's report** (`report-*.md`, `auditor-*.md`, or any scratch file) under `.straymark/audits/` — for this Charter or any other. Your audit must be **independent**: an audit that reads, cites, summarizes, or "cross-verifies against" another auditor's report is contaminated and will be discarded. Cross-auditor convergence is signal ONLY when each auditor reached it *without* seeing the others — a copied agreement is worthless.
 
 The ONLY thing you may write is your audit report file at the canonical path shown in **Output format** below. That is the ONLY file you have permission to create.
 
@@ -67,11 +68,24 @@ If a test fails, **REPORT IT**. Do NOT repair it.
 
 ---
 
+## Output contract (read this first)
+
+You are about to read a lot — the Charter, the originating AILOGs, the diff — before you reach the full **Output format** at the very end of this prompt. Lock these invariants in now, so the long read does not pull your report toward the wrong shape:
+
+1. **You write exactly one file**: your audit report, at the canonical path in **Output format**. Nothing else (see the ABSOLUTE RULE).
+2. **Required report frontmatter** (validated against `.straymark/schemas/audit-output.schema.v0.json`): `audit_role`, `auditor`, `charter_id`, `git_range`, `prompt_used`, `audited_at`, `findings_total`, `findings_by_category` — where `findings_by_category` has exactly the four keys `hallucination`, `implementation_gap`, `real_debt`, `false_positive`. `evidence_citations` and `audit_quality` are optional but recommended.
+3. **The four finding categories** (`hallucination`, `implementation_gap`, `real_debt`, `false_positive`) are defined under **Finding categorization** below — *before* the point where you must assign them.
+4. **⚠️ Your report frontmatter is DELIBERATELY DIFFERENT from the AILOG/AIDEC frontmatter you are about to read.** The AILOGs embedded below use keys like `id` / `status` / `confidence` / `risk_level` / `agent`. Your report does **not** — it uses the audit keys in (2). Do not mimic the surrounding documents; follow the schema.
+
+This is a summary. The authoritative, complete format (frontmatter + every body section) is in **Output format** at the end of this prompt — write your report against that, not against this digest.
+
+---
+
 ## Your role
 
 You are an independent code auditor. Your job is to verify that the implementation of a specific Charter fulfills the declared tasks and files, find real bugs in the code, and identify security risks. **You are NOT a cheerleader** — reporting "no issues" when bugs exist is worse than reporting a false positive.
 
-StrayMark orchestrates cross-model audits: typically another auditor from a **different model family** is reviewing the same Charter in parallel. Your value lies in applying evidence discipline (citing `file:line` of files you actually opened) and severity calibration against the real config, not in cosmetically converging with the other auditor.
+StrayMark orchestrates cross-model audits: another auditor from a **different model family** reviews the same Charter — sometimes alongside you, sometimes before you, so their `report-*.md` may already sit in `.straymark/audits/CHARTER-01-road-to-v0-1-0-alpha-1/`. **You must not read it** (see the ABSOLUTE RULE). Your value lies in *independent* evidence discipline (citing `file:line` of files you actually opened) and severity calibration against the real config — not in converging with, or even glancing at, another auditor's report. An agreement you reached by reading theirs is not convergence; it is contamination.
 
 ---
 
@@ -87,7 +101,7 @@ StrayMark orchestrates cross-model audits: typically another auditor from a **di
 
 **Charter under audit:** `CHARTER-01-road-to-v0-1-0-alpha-1` — Road to v0.1.0-alpha.1
 **Charter file:** `.straymark/charters/01-road-to-v0-1-0-alpha-1.md`
-**Git range:** `origin/main..HEAD`
+**Git range:** `31482c7..ae5a27d`
 
 The authoritative source of scope is the Charter file at `.straymark/charters/01-road-to-v0-1-0-alpha-1.md`. Read it in full before starting — it declares which files are modified, which tasks are executed, which risks are accepted, and what counts as successful closure.
 
@@ -104,6 +118,8 @@ The authoritative source of scope is the Charter file at `.straymark/charters/01
 ### Originating AILOGs
 
 These AILOGs document the rationale and the emergent risks during execution. **Read them before auditing** — the `R<N>` risks already documented there are NOT new findings, they are consciously accepted trade-offs.
+
+> **Frontmatter note.** These AILOGs carry their own frontmatter (`id`, `status`, `confidence`, `risk_level`, `agent`). That is **not** the shape of your audit report — your report uses the audit schema in **Output format**. Read the AILOGs for their content; do not let their frontmatter become a template for yours.
 
 ```
 .straymark/07-ai-audit/agent-logs/guide/AILOG-2026-05-29-001-roadmap-v0-1-0-alpha-foundation.md
@@ -234,6 +250,42 @@ expected effort estimate is **L** (large, multi-week, multi-batch).
   SHA256SUMS, announcement on r/linux, r/gnome, r/onedrive and
   StrangeDaysTech Mastodon. Charter closes with telemetry.
 
+## Batch Ledger
+
+> Backfilled on 2026-06-04 (Fase 5 PR): the Charter §Tasks mandated
+> `straymark charter batch-complete` after each phase merge, but this section
+> was never scaffolded at declaration time, so Fases 0–4 are recorded
+> retroactively from the merge history (process drift, documented in
+> AILOG-2026-06-04-002). Batch N = Fase N−1.
+
+### Batch 1 — Fase 0: governance foundation + public backlog
+
+Merged 2026-05-28 — PR #4 (declare Charter-01, archive non-MVP UIs, governance foundation). Part 2 (GitHub-side): 24 backlog issues created from risk-analysis on 2026-05-28; GitHub Project later removed as redundant (see CLAUDE.md §3).
+
+### Batch 2 — Fase 1: P0 risk mitigation + CI hardening
+
+Merged 2026-05-28→30 — PRs #32 (RISK-002 OAuth off D-Bus), #33 (RISK-003 FUSE write-during-hydration), #35 (RISK-001 D-Bus health monitor), #36 (ISSUE-002 YAML billion-laughs), #34 (config path fix), #39 (CI hardening + external audit, lands #37/#38), #40 (audit drafts). External pre-merge audit consolidated.
+
+### Batch 3 — Fase 2: engine polish (T101 + FUSE listing repair)
+
+Merged 2026-05-31 — PR #41: T101 closed via real-mount integration test (getattr 43.7µs, readdir 1.40ms/1000, RSS 37.9MB/10k); 4 FUSE listing bugs + inode-persistence defect fixed. See AILOG-2026-05-31-001.
+
+### Batch 4 — Fase 3: GTK4 preferences panel audit + remediation
+
+Merged 2026-05-31 — PR #42: panel audit (6 findings) + remediation; H1 RISK-002 drift fixed (CompleteAuthViaGOA); G1 System group deferred (AIDEC-2026-05-31-001). E2E verified in Nivel-5 VM. See AILOG-2026-05-31-002.
+
+### Batch 5 — Fase 4: Flatpak packaging + SPDX fix + metainfo
+
+Merged 2026-06-04 — PR #48: Flatpak manifest rewrite (runtime 49, dir sources, meson module, scoped bus), SPDX fix (LNXDrive/GPL-3.0-or-later), metainfo completed. Bundle builds+installs clean via org.flatpak.Builder. Drift R8 (runtime 47→49 EOL, metainfo path). See AILOG-2026-06-04-001 + AIDEC-2026-06-04-001.
+
+### Batch 6 — Fase 5: release infrastructure & public assets
+
+(pending)
+
+### Batch 7 — Fase 6: tag, release, announce + Charter close
+
+(pending)
+
 ## Out of scope (recorded ex-ante so the drift gate ignores them)
 
 - GTK4 preferences panel beyond the four basic groups → v0.2.
@@ -324,8 +376,8 @@ The lnxdrive monorepo finished its MVP implementation (SpecKit features `001-cor
    - `ISSUE-002`: harden the YAML config parser against billion-laughs (size + alias caps); regression fixture in `lnxdrive-engine/tests/security/`.
    - `cargo audit` + `cargo deny` jobs in CI.
 3. **Engine polish** — close the one remaining task (T101 performance validation) in `lnxdrive-engine/specs/002-files-on-demand/tasks.md`. **Done** (Fase 2): T101 validated via a real-mount integration test — `getattr` 43.7µs, `readdir` 1.40ms/1000 entries, idle RSS 37.9MB/10k files (all under target). The test was the first real FUSE mount exercised in the codebase and surfaced four functional listing bugs (init runtime-context panic, root self-listing, unstable `readdir` order, `opendir` dir-cache) plus an inode-persistence defect, all fixed with regression tests — see AILOG-2026-05-31-001. The other three items this row originally listed (remove `todo!()/unimplemented!()`, remove debug `println!`, enable `cargo test --workspace` in CI) were **already completed during Fase 1** (verified against `main`: zero such sites in crates; `cargo test --workspace` live at `.github/workflows/engine-ci.yml:66`).
-4. **GTK4 preferences panel** — the panel already exists under `lnxdrive-gnome/preferences/` (the root `src/main.rs` stub is just a placeholder). Fase 3 audits it (`.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md`) and fixes the findings. It ships **three** settings groups wired to the daemon — Account, Folders (Sync), Network (Advanced) — plus Conflicts. The fourth group, **System** (auto-start, cache, dehydration), is **deferred to a v0.2 Charter** because it needs new daemon D-Bus API and is post-alpha (see AIDEC-2026-05-31-001). Key fix: realign the panel with the Fase-1 RISK-002 daemon API (`CompleteAuthViaGOA`).
-5. **Flatpak packaging** — complete `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` with install stages (icons, `*.desktop`, metainfo XML), correct permissions (`--filesystem=home:rw`, `--talk-name=org.freedesktop.secrets`), and target `org.gnome.Platform 47`. Fix `lnxdrive.spdx` (currently describes StrayMark by mistake). Complete the metainfo XML with description, releases section, and screenshot URLs.
+4. **GTK4 preferences panel** — the panel already exists under `lnxdrive-gnome/preferences/` (the root `src/main.rs` stub is just a placeholder). Fase 3 audits it (`.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md`) and fixes the findings. It ships **three** settings groups wired to the daemon — Account, Folders (Sync), Network (Advanced) — plus Conflicts. The fourth group, **System** (auto-start, cache, dehydration), is **deferred to a v0.2 Charter** because it needs new daemon D-Bus API and is post-alpha (see AIDEC-2026-05-31-001). Key fix: realign the panel with the Fase-1 RISK-002 daemon API (`CompleteAuthViaGOA`). **Verified end-to-end** in the Nivel-5 testing VM (real GNOME Wayland): all pages load, full D-Bus contract exercised with no failed calls, live `QuotaChanged`, and operator-confirmed visual render of every page (incl. nested selective-sync selection). External pre-merge audit consolidated in `review-fase-3.md` (1 Medium, fixed). See AILOG-2026-05-31-002.
+5. **Flatpak packaging** — complete `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` with install stages (icons, `*.desktop`, metainfo XML), correct permissions (`--filesystem=home:rw`, `--talk-name=org.freedesktop.secrets`), and target `org.gnome.Platform 47`. Fix `lnxdrive.spdx` (currently describes StrayMark by mistake). Complete the metainfo XML with description, releases section, and screenshot URLs. **Done** (Fase 4): manifest rewritten — the inherited skeleton pointed at two non-existent git repos and a stub binary; now builds daemon + CLI (cargo) and the GTK4 panel (meson, host-side Nautilus/Shell/GOA modules excluded) from monorepo `dir` sources. Target moved to `org.gnome.Platform 49` (47 was EOL before the Charter was signed — drift R8, AIDEC-2026-06-04-001); `--socket=session-bus` replaced by scoped bus names per the RISK-002 posture. SPDX now describes LNXDrive under GPL-3.0-or-later (was: StrayMark/MIT). **Verified**: bundle builds and installs cleanly via `org.flatpak.Builder` (3 binaries + desktop/schema/icon/metainfo exported; CLI answers in-sandbox). FUSE-under-sandbox behaviour intentionally left to the R2 VM smoke-test (Fase 6). See AILOG-2026-06-04-001.
 6. **Release infrastructure & public assets** — `.github/workflows/release.yml` (tag → bundle → GitHub Release with SHA256SUMS); `SECURITY.md`; `CHANGELOG.md`; 6 UI screenshots in `docs/screenshots/`; version `0.1.0-alpha.1` consistent across every `Cargo.toml`, Flatpak manifest, and metainfo XML; README install section + competitive comparison vs `jstaf/onedriver` and `abraunegg/onedrive`.
 7. **Tag, release, announce** — signed tag `v0.1.0-alpha.1`, GitHub Pre-release with Flatpak bundle, posts on r/linux, r/gnome, r/onedrive, and StrangeDaysTech Mastodon.
 
@@ -360,8 +412,8 @@ This Charter spans many files across 7 phases. The table below names the load-be
 | `lnxdrive-engine/specs/002-files-on-demand/tasks.md` | Close the one remaining `[ ]` task (Fase 2) |
 | The ~4 engine files containing `todo!()/unimplemented!()` (incl. `audit.rs`, `filesystem.rs`) | Implement, remove, or feature-gate; replace ~10 debug `println!` with `tracing::debug!` (Fase 2) |
 | `lnxdrive-gnome/src/main.rs`, `lnxdrive-gnome/data/ui/preferences.ui` (new), `lnxdrive-gnome/Cargo.toml` | GTK4 prefs panel with 4 settings groups (Fase 3) |
-| `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` | Complete install stages, permissions, target `org.gnome.Platform 47` (Fase 4) |
-| `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in` | Full description, releases section, screenshot URLs (Fase 4) |
+| `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` | Complete install stages, permissions, target `org.gnome.Platform 49` — original entry said 47, EOL since 2025 (drift R8, AIDEC-2026-06-04-001); scoped bus names replace `--socket=session-bus`; gnome module builds via meson with host-side extensions (Nautilus/Shell/GOA) disabled (Fase 4) |
+| `lnxdrive-gnome/preferences/data/com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in` | Full description, releases section, screenshot URLs — original entry misplaced the file under `lnxdrive-packaging/flatpak/`; it lives in the preferences meson tree (drift R8, AILOG-2026-06-04-001) (Fase 4) |
 | `lnxdrive.spdx` | Replace contents — currently describes StrayMark; should describe LNXDrive (Fase 4) |
 | `.github/workflows/release.yml` (new) | Tag → flatpak-builder bundle → GitHub Release + SHA256SUMS (Fase 5) |
 | `SECURITY.md` (new) | Disclosure policy, SLA, known limitations referencing risk-analysis docs (Fase 5) |
@@ -507,1496 +559,1642 @@ preserved unchanged below for future maintainers; the 7 conventions are:
 ## Diff
 
 ```diff
-diff --git a/.straymark/07-ai-audit/agent-logs/gnome/AILOG-2026-05-31-002-fase-3-gtk4-panel-audit-and-fixes.md b/.straymark/07-ai-audit/agent-logs/gnome/AILOG-2026-05-31-002-fase-3-gtk4-panel-audit-and-fixes.md
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
 new file mode 100644
-index 0000000..701f9ff
+index 0000000..1171395
 --- /dev/null
-+++ b/.straymark/07-ai-audit/agent-logs/gnome/AILOG-2026-05-31-002-fase-3-gtk4-panel-audit-and-fixes.md
-@@ -0,0 +1,120 @@
++++ b/.github/workflows/release.yml
+@@ -0,0 +1,75 @@
++# Release pipeline (Charter-01 Fase 5)
++#
++# Trigger: push of a `v*` tag (e.g. v0.1.0-alpha.1).
++# Builds the Flatpak bundle from lnxdrive-packaging/flatpak/ and publishes a
++# GitHub Release (pre-release when the tag carries a pre-release suffix) with
++# the bundle + SHA256SUMS.
++#
++# Production smoke (Charter-01 §Verification) installs from:
++#   https://github.com/StrangeDaysTech/lnxdrive/releases/download/<tag>/lnxdrive.flatpak
++
++name: Release
++
++on:
++  push:
++    tags:
++      - 'v*'
++
++permissions:
++  contents: write
++
++jobs:
++  flatpak-bundle:
++    name: Build Flatpak bundle & publish release
++    runs-on: ubuntu-latest
++    env:
++      APP_ID: com.strangedaystech.LNXDrive
++      MANIFEST: lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml
++    steps:
++      - name: Checkout
++        uses: actions/checkout@v4
++
++      - name: Install flatpak-builder
++        run: |
++          sudo apt-get update
++          sudo apt-get install -y --no-install-recommends flatpak flatpak-builder
++
++      - name: Install GNOME runtime + Rust SDK extension
++        run: |
++          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
++          flatpak install --user --noninteractive flathub \
++            org.gnome.Platform//49 \
++            org.gnome.Sdk//49 \
++            org.freedesktop.Sdk.Extension.rust-stable//25.08
++
++      - name: Verify tag matches the declared version
++        run: |
++          TAG="${GITHUB_REF_NAME#v}"
++          DECLARED=$(grep -m1 '^version = ' lnxdrive-engine/Cargo.toml | cut -d'"' -f2)
++          if [ "$TAG" != "$DECLARED" ]; then
++            echo "::error::Tag v$TAG does not match workspace version $DECLARED"
++            exit 1
++          fi
++
++      - name: Build bundle
++        run: |
++          flatpak-builder --user --force-clean --repo=repo build-dir "$MANIFEST"
++          flatpak build-bundle repo lnxdrive.flatpak "$APP_ID" \
++            --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
++
++      - name: Generate SHA256SUMS
++        run: sha256sum lnxdrive.flatpak > SHA256SUMS
++
++      - name: Publish GitHub Release
++        env:
++          GH_TOKEN: ${{ github.token }}
++        run: |
++          PRERELEASE_FLAG=""
++          case "$GITHUB_REF_NAME" in
++            *-*) PRERELEASE_FLAG="--prerelease" ;;
++          esac
++          gh release create "$GITHUB_REF_NAME" \
++            --title "LNXDrive $GITHUB_REF_NAME" \
++            --generate-notes \
++            $PRERELEASE_FLAG \
++            lnxdrive.flatpak SHA256SUMS
+diff --git a/.straymark/07-ai-audit/agent-logs/guide/AILOG-2026-05-29-001-roadmap-v0-1-0-alpha-foundation.md b/.straymark/07-ai-audit/agent-logs/guide/AILOG-2026-05-29-001-roadmap-v0-1-0-alpha-foundation.md
+index f36f28b..09a2cc2 100644
+--- a/.straymark/07-ai-audit/agent-logs/guide/AILOG-2026-05-29-001-roadmap-v0-1-0-alpha-foundation.md
++++ b/.straymark/07-ai-audit/agent-logs/guide/AILOG-2026-05-29-001-roadmap-v0-1-0-alpha-foundation.md
+@@ -121,6 +121,42 @@ expected effort estimate is **L** (large, multi-week, multi-batch).
+   SHA256SUMS, announcement on r/linux, r/gnome, r/onedrive and
+   StrangeDaysTech Mastodon. Charter closes with telemetry.
+ 
++## Batch Ledger
++
++> Backfilled on 2026-06-04 (Fase 5 PR): the Charter §Tasks mandated
++> `straymark charter batch-complete` after each phase merge, but this section
++> was never scaffolded at declaration time, so Fases 0–4 are recorded
++> retroactively from the merge history (process drift, documented in
++> AILOG-2026-06-04-002). Batch N = Fase N−1.
++
++### Batch 1 — Fase 0: governance foundation + public backlog
++
++Merged 2026-05-28 — PR #4 (declare Charter-01, archive non-MVP UIs, governance foundation). Part 2 (GitHub-side): 24 backlog issues created from risk-analysis on 2026-05-28; GitHub Project later removed as redundant (see CLAUDE.md §3).
++
++### Batch 2 — Fase 1: P0 risk mitigation + CI hardening
++
++Merged 2026-05-28→30 — PRs #32 (RISK-002 OAuth off D-Bus), #33 (RISK-003 FUSE write-during-hydration), #35 (RISK-001 D-Bus health monitor), #36 (ISSUE-002 YAML billion-laughs), #34 (config path fix), #39 (CI hardening + external audit, lands #37/#38), #40 (audit drafts). External pre-merge audit consolidated.
++
++### Batch 3 — Fase 2: engine polish (T101 + FUSE listing repair)
++
++Merged 2026-05-31 — PR #41: T101 closed via real-mount integration test (getattr 43.7µs, readdir 1.40ms/1000, RSS 37.9MB/10k); 4 FUSE listing bugs + inode-persistence defect fixed. See AILOG-2026-05-31-001.
++
++### Batch 4 — Fase 3: GTK4 preferences panel audit + remediation
++
++Merged 2026-05-31 — PR #42: panel audit (6 findings) + remediation; H1 RISK-002 drift fixed (CompleteAuthViaGOA); G1 System group deferred (AIDEC-2026-05-31-001). E2E verified in Nivel-5 VM. See AILOG-2026-05-31-002.
++
++### Batch 5 — Fase 4: Flatpak packaging + SPDX fix + metainfo
++
++Merged 2026-06-04 — PR #48: Flatpak manifest rewrite (runtime 49, dir sources, meson module, scoped bus), SPDX fix (LNXDrive/GPL-3.0-or-later), metainfo completed. Bundle builds+installs clean via org.flatpak.Builder. Drift R8 (runtime 47→49 EOL, metainfo path). See AILOG-2026-06-04-001 + AIDEC-2026-06-04-001.
++
++### Batch 6 — Fase 5: release infrastructure & public assets
++
++(pending)
++
++### Batch 7 — Fase 6: tag, release, announce + Charter close
++
++(pending)
++
+ ## Out of scope (recorded ex-ante so the drift gate ignores them)
+ 
+ - GTK4 preferences panel beyond the four basic groups → v0.2.
+diff --git a/.straymark/07-ai-audit/agent-logs/packaging/AILOG-2026-06-04-001-fase-4-flatpak-packaging-manifest-rewrite-spdx-fix.md b/.straymark/07-ai-audit/agent-logs/packaging/AILOG-2026-06-04-001-fase-4-flatpak-packaging-manifest-rewrite-spdx-fix.md
+new file mode 100644
+index 0000000..ee62b3b
+--- /dev/null
++++ b/.straymark/07-ai-audit/agent-logs/packaging/AILOG-2026-06-04-001-fase-4-flatpak-packaging-manifest-rewrite-spdx-fix.md
+@@ -0,0 +1,195 @@
 +---
-+id: AILOG-2026-05-31-002
-+title: Fase 3 — GTK4 preferences panel audit + findings remediation
++id: AILOG-2026-06-04-001
++title: "Fase 4 — Flatpak packaging: manifest rewrite, SPDX fix, metainfo completion"
 +status: draft
-+created: 2026-05-31
++created: 2026-06-04
 +agent: claude-opus-4-8-v1.0
 +confidence: high
 +review_required: true
 +risk_level: medium
-+tags: [gnome, preferences, gtk4, dbus, goa, risk-002, charter-01, phase-3, audit]
++eu_ai_act_risk: not_applicable
++nist_genai_risks: [information_security, value_chain]
++iso_42001_clause: [8]
++lines_changed: 510              # +447/-63 (git diff --shortstat del PR)
++files_modified:
++  - lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml
++  - lnxdrive-gnome/preferences/data/com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in
++  - lnxdrive.spdx
++  - .straymark/charters/01-road-to-v0-1-0-alpha-1.md
++observability_scope: none
++tags: [packaging, flatpak, spdx, metainfo, appstream, charter-01, phase-4]
 +related:
 +  - CHARTER-01-road-to-v0-1-0-alpha-1
-+  - phase-3-gtk4-panel-audit
-+  - AIDEC-2026-05-31-001
-+  - AILOG-2026-05-29-002
-+eu_ai_act_risk: not_applicable
-+nist_genai_risks: [information_security]
-+iso_42001_clause: [8]
++  - AIDEC-2026-06-04-001
++  - AILOG-2026-05-31-002
 +---
 +
-+# AILOG: Fase 3 — GTK4 panel audit + remediation
++# AILOG: Fase 4 — Flatpak packaging: manifest rewrite, SPDX fix, metainfo completion
 +
 +## Summary
 +
-+Fase 3 was scoped as "implement the GTK4 preferences panel (currently a stub)".
-+The stub is only `lnxdrive-gnome/src/main.rs`; the real panel already exists under
-+`lnxdrive-gnome/preferences/` and compiles. Per the operator, the work became a
-+**deep audit** of that panel (3 parallel Explore agents, calibrated against
-+source — `.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md`) followed by
-+remediation of the findings.
++Fase 4 del Charter-01 (scope item 5): el manifiesto Flatpak pasa de un esqueleto
++roto (repos git inexistentes, runtime 45 EOL, `command` apuntando a un stub, sin
++install stages) a un manifiesto funcional que construye daemon + CLI + panel
++GTK4 desde el monorepo, con sandbox scoped según la postura RISK-002.
++`lnxdrive.spdx` deja de describir StrayMark (proyecto equivocado, licencia MIT
++equivocada) y describe LNXDrive bajo GPL-3.0-or-later. El metainfo de
++Preferences se completa con descripción extensa, screenshots y release
++`0.1.0-alpha.1` (type development). **Verificado**: el bundle construye e
++instala limpio con `org.flatpak.Builder` y los tres binarios + assets quedan
++correctamente exportados en el sandbox.
 +
-+Six findings (1 High, 3 Medium, 1 Low, 1 gap); four agent over-classifications
-+rejected. All resolved: **H1–H5 fixed, G1 deferred** ([[AIDEC-2026-05-31-001]]).
-+`cargo check` and `cargo clippy -- -D warnings` are clean for the panel (the
-+latter for the first time).
++## Context
 +
-+## The findings & fixes
++El Charter-01 declara la Fase 4 como "Flatpak packaging + `lnxdrive.spdx` fix +
++metainfo completion". La exploración previa (agente Explore, mapeo del estado
++real antes de planificar) reveló que el manifiesto heredado no era completable
++de forma incremental: sus sources apuntaban a dos repos git separados con tag
++`v0.1.0` que nunca existieron (el proyecto es un monorepo sin tags), y su
++segundo módulo construía el binario stub `lnxdrive-gnome` ("Not yet
++implemented") en lugar del panel real `lnxdrive-preferences`. Se reescribió
++completo — decisiones de arquitectura en [[AIDEC-2026-06-04-001]].
 +
-+- **H1 (High) — RISK-002 drift.** Fase 1 removed `Auth.CompleteAuthWithTokens`
-+  from the daemon and shipped `CompleteAuthViaGOA` (tokens off the bus), but the
-+  panel still called the removed method, and its GOA code sat behind a `goa`
-+  feature that `Cargo.toml` never defined → compiled out. This is the **third
-+  occurrence (N=3)** of the "declared but not wired" pattern reported upstream to
-+  StrayMark (#205), and the first that is a *regression* of a shipped Fase-1
-+  mitigation. Fix: define the `goa` feature (default on); add the
-+  `complete_auth_via_goa` proxy and drop `complete_auth_with_tokens`; hand the
-+  GOA account object-path to the daemon (tokens never client-side). This also
-+  surfaced and fixed a latent type error in `goa_sso` that had **never compiled**
-+  (the feature was always off) — concrete evidence the GOA path was dead code.
-+  The manual browser auth path (`start_auth` + `AuthStateChanged`) was unaffected.
-+- **H2 (Medium) — daemon state not consumed.** Added the missing Sync/Status
-+  properties+signals and `Settings.config_changed` to the proxies, and wired a
-+  real consumer (AccountPage refreshes quota on `QuotaChanged`).
-+- **H3 (Medium) — silent errors.** `folder_tree`, `sync_page`, and the onboarding
-+  pages now surface load/save failures in the UI (inline error, error group,
-+  toast/banner) instead of stderr; `folder_tree` distinguishes a parse error from
-+  an empty tree.
-+- **H4 (Medium) — folder_tree load race.** Merged the two independent load tasks
-+  into one ordered task (selections first, then populate) so selections can no
-+  longer apply to an empty tree.
-+- **H5 (Low) — lint debt.** `cargo check` warnings cleared (unused imports,
-+  deprecated `ActionRow::icon_name` → `add_prefix`); the audit also surfaced 145
-+  pre-existing `needless_borrow` clippy lints across the panel (the panel had
-+  never passed clippy `-D warnings`), auto-fixed in this pass.
-+- **G1 (gap) — "System" settings group.** Deferred to a v0.2 Charter
-+  ([[AIDEC-2026-05-31-001]]): cache/dehydration need new daemon D-Bus API and are
-+  post-alpha. Fase 3 ships three wired groups (Account, Folders, Network) +
-+  Conflicts.
++## Actions Performed
 +
-+## Rejected (calibration)
-+
-+The `.expect()` cascades in GTK factories (idiomatic, type-guaranteed), the
-+missing `Files` interface (Nautilus' concern, not the prefs UI), the
-+`STRATEGY_VALUES[i]` index (equal-length consts), and a FUSE-style async deadlock
-+(zbus uses async-io + glib `spawn_local`, no `block_on`) were verified and
-+rejected as not-a-bug for this codebase.
-+
-+## Verification
-+
-+```bash
-+cd lnxdrive-gnome/preferences
-+cargo check                              # clean
-+cargo clippy --all-targets -- -D warnings  # clean (first time for the panel)
-+```
-+
-+Runtime verification (panel launches, authenticates against a live daemon, pages
-+load/save over D-Bus, GOA flow) is **manual** — it needs a GTK display and an
-+authenticated daemon, the same constraint class as the FUSE mount test; recorded
-+as a follow-up, not run in this environment.
-+
-+## Drift
-+
-+- Fase 3 scope as written ("implement from a stub") did not match reality (panel
-+  ~95% built). Re-framed as audit + remediation; Charter row updated.
-+- G1 dropped from the alpha (deferred to v0.2), reducing "four groups" to three +
-+  Conflicts. Documented in the AIDEC and Charter.
-+- An external pre-merge audit of this phase is planned before merge, per the
-+  operator's phase-scoped external-audit workflow.
++1. **Manifiesto** (`lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml`):
++   - Runtime `org.gnome.Platform 45 → 49` (el "47" del Charter estaba EOL desde
++     2025 — drift R8, ver AIDEC).
++   - Sources `type: dir` relativos al manifiesto (monorepo local) con
++     `skip: [target]`, en lugar de repos git inexistentes.
++   - Módulo engine: `cargo build --release --locked -p lnxdrive-daemon -p
++     lnxdrive-cli` → instala `lnxdrived` y `lnxdrive`.
++   - Módulo gnome: buildsystem **meson** con `-Denable_nautilus=false
++     -Denable_shell=false -Denable_preferences=true -Denable_goa=false` — el
++     meson existente ya instala panel, iconos, `.desktop`, metainfo y schema
++     GSettings (los "install stages" del Charter sin duplicación manual). Las
++     extensiones Nautilus/Shell y el provider GOA son host-side y no pueden
++     vivir en el sandbox.
++   - `command: lnxdrive-preferences` (la GUI real; el daemon se lanza con
++     `flatpak run --command=lnxdrived`).
++   - Sandbox: se elimina `--socket=session-bus` en favor de
++     `--own-name=com.strangedaystech.LNXDrive` +
++     `--talk-name=org.freedesktop.secrets` +
++     `--talk-name=org.gnome.OnlineAccounts` (superficie D-Bus mínima,
++     coherente con RISK-002). `--filesystem=home` literal del Charter.
++     `--device=all` para `/dev/fuse` (files-on-demand; sin clase más fina).
++   - `build-args: --share=network` para cargo (ver Follow-ups: vendoring para
++     Flathub).
++2. **SPDX** (`lnxdrive.spdx`): reemplazo completo — describe LNXDrive (daemon,
++   FUSE, CLI, integración GNOME), `PackageLicenseConcluded/Declared:
++   GPL-3.0-or-later` (antes MIT, contradiciendo `LICENSE` y todos los crates),
++   `PackageVersion: 0.1.0` (antes 1.0.0; la unificación a `0.1.0-alpha.1` es
++   Fase 5), copyright alineado con `LICENSE`.
++3. **Metainfo**
++   (`lnxdrive-gnome/preferences/data/com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in`):
++   descripción de 3 párrafos + lista de features por página del panel, URLs
++   `homepage`/`bugtracker`/`vcs-browser` apuntando al monorepo (antes:
++   `lnxdrive-gnome` repo separado), 3 screenshots con nombres canónicos que la
++   Fase 5 debe producir (`preferences-window.png`, `onboarding-wizard.png`,
++   `conflict-dialog.png` bajo `docs/screenshots/`), release `0.1.0-alpha.1`
++   `type="development"` con changelog (sustituye la entrada `0.1.0 /
++   2026-02-05` que nunca correspondió a un release publicado).
++4. **Atomic update del Charter** (formato v4): filas Fase 4 de la tabla
++   `## Files to modify` — runtime 47→49 y ruta real del metainfo (la tabla lo
++   ubicaba bajo `lnxdrive-packaging/flatpak/`; vive en el árbol meson de
++   preferences). Scope item 5 anotado con el resultado de la fase.
 +
 +## Risk
 +
-+All changes are in the GTK client; no daemon code changed. H1 realigns the panel
-+with the (already shipped, audited) RISK-002 daemon API, so it cannot reintroduce
-+the token-on-bus exposure — it removes the client-side token fetch entirely. The
-+proxy additions (H2) are declarative. Error surfacing (H3) and the load
-+reordering (H4) only change UI behaviour. The clippy auto-fix (H5) is mechanical.
-+No tests broken; the panel has no unit tests (UI), so runtime behaviour rests on
-+the planned manual verification + external audit.
++- **R8 (drift, documentado aquí y en el Charter)**: dos desviaciones de la
++  declaración ex-ante — (a) runtime objetivo `org.gnome.Platform 47 → 49`
++  porque 47 alcanzó EOL en 2025, antes incluso de la firma del Charter
++  (2026-05-29); (b) la ruta del metainfo en la tabla Files-to-modify era
++  incorrecta. Ambas corregidas atómicamente en este mismo PR
++  ([[AIDEC-2026-06-04-001]]).
++- El riesgo R2 del Charter (comportamiento del bundle bajo sandbox ≠ `cargo
++  run`, en particular el mount FUSE) **sigue abierto por diseño**: su
++  mitigación es el smoke-test en VM Fedora/Ubuntu previo al release (Fase 6),
++  no esta fase.
++- **Salida del drift check** (`check-charter-drift.sh`, rango
++  `origin/main..HEAD`): los 26 archivos "declared but NOT modified" pertenecen
++  a las demás fases del Charter (el script compara la tabla completa contra un
++  PR de fase — esperado, no accionable). Los 3 "modified but NOT declared" son
++  falsos positivos: el metainfo **sí** está declarado (fila corregida por el
++  propio drift R8), `lnxdrive.spdx` **sí** está declarado (fila intacta de la
++  tabla; límite del parser heurístico), y `.straymark/follow-ups-backlog.md`
++  es el registro de governanza que debe viajar en el mismo commit que el AILOG
++  (AGENT-RULES §13), no scope de producto.
 +
-+## Telemetry
++## Modified Files
 +
-+| Metric | Value |
-+|---|---|
-+| Findings (audit) | 6 (1 High, 3 Medium, 1 Low, 1 gap) + 4 rejected |
-+| Findings resolved | H1–H5 fixed, G1 deferred |
-+| Files changed | ~13 (panel) + 3 governance docs |
-+| New docs | audit, AIDEC, this AILOG |
-+| clippy lints cleared | 145 needless_borrow + others |
-+| Daemon code changed | 0 |
-+| Pre-commit hook failures | none |
-diff --git a/.straymark/07-ai-audit/decisions/AIDEC-2026-05-31-001-defer-system-settings-group.md b/.straymark/07-ai-audit/decisions/AIDEC-2026-05-31-001-defer-system-settings-group.md
-new file mode 100644
-index 0000000..2306506
---- /dev/null
-+++ b/.straymark/07-ai-audit/decisions/AIDEC-2026-05-31-001-defer-system-settings-group.md
-@@ -0,0 +1,102 @@
++| File | Lines Changed (+/-) | Change Description |
++|------|--------------------|--------------------|
++| `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` | reescritura completa | Runtime 49, sources dir monorepo, módulo meson, sandbox scoped, command real |
++| `lnxdrive.spdx` | reescritura completa | Describe LNXDrive (antes StrayMark), GPL-3.0-or-later (antes MIT), versión 0.1.0 |
++| `lnxdrive-gnome/preferences/data/com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in` | +60/-6 aprox | Descripción completa, URLs monorepo, screenshots, release 0.1.0-alpha.1 |
++| `.straymark/charters/01-road-to-v0-1-0-alpha-1.md` | ~6 líneas | Atomic update: filas Fase 4 + anotación scope item 5 (drift R8) |
++
++## Decisions Made
++
++Ver [[AIDEC-2026-06-04-001]] (runtime 49, sources dir, command, módulos
++host-side excluidos, bus scoped, red en build). Decisión menor sin AIDEC: la
++entrada de release `0.1.0 / 2026-02-05` del metainfo se sustituyó en lugar de
++conservarse — nunca hubo release público con esa versión y AppStream la
++mostraría como historial falso.
++
++## Impact
++
++- **Functionality**: primer artefacto de distribución construible del proyecto;
++  base directa para `release.yml` (Fase 5).
++- **Performance**: N/A.
++- **Security**: superficie D-Bus del sandbox reducida (own-name/talk-name en
++  vez de session-bus sin restricción); SPDX ahora declara la licencia real
++  (GPL-3.0-or-later) — relevante para compliance de distribución; tokens
++  siguen en keyring vía `--talk-name=org.freedesktop.secrets` (RISK-002).
++- **Privacy**: N/A (sin cambios en manejo de datos).
++- **Environmental**: N/A.
++
++## Verification
++
++- [x] `desktop-file-validate` sobre el `.desktop`: limpio (exit 0).
++- [x] `appstreamcli validate --no-net` sobre el metainfo: **pass** (1 aviso
++  pedante por mayúsculas en el app-id heredado, no accionable). Con red:
++  3 warnings esperados `screenshot-image-not-found` — los PNG llegan en
++  Fase 5 (nombres canónicos ya fijados, ver Follow-ups).
++- [x] Build de verificación del Charter: `flatpak run org.flatpak.Builder
++  --user --install --force-clean build-dir
++  lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` — **construye
++  e instala limpio** (commit `31106ca4`, 33.9 MB instalado, runtime
++  org.gnome.Platform/x86_64/49).
++- [x] Post-install en sandbox: `/app/bin/{lnxdrived,lnxdrive,
++  lnxdrive-preferences}` presentes; `flatpak run --command=lnxdrive … --version`
++  → `lnxdrive 0.1.0`; `.desktop`, `gschemas.compiled`, icono SVG y metainfo
++  exportados en `/app/share/`.
++- [x] `straymark validate` + `.straymark/scripts/check-charter-drift.sh`
++  pre-commit (resultados en la descripción del PR).
++
++## Follow-ups
++
++- **Vendoring de crates para Flathub**: el manifiesto usa `build-args:
++  --share=network` para que cargo descargue crates.io; una submission a
++  Flathub exige sources vendorizados (`flatpak-cargo-generator`). Aplica
++  cuando se decida publicar en Flathub (post-alpha, candidato v0.2).
++- **`lnxdrive-packaging/README.md` desactualizado**: promete subdirectorios
++  `rpm/`, `debian/`, `aur/`, `appimage/` que no existen (diferidos a
++  v0.2.0-beta por el Charter). Alinear el README con la realidad del alpha
++  (Flatpak only) — candidato a resolverse de paso en Fase 5 junto con el
++  README raíz.
++- **Nombres canónicos de screenshots para Fase 5**: el metainfo referencia
++  `docs/screenshots/{preferences-window,onboarding-wizard,conflict-dialog}.png`;
++  la Fase 5 debe producir exactamente esos nombres (más los 3 restantes del
++  Charter para el README).
++
++## Additional Notes
++
++- El bundle del alpha **no incluye** la extensión de Nautilus, la extensión de
++  Shell ni el provider GOA (componentes host-side). Documentarlo como
++  limitación conocida en README/release notes es trabajo de Fase 5.
++- Verificación de build ejecutada con `org.flatpak.Builder` (Flathub, user
++  install) — el binario `flatpak-builder` nativo no está empaquetado en la
++  máquina de verificación; el comando del Charter §Verification sigue siendo
++  válido sustituyendo el prefijo por `flatpak run org.flatpak.Builder`.
++
 +---
-+id: AIDEC-2026-05-31-001
-+title: Posponer el grupo de ajustes "System" del panel (G1) a v0.2
-+status: accepted
-+created: 2026-05-31
++
++<!-- Template: StrayMark | https://strangedays.tech -->
+diff --git a/.straymark/07-ai-audit/agent-logs/packaging/AILOG-2026-06-04-002-fase-5-release-infrastructure-public-assets.md b/.straymark/07-ai-audit/agent-logs/packaging/AILOG-2026-06-04-002-fase-5-release-infrastructure-public-assets.md
+new file mode 100644
+index 0000000..2684a93
+--- /dev/null
++++ b/.straymark/07-ai-audit/agent-logs/packaging/AILOG-2026-06-04-002-fase-5-release-infrastructure-public-assets.md
+@@ -0,0 +1,210 @@
++---
++id: AILOG-2026-06-04-002
++title: "Fase 5 — Release infrastructure & public assets"
++status: draft
++created: 2026-06-04
 +agent: claude-opus-4-8-v1.0
 +confidence: high
 +review_required: true
 +risk_level: low
-+tags: [gnome, preferences, settings, scope, deferral, charter-01, phase-3, v0.2]
++eu_ai_act_risk: not_applicable
++nist_genai_risks: [information_integrity, value_chain]
++iso_42001_clause: [8]
++lines_changed: 656              # +550/-106 (git diff --shortstat del PR, sin contar el commit del Batch Ledger)
++files_modified:
++  - .github/workflows/release.yml
++  - SECURITY.md
++  - CHANGELOG.md
++  - README.md
++  - docs/screenshots/README.md
++  - lnxdrive-packaging/README.md
++  - lnxdrive-engine/Cargo.toml
++  - lnxdrive-engine/Cargo.lock
++  - lnxdrive-gnome/Cargo.toml
++  - lnxdrive-gnome/Cargo.lock
++  - lnxdrive-gnome/meson.build
++  - lnxdrive-gnome/preferences/Cargo.toml
++  - lnxdrive-gnome/preferences/Cargo.lock
++  - lnxdrive.spdx
++  - .straymark/07-ai-audit/agent-logs/guide/AILOG-2026-05-29-001-roadmap-v0-1-0-alpha-foundation.md
++  - .straymark/follow-ups-backlog.md
++observability_scope: none
++tags: [release, ci, packaging, security-policy, changelog, readme, versioning, charter-01, phase-5]
 +related:
 +  - CHARTER-01-road-to-v0-1-0-alpha-1
-+  - phase-3-gtk4-panel-audit
++  - AILOG-2026-06-04-001
++  - AIDEC-2026-06-04-001
 +---
 +
-+# AIDEC: Posponer el grupo "System" (G1) a v0.2
++# AILOG: Fase 5 — Release infrastructure & public assets
++
++## Summary
++
++Fase 5 del Charter-01 (scope item 6): infraestructura de release y assets
++públicos. Se crea el pipeline tag→bundle→Release (`release.yml`), `SECURITY.md`
++(reporte privado + disclosure coordinado), `CHANGELOG.md` (Keep a Changelog,
++entrada `0.1.0-alpha.1`), se unifica la versión a `0.1.0-alpha.1` en los 5
++puntos de declaración + 3 Cargo.lock, y se actualiza el README raíz con
++instalación real por Flatpak, galería de screenshots (6 nombres canónicos) y
++tabla comparativa verificada contra el estado 2026 de jstaf/onedriver y
++abraunegg/onedrive. Los 6 PNG los captura el operador en la VM Nivel-5
++(decisión de esta sesión); el PR no se mergea sin ellos.
++
++Adicionalmente se **backfillea el Batch Ledger** del Charter (process drift:
++el Charter §Tasks mandaba `batch-complete` tras cada merge de fase, pero la
++sección nunca se scaffoldeó en el AILOG de origen — Fases 0–4 registradas
++retroactivamente desde el historial de merges con `--note`).
 +
 +## Context
 +
-+La auditoría de Fase 3 (`.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md`)
-+registró el hallazgo **G1**: el Charter-01 nombra cuatro grupos de ajustes
-+(Account, Folders, Network, System), pero el panel implementa Account, Sync
-+(≈Folders), Advanced (≈Network) y Conflicts — **no existe un grupo "System"**, y
-+el daemon **no expone API D-Bus** para sus ajustes candidatos: arranque
-+automático, gestión de caché y política de deshidratación.
++Con Fases 0–4 mergeadas, el proyecto tiene bundle construible pero cero
++infraestructura de publicación: sin workflow de release, sin política de
++seguridad, sin changelog, versiones `0.1.0` planas inconsistentes con el tag
++objetivo `v0.1.0-alpha.1`, y un README raíz con secciones obsoletas
++(instalación "Planned", quick-start de CLI con comandos inexistentes, roadmap
++pre-Charter con todo "Planned").
 +
-+De esos tres, solo el **arranque automático** es implementable sin API D-Bus
-+nueva (gestionando una unit de usuario de systemd o un `.desktop` de autostart
-+desde el panel). **Caché** y **deshidratación** requieren extender la interfaz
-+`Settings` del daemon con métodos nuevos y la lógica para aplicarlos — trabajo
-+**cruzado** (daemon + panel) y de diseño no trivial.
++## Actions Performed
++
++1. **`.github/workflows/release.yml`** (nuevo): trigger en tags `v*`;
++   construye con `flatpak-builder` nativo (apt, ubuntu-latest) + runtime 49 +
++   rust-stable 25.08; verifica que el tag coincide con la versión del
++   workspace (gate anti-desincronización); `flatpak build-bundle` →
++   `lnxdrive.flatpak` + `SHA256SUMS`; publica GitHub Release con `gh` CLI
++   (`--prerelease` automático si el tag lleva sufijo). **Sin actions de
++   terceros** (solo `actions/checkout`) — postura supply-chain.
++2. **`SECURITY.md`** (nuevo): reporte privado vía GitHub Security Advisories
++   (primario) o `contact@strangedays.tech`; ack ≤7 días; disclosure
++   coordinado ≤90 días; tabla de versiones soportadas (solo último alpha);
++   resumen de postura (keyring, bus scoped, YAML hardening, cargo
++   audit/deny).
++3. **`CHANGELOG.md`** (nuevo): Keep a Changelog 1.1.0; entrada
++   `0.1.0-alpha.1` con Added/Security/Known limitations; la fecha se fija al
++   taggear (Fase 6).
++4. **Unificación de versión** `0.1.0` → `0.1.0-alpha.1`: workspace del engine,
++   `lnxdrive-gnome/Cargo.toml`, `preferences/Cargo.toml`, `meson.build`,
++   `lnxdrive.spdx`; los tres `Cargo.lock` regenerados (`cargo update
++   --workspace --offline`) — crítico porque el build Flatpak usa `--locked`.
++   El lock del crate stub raíz (`lnxdrive-gnome`) se ajustó a mano: su
++   git-dependency apunta a un remoto que no resuelve y nada lo construye
++   (entrada idéntica a la que escribiría cargo). Verificado: `cargo check -p
++   lnxdrive-daemon -p lnxdrive-cli` limpio; sin asserts de versión en
++   tests/CI.
++5. **`README.md` raíz**: badges (alpha + release), instalación real
++   (`flatpak install --user <URL del bundle>` + verificación SHA256SUMS),
++   galería de 6 screenshots con nombres canónicos, first-steps reales
++   (wizard → GOA/browser → selective sync → daemon), quick-start del CLI con
++   **comandos reales** (status/auth/mount/pin/dehydrate/explain — los
++   anteriores `account add`/`ls`/`log` no existen; verificado contra el
++   binario del Flatpak instalado), tabla comparativa vs jstaf/onedriver
++   (v0.15.0, ene-2026, activo) y abraunegg/onedrive (v2.5.10, ene-2026,
++   activo) con maturity honesta (alpha vs stable), limitaciones del alpha
++   (componentes host-side), roadmap actualizado a milestones reales,
++   diferenciador multi-provider re-calificado como *(roadmap)*.
++6. **`docs/screenshots/README.md`** (nuevo): los 6 nombres canónicos +
++   instrucciones de captura para el operador (VM Nivel-5, cuenta de prueba).
++7. **`lnxdrive-packaging/README.md`**: realineado con la realidad del alpha
++   (Flatpak only; rpm/debian/aur/appimage diferidos a v0.2.0-beta; comandos
++   de build desde la raíz del monorepo; nota org.flatpak.Builder). Cierra
++   **FU-004** del registro (recount en el mismo commit).
++8. **Batch Ledger backfill** (commit previo de esta rama): sección añadida al
++   AILOG de origen del Charter con Batches 1–7 (= Fases 0–6); Batches 1–5
++   completados retroactivamente vía `straymark charter batch-complete
++   --note` con PRs y fechas del historial.
++
++## Risk
++
++- **R9 (process drift, new, not in Charter)**: el mecanismo de Batch Ledger
++  declarado en Charter §Tasks nunca se materializó en Fases 0–4 (la sección
++  no existía en el AILOG de origen). Corregido con backfill retroactivo desde
++  el historial de merges. Causa raíz: el scaffold del AILOG de origen
++  (formato pre-v4) no incluía la sección y ningún gate lo detectó hasta el
++  primer `batch-complete` real. El gate de cierre (`straymark charter drift`
++  rechaza `(pending)`) protegerá las Fases 5–6.
++- **R10 (scope note)**: el README raíz necesitó más que la "install section +
++  comparison" declarada — quick-start con comandos inexistentes y roadmap
++  pre-Charter eran contenido público falso a fecha de release; se corrigieron
++  en esta fase como parte del espíritu "public assets". El movimiento del
++  contenido previo no fue necesario (el README raíz ya era de producto; el
++  del engine ya existía por separado).
++- Los screenshots son **bloqueo de merge**: el PR queda en draft hasta que el
++  operador deposite los 6 PNG (FU-005 se cierra entonces).
++- **Salida del drift check** (rango `origin/main..HEAD`): los 21 "declared but
++  NOT modified" pertenecen a otras fases (esperado en PR de fase). Los 9
++  "modified but NOT declared" están todos cubiertos arriba: 3 `Cargo.lock` +
++  `meson.build` + `preferences/Cargo.toml` + `lnxdrive.spdx` = unificación de
++  versión (la fila del Charter "Every Cargo.toml with version=, all manifests,
++  metainfo XML" los declara en agregado); `docs/screenshots/README.md` =
++  soporte de la fila screenshots; `lnxdrive-packaging/README.md` = FU-004;
++  `follow-ups-backlog.md` = registro §13 en el mismo commit.
++
++## Modified Files
++
++| File | Lines Changed (+/-) | Change Description |
++|------|--------------------|--------------------|
++| `.github/workflows/release.yml` | +78 (nuevo) | Pipeline tag → bundle → Release + SHA256SUMS |
++| `SECURITY.md` | +55 (nuevo) | Política de seguridad y disclosure |
++| `CHANGELOG.md` | +60 (nuevo) | Entrada 0.1.0-alpha.1 |
++| `README.md` | ~150 modificadas | Install real, screenshots, comparativa, roadmap, CLI real |
++| `docs/screenshots/README.md` | +20 (nuevo) | Nombres canónicos para el operador |
++| `lnxdrive-packaging/README.md` | reescritura | Flatpak only, formatos diferidos (FU-004) |
++| 5 archivos de versión + 3 Cargo.lock | ~30 | Unificación 0.1.0-alpha.1 |
++| AILOG origen Charter | +40 | Batch Ledger backfill (R9) |
++| `.straymark/follow-ups-backlog.md` | ~10 | FU-004 closed + recount |
++
++## Decisions Made
++
++- **`gh` CLI + actions oficiales únicamente** en `release.yml` (sin
++  `softprops/action-gh-release` ni equivalentes): menor superficie
++  supply-chain; el runner ya trae `gh` autenticado con `github.token`.
++- **Gate tag↔versión** en el workflow: aborta si `v<tag>` ≠ versión del
++  workspace — previene releases con artefactos mal versionados.
++- **Comparativa honesta**: maturity "Alpha" vs "Stable" explícita y
++  recomendación directa de las alternativas para Business/SharePoint. Estado
++  de competidores verificado por web search (2026-06), no entrenamiento.
++- Screenshots: captura por el operador en VM Nivel-5 (opción elegida en
++  sesión frente a captura automatizada o PR aparte).
++
++## Impact
++
++- **Functionality**: con esto, `git tag v0.1.0-alpha.1 && git push --tags`
++  produce el release completo — Fase 6 queda reducida a tag + smoke + anuncio.
++- **Performance**: N/A.
++- **Security**: canal de reporte privado publicado; política de versiones
++  soportadas explícita; pipeline sin actions de terceros.
++- **Privacy**: screenshots con cuenta de prueba (instrucción explícita).
++- **Environmental**: N/A.
++
++## Verification
++
++- [x] `cargo check -p lnxdrive-daemon -p lnxdrive-cli --offline` limpio tras
++  el bump de versión + locks regenerados.
++- [x] Comandos del README quick-start contrastados contra `lnxdrive --help`
++  real (binario del Flatpak instalado en Fase 4).
++- [x] Estado de jstaf/onedriver y abraunegg/onedrive verificado por web
++  search (releases ene-2026, ambos activos).
++- [x] `straymark validate` 0 errores; `followups recount` tras cierre de
++  FU-004; drift check documentado en la descripción del PR.
++- [ ] `release.yml` se ejercita end-to-end recién en Fase 6 (primer tag) —
++  riesgo aceptado: el workflow replica los pasos ya verificados localmente
++  en Fase 4 (mismo manifiesto, mismo runtime).
++- [ ] 6 PNG del operador en `docs/screenshots/` (bloqueo de merge).
++
++## Follow-ups
++
++- **`lnxdrive-engine/config/lnxdrive-autostart.desktop` apunta a
++  `/usr/bin/lnxdrive-daemon`**: el binario real se llama `lnxdrived` y en
++  Flatpak vive en `/app/bin`. Sin efecto en el alpha (el autostart no se
++  instala desde el bundle), pero corregir antes de empaquetar formatos
++  nativos en v0.2.0-beta.
++
++## Additional Notes
++
++- FU-005 (nombres canónicos de screenshots) queda `open` hasta que los PNG
++  estén en el árbol; se cierra en el triage de esta fase.
++- La fecha del `CHANGELOG.md` y del `<release>` del metainfo se fijan al
++  taggear (Fase 6).
++
++---
++
++<!-- Template: StrayMark | https://strangedays.tech -->
+diff --git a/.straymark/07-ai-audit/decisions/AIDEC-2026-06-04-001-flatpak-manifest-architecture.md b/.straymark/07-ai-audit/decisions/AIDEC-2026-06-04-001-flatpak-manifest-architecture.md
+new file mode 100644
+index 0000000..81e31e9
+--- /dev/null
++++ b/.straymark/07-ai-audit/decisions/AIDEC-2026-06-04-001-flatpak-manifest-architecture.md
+@@ -0,0 +1,109 @@
++---
++id: AIDEC-2026-06-04-001
++title: Arquitectura del manifiesto Flatpak para v0.1.0-alpha (runtime 49, sources dir, bus scoped)
++status: accepted
++created: 2026-06-04
++agent: claude-opus-4-8-v1.0
++confidence: high
++review_required: true
++risk_level: medium
++tags: [packaging, flatpak, runtime, sandbox, dbus, charter-01, phase-4]
++related:
++  - CHARTER-01-road-to-v0-1-0-alpha-1
++  - AILOG-2026-06-04-001
++---
++
++# AIDEC: Arquitectura del manifiesto Flatpak para v0.1.0-alpha
++
++## Context
++
++El Charter-01 (Fase 4, scope item 5) pide completar
++`lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` con install
++stages, permisos correctos y target `org.gnome.Platform 47`. El manifiesto
++heredado tenía cuatro defectos estructurales:
++
++1. Apuntaba a **dos repos git separados** (`lnxdrive.git`, `lnxdrive-gnome.git`
++   con tag `v0.1.0`) que no existen — el proyecto es un **monorepo** sin tags.
++2. `command: lnxdrive-gnome` ejecuta un **stub** (`src/main.rs` imprime
++   "Not yet implemented"); la GUI real es `lnxdrive-preferences`.
++3. Runtime `org.gnome.Platform 45` (EOL); el Charter declara 47, que también
++   alcanzó EOL en 2025 — antes incluso de la firma del Charter (2026-05-29).
++4. Sin install stages para iconos, `.desktop`, metainfo ni schema GSettings, y
++   con `--socket=session-bus` (bus de sesión sin restricción).
 +
 +## Problem
 +
-+¿Dónde y cuándo abordamos G1, dado que el Charter-01 es estrictamente "Road to
-+v0.1.0-alpha.1" y G1 mezcla un control trivial (auto-start) con ajustes que no
-+tienen backend y exceden el MVP del alpha?
++Definir runtime objetivo, mecanismo de sources, comando principal, alcance de
++módulos y política de sandbox para el bundle del alpha, respetando el scope del
++Charter y la postura de seguridad de RISK-002 (superficie D-Bus mínima).
 +
 +## Alternatives Considered
 +
-+### Alternativa 1 — Implementar G1 completo ahora, dentro de Charter-01
++### Runtime objetivo
++- **A. `org.gnome.Platform 47`** (literal del Charter): EOL desde 2025 — sin
++  parches de seguridad; además libadwaita 1.6 justo en el límite del feature
++  gate `v1_6` del panel. Descartada: publicar un alpha sobre runtime EOL
++  contradice el espíritu de la Fase 1 (cierre de riesgos).
++- **B. `org.gnome.Platform 50`** (estable actual, mar 2026): válida, pero
++  reduce la ventana de compatibilidad para early adopters en distros LTS.
++- **C. `org.gnome.Platform 49`** ✅: el runtime soportado más antiguo en
++  jun 2026; satisface gtk4 `v4_14` + libadwaita `v1_6`; ya instalado en la
++  máquina de verificación Nivel-5.
 +
-+Crear la página "System" con auto-start + caché + deshidratación, añadiendo la
-+API D-Bus necesaria en el daemon.
++### Sources de los módulos
++- **A. Git remoto con tags** (heredado): los repos/tags no existen; rompería
++  el build local y el de release.
++- **B. `type: dir` relativo al manifiesto** ✅: construye siempre desde el
++  checkout local del monorepo — sirve igual para la verificación local del
++  operador y para `release.yml` (Fase 5). `skip: [target]` evita copiar
++  artefactos de cargo.
++- **C. `type: git` con `path:` local**: solo archivos commiteados — incómodo
++  para iterar (cada ajuste exige commit previo) sin aportar nada al alpha.
 +
-+**Pros:** cierra el "cuatro grupos" literal del Charter.
-+**Cons:** caché/deshidratación **no son MVP alpha**; obliga a diseñar y exponer
-+API D-Bus nueva (superficie + pruebas) bajo presión del release alpha; infla un
-+Charter cuyo objetivo declarado es el alpha mínimo. Contradice
-+[[feedback_minimum_viable_plus_tde]].
++### Comando principal y módulos
++- `command: lnxdrive-preferences` (la GUI real). El daemon se lanza con
++  `flatpak run --command=lnxdrived com.strangedaystech.LNXDrive`.
++- Módulo engine: `cargo build --release --locked -p lnxdrive-daemon -p
++  lnxdrive-cli` (los dos binarios reales: `lnxdrived`, `lnxdrive`).
++- Módulo gnome: **meson** con `-Denable_nautilus=false -Denable_shell=false`
++  — las extensiones de Nautilus/Shell y el provider GOA se cargan en procesos
++  del *host* y no pueden vivir dentro del sandbox; el meson existente ya
++  instala panel, iconos, `.desktop`, metainfo y schema (los "install stages"
++  que pedía el Charter, sin duplicarlos a mano).
 +
-+### Alternativa 2 — Página "System" solo con auto-start ahora, resto diferido
++### Política de sandbox (finish-args)
++- Se elimina `--socket=session-bus` (acceso sin restricción) en favor de
++  **nombres scoped**: `--own-name=com.strangedaystech.LNXDrive` +
++  `--talk-name=org.freedesktop.secrets` + `--talk-name=org.gnome.OnlineAccounts`
++  — alineado con RISK-002 (superficie D-Bus mínima).
++- `--device=all` para `/dev/fuse` (no existe clase de device más fina en
++  Flatpak); el riesgo R2 del Charter ya prevé el smoke-test de FUSE bajo
++  sandbox en VM antes de publicar.
++- `--filesystem=home` literal del Charter (la raíz de sync vive en `$HOME`).
 +
-+Enviar una página con el único control implementable y dejar caché/deshidratación
-+para después.
-+
-+**Pros:** algo de "System" visible en el alpha sin API nueva.
-+**Cons:** un grupo "System" a medias (un solo toggle) confunde más que ayuda;
-+mezcla alcance v0.1 y v0.2 en un mismo grupo; habría que rediseñarlo al añadir el
-+resto. Bajo valor para el usuario alpha.
-+
-+### Alternativa 3 — Fase nueva dentro de Charter-01 para G1
-+
-+Añadir una "Fase 7: System settings" al roadmap de Charter-01.
-+
-+**Pros:** mantiene G1 rastreado en el Charter activo.
-+**Cons:** **incoherente con el alcance del Charter** — Charter-01 es "Road to
-+v0.1.0-alpha.1"; una fase de ajustes que requiere API nueva y no es MVP no
-+pertenece a un Charter de alpha. Diluiría el criterio de "hecho" del alpha.
-+
-+### Alternativa 4 — Diferir G1 a un Charter v0.2 futuro (ELEGIDA)
-+
-+Documentar G1 como diferido; abordarlo en un Charter v0.2 (cuando v0.2 arranque),
-+junto con el resto de ajustes avanzados y su API D-Bus.
-+
-+**Pros:** respeta el alcance del alpha; agrupa el grupo "System" completo de forma
-+coherente (auto-start + caché + deshidratación + su API) en el ciclo donde
-+pertenece; no introduce API D-Bus a medias en el alpha.
-+**Cons:** el panel del alpha mostrará tres grupos en vez de cuatro — aceptable y
-+documentado.
++### Red durante el build
++- cargo descarga crates.io vía `build-args: --share=network`. Una submission a
++  Flathub exigiría sources vendorizados (`flatpak-cargo-generator`); se difiere
++  — el alpha distribuye bundle por GitHub Releases (registrado como follow-up).
 +
 +## Decision
 +
-+**Alternativa 4.** G1 (grupo "System") se **pospone a v0.2** y se abordará en un
-+**Charter v0.2 futuro**, no como fase de Charter-01 ni como implementación parcial
-+en el alpha. No se crea el Charter v0.2 ahora (sería prematuro y de un solo ítem);
-+esta AIDEC es la semilla de seguimiento y se promoverá al backlog de v0.2 cuando
-+ese ciclo comience.
-+
-+El Charter-01 se actualiza para reflejar que la Fase 3 entrega **tres** grupos de
-+ajustes wired al daemon (Account, Folders/Sync, Network/Advanced) más Conflicts,
-+y que el grupo "System" queda **fuera de alcance del alpha** por esta decisión.
++Runtime **`org.gnome.Platform 49`** (drift documentado vs el "47" del Charter,
++con atomic update de la tabla Files-to-modify), sources **`type: dir`** por
++módulo con `skip`, `command: lnxdrive-preferences`, módulo gnome vía **meson**
++con extensiones host-side deshabilitadas, bus de sesión **scoped** (own-name +
++talk-names), `--device=all` para FUSE y red solo en build para cargo.
 +
 +## Consequences
 +
-+- El panel del alpha no tendrá grupo "System"; el arranque automático se gestiona
-+  por el packaging/systemd del alpha, no por la UI todavía.
-+- Cuando arranque v0.2, su Charter incluirá: API D-Bus de caché y deshidratación
-+  en `Settings`, y la página "System" del panel (auto-start + caché +
-+  deshidratación) que las consume.
-+- Fase 3 puede cerrarse con los hallazgos **H** (H1–H5) resueltos sin bloquear por
-+  G1.
-diff --git a/.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md b/.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md
-new file mode 100644
-index 0000000..9220bab
---- /dev/null
-+++ b/.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md
-@@ -0,0 +1,194 @@
-+---
-+audit_role: internal-calibrated-audit
-+calibrator: claude-opus-4-8
-+charter_id: CHARTER-01-road-to-v0-1-0-alpha-1
-+phase: "Fase 3 — GTK4 preferences panel"
-+component: lnxdrive-gnome/preferences
-+audited_at: 2026-05-31
-+method: 3 parallel Explore agents (D-Bus contract / UI logic / async+build), reconciled and code-verified by the calibrator
-+findings_consolidated: 6
-+findings_by_severity:
-+  high: 1
-+  medium: 3
-+  low: 1
-+  gap: 1
-+false_positives_rejected: 4
-+verdict: FUNCTIONAL_WITH_DRIFT
-+---
-+
-+# Internal audit — Fase 3 GTK4 preferences panel
-+
-+**Reviewer:** claude-opus-4-8
-+**Date:** 2026-05-31
-+**Confidence:** High
-+**Component:** `lnxdrive-gnome/preferences/` (binary `lnxdrive-preferences`)
-+
-+## 1. Executive summary
-+
-+Fase 3 of Charter-01 is scoped as "implement the GTK4 preferences panel
-+(currently a `println!("not yet implemented")` stub)". That stub is only the
-+placeholder `lnxdrive-gnome/src/main.rs`; the **real panel already exists and is
-+~95% built** under `lnxdrive-gnome/preferences/` — an `adw::Application` with a
-+typed zbus client, an onboarding wizard, and four pages (Account, Sync,
-+Conflicts, Advanced). It **compiles** (`cargo check` clean, 12 warnings) and,
-+unlike the FUSE crate audited in Fase 2, it **does not have a fatal runtime trap**
-+(async is correctly `async-io` + glib `spawn_local`, no stray `block_on`/
-+`tokio::spawn`; GSettings schema id/keys, app-id, and build wiring are
-+consistent).
-+
-+The audit was run because "compiles" is not "works" — the panel had never been
-+exercised against a real daemon, and the zbus proxy contract is validated at
-+**runtime**, not compile time. Three Explore agents (D-Bus contract / UI logic /
-+async+build) produced findings that the calibrator reconciled and verified
-+against source, rejecting four agent over-classifications.
-+
-+**The one serious finding is a cross-component governance drift (H1):** Fase 1
-+(RISK-002) removed `Auth.CompleteAuthWithTokens` from the daemon and replaced it
-+with `Auth.CompleteAuthViaGOA` to keep OAuth tokens off the D-Bus surface, but
-+the **panel was never updated** — it still declares/calls `complete_auth_with_tokens`
-+(now nonexistent), and that GOA code is behind `#[cfg(feature = "goa")]` while
-+`Cargo.toml` defines **no `goa` feature**, so GOA SSO is compiled out entirely.
-+This is the **third occurrence (N=3)** of the "declared but not wired" pattern
-+already reported upstream to StrayMark (#205) — and the first one that is a
-+*regression* of a shipped Fase-1 mitigation rather than an original gap.
-+
-+Mitigating fact: the **manual browser auth path works** (`start_auth()` +
-+`AuthStateChanged` signal, both present on the daemon — `auth_page.rs:238-295`),
-+so the panel can still authenticate; only the GOA "use your existing Microsoft
-+account" path (FR-019–023) is broken. Hence H1 is **High, not Critical**.
-+
-+**Overall verdict: FUNCTIONAL_WITH_DRIFT.** The panel runs and mostly works; the
-+material work is fixing the RISK-002 drift, three medium robustness items, lint
-+cleanup, and the absent "System" group.
-+
-+## 2. Scope
-+
-+Audited: every Rust source under `lnxdrive-gnome/preferences/src/`, the zbus
-+client contract against the daemon's interfaces in
-+`lnxdrive-engine/crates/lnxdrive-ipc/src/service.rs`, plus `Cargo.toml`,
-+`meson.build`, the GSettings schema, and the desktop/metainfo files. Not run:
-+live execution against a mounted daemon (no authenticated account available in
-+this environment) — deferred to manual verification.
-+
-+## 3. Findings (calibrated)
-+
-+### H1 — RISK-002 drift: GOA auth broken & compiled out — **HIGH**
-+
-+- **Client** declares and calls `complete_auth_with_tokens(access_token,
-+  refresh_token, expires_at_unix)` — `dbus_client.rs:88,235-243` and
-+  `onboarding/auth_page.rs:362`.
-+- **Daemon** removed that method in Fase 1; only `complete_auth(code, state)`
-+  (`service.rs:873`) and `complete_auth_via_goa(goa_account_path)`
-+  (`service.rs:917`) exist. `service.rs:902` states it "replaces the historical
-+  `CompleteAuthWithTokens`"; the tests at `service.rs:2004` confirm it was
-+  deleted.
-+- The GOA UI is gated on `#[cfg(feature = "goa")]` (`auth_page.rs:20,35,143,338`)
-+  but `preferences/Cargo.toml` defines **no `[features]`** → the gate is always
-+  false → GOA SSO is compiled out (also the source of the `unexpected cfg value
-+  'goa'` warnings).
-+- **Impact:** GOA SSO (FR-019–023) is non-functional and, if re-enabled as-is,
-+  would call a method the daemon no longer exposes (`UnknownMethod` at runtime).
-+  Manual browser auth is unaffected.
-+- **Remediation:** (a) add `[features] goa = []` (decide default on/off) to
-+  `Cargo.toml`; (b) add a `complete_auth_via_goa(goa_account_path)` proxy method
-+  to `dbus_client.rs` and drop/deprecate `complete_auth_with_tokens`;
-+  (c) rewrite `auth_page.rs::on_goa_sign_in_clicked` to pass the GOA account
-+  object path to `complete_auth_via_goa` instead of fetching tokens client-side.
-+
-+### H2 — Daemon state not consumed (no live status) — **MEDIUM**
-+
-+- The client proxies omit several daemon-exposed properties/signals: `Sync`
-+  `sync_status`/`last_sync_time`/`pending_changes` + `sync_started`/
-+  `sync_completed`/`sync_progress` (`service.rs:652-705`); `Status`
-+  `connection_status`/`dbus_health` + `quota_changed`/`connection_changed`
-+  (`service.rs:762-790`); `Settings.config_changed` (`service.rs:1066`).
-+- **Impact:** the panel shows no live sync/connection status and does not refresh
-+  on external changes. Functional gap, not a crash.
-+- **Remediation:** add the missing properties/signals to the proxies and wire a
-+  minimal set (sync status + quota refresh) into the relevant pages.
-+
-+### H3 — Silent error handling — **MEDIUM**
-+
-+- D-Bus call failures go to `eprintln!`/stderr, not the UI (e.g.
-+  `sync_page.rs:200`, `account_page.rs`), so a dead daemon leaves the panel
-+  showing default values as if loaded.
-+- JSON parsing uses `unwrap_or_default()` (`folder_tree.rs:416`), so a malformed
-+  `GetRemoteFolderTree` response renders an **empty tree indistinguishable from
-+  "no folders"**.
-+- **Impact:** silent degradation; user operates on stale/empty UI believing it
-+  loaded.
-+- **Remediation:** surface load/save failures via an `adw::Toast`/banner;
-+  distinguish parse-error from empty in `folder_tree`.
-+
-+### H4 — `folder_tree` load race — **MEDIUM**
-+
-+- `FolderTree::new` fires `load_remote_tree()` and `load_selected_folders()` as
-+  two independent `spawn_local` tasks (`folder_tree.rs:205-206`); `apply_selections`
-+  can run before the tree is populated, dropping the selection highlight. A
-+  related issue: `apply_selections` only walks root-level nodes, so lazily-loaded
-+  children are not marked.
-+- **Impact:** selective-sync selections may not display correctly.
-+- **Remediation:** chain selections after the tree populates (await both, or
-+  apply selections in the populate continuation); apply recursively as nodes
-+  expand.
-+
-+### H5 — Compiler warnings — **LOW**
-+
-+- 12 warnings: unused `gtk4::prelude` imports (`sync_page.rs:11`,
-+  `onboarding/mod.rs:17`, `app.rs:12`), `unexpected cfg value 'goa'` (resolved by
-+  H1's feature definition), deprecated `ActionRowBuilder::icon_name`
-+  (`confirm_page.rs:90,96`).
-+- **Remediation:** remove unused imports; migrate the deprecated builder call;
-+  the `cfg` warnings disappear once `goa` is a declared feature.
-+
-+### G1 — "System" settings group absent — **GAP**
-+
-+- The Charter names four groups (Account, Folders, Network, System). The panel
-+  has Account, Sync (≈Folders), Advanced (≈Network), Conflicts — but **no
-+  "System" group**, and the daemon exposes **no D-Bus API** for its candidate
-+  settings (auto-start, cache, dehydration policy).
-+- **Resolution — DEFERRED to v0.2** (see [[AIDEC-2026-05-31-001]]): the whole
-+  "System" group is deferred to a future v0.2 Charter rather than implemented
-+  partially in the alpha. Cache and dehydration controls need new daemon D-Bus
-+  API; auto-start alone would be a one-toggle group mixing v0.1/v0.2 scope. Fase 3
-+  ships three wired groups (Account, Folders/Sync, Network/Advanced) + Conflicts;
-+  the "System" group is out of alpha scope by that decision.
-+
-+## 4. Rejected (agent over-classifications)
-+
-+The calibrator verified and **rejected** these as not-a-bug for this codebase:
-+
-+- **`.expect()` cascade in GTK factories** (`folder_tree.rs:227,260-318`) — flagged
-+  CRITICAL by the UI agent, but these are idiomatic gtk4-rs factory closures where
-+  the item type is guaranteed by construction (`TreeListModel`/`ListItem` always
-+  yield the registered type). The async+build agent correctly rated them low.
-+  **Rejected as CRITICAL; at most a stylistic LOW.**
-+- **`Files` interface missing from client** — the panel is the *preferences* UI;
-+  pin/unpin/file-status is Nautilus' concern, not this binary's. **Not applicable.**
-+- **`conflict_list.rs:296` `STRATEGY_VALUES[i]` index** — the two arrays are
-+  fixed-size consts of equal length; no runtime risk exists today. **LOW, not
-+  CRITICAL.**
-+- **async-runtime deadlock (FUSE-style)** — verified absent: zbus uses `async-io`
-+  (not tokio), all D-Bus calls run via `glib spawn_local`, no `block_on`. **No bug.**
-+
-+## 5. Remediation plan (→ Fase 3 implementation)
-+
-+Ordered, each on the `feat/charter-01-phase-3-*` branch with regression coverage
-+where testable and a closing AILOG:
-+
-+1. **H1 (High):** define the `goa` feature; replace the client/`auth_page` token
-+   path with `complete_auth_via_goa`. Backport a governance note (this is a
-+   Fase-1 RISK-002 regression) and feed the N=3 "declared but not wired" data
-+   point into the upstream-feedback drafts.
-+2. **H3 (Medium):** toast/banner on D-Bus errors; parse-error vs empty in
-+   `folder_tree`.
-+3. **H4 (Medium):** fix the `folder_tree` load ordering + recursive selection.
-+4. **H2 (Medium):** extend proxies and wire live sync/quota status.
-+5. **G1 (Gap):** decide System-group scope; implement auto-start or document
-+   deferral.
-+6. **H5 (Low):** clear warnings + deprecation.
-+
-+Verification: `cargo clippy -p lnxdrive-preferences -- -D warnings` clean; unit
-+tests for any non-GTK logic added; manual run against a live daemon recorded in
-+the closing AILOG (the panel cannot be exercised end-to-end in CI — same
-+`/dev/fuse`/display constraint class as the T101 mount test).
-diff --git a/.straymark/audits/CHARTER-01/upstream-feedback-drafts.md b/.straymark/audits/CHARTER-01/upstream-feedback-drafts.md
-index 53a33d3..031bbab 100644
---- a/.straymark/audits/CHARTER-01/upstream-feedback-drafts.md
-+++ b/.straymark/audits/CHARTER-01/upstream-feedback-drafts.md
-@@ -10,7 +10,8 @@
- > |---|---|---|---|
- > | 2a | `charter drift` rejects the range its Charter template ships | CLI/format friction (ad-hoc) | ✅ filed — [straymark#207](https://github.com/StrangeDaysTech/straymark/issues/207) |
- > | 2b | `charter audit --prepare` default range under-covers phase audits | Documentation gap (ad-hoc) | ✅ filed — [straymark#208](https://github.com/StrangeDaysTech/straymark/issues/208) |
--> | 1 | "declared but not wired" transfers to N=2 (crate/D-Bus surface) | Pattern candidate | 🕓 draft below — file at Charter close |
-+> | 1 | "declared but not wired" — now N=3 (cross-component regression of a shipped mitigation, found in Fase 3) | Pattern candidate | ✅ filed — [straymark#209](https://github.com/StrangeDaysTech/straymark/issues/209) (advanced from Charter-close cadence: the Fase-3 panel audit produced the N=3 data point) |
-+> | 4 | Charter scope declared against assumed (un-read) code → code-reconnaissance gate at creation | Process / methodology gap | ✅ filed — [straymark#210](https://github.com/StrangeDaysTech/straymark/issues/210) |
- > | 3 | External-audit calibration results (dual-model + calibrator-hunts-missed) | External audit results / pattern | 🕓 draft below — file at Charter close |
- >
- > The cadence committed in #205 is **per Charter close** for telemetry + audit
++- El bundle construye reproduciblemente desde cualquier checkout del monorepo
++  sin depender de tags inexistentes; `release.yml` (Fase 5) lo reutiliza tal cual.
++- Early adopters necesitan `org.gnome.Platform//49` (descarga automática al
++  instalar el bundle).
++- La integración Nautilus/Shell/GOA queda fuera del Flatpak del alpha — se
++  documentará como limitación conocida en el README/release notes (Fase 5).
++- Flathub queda explícitamente fuera del alcance del alpha (follow-up FU en el
++  registro).
++- Si el smoke-test de R2 muestra que FUSE no monta bajo el sandbox ni con
++  `--device=all`, aplica la mitigación ya prevista: v0.1.0-alpha.2 con el
++  permiso/portal faltante.
 diff --git a/.straymark/charters/01-road-to-v0-1-0-alpha-1.md b/.straymark/charters/01-road-to-v0-1-0-alpha-1.md
-index 4efd532..2d78735 100644
+index 5d98456..91825e0 100644
 --- a/.straymark/charters/01-road-to-v0-1-0-alpha-1.md
 +++ b/.straymark/charters/01-road-to-v0-1-0-alpha-1.md
-@@ -29,7 +29,7 @@ The lnxdrive monorepo finished its MVP implementation (SpecKit features `001-cor
-    - `ISSUE-002`: harden the YAML config parser against billion-laughs (size + alias caps); regression fixture in `lnxdrive-engine/tests/security/`.
+@@ -30,7 +30,7 @@ The lnxdrive monorepo finished its MVP implementation (SpecKit features `001-cor
     - `cargo audit` + `cargo deny` jobs in CI.
  3. **Engine polish** — close the one remaining task (T101 performance validation) in `lnxdrive-engine/specs/002-files-on-demand/tasks.md`. **Done** (Fase 2): T101 validated via a real-mount integration test — `getattr` 43.7µs, `readdir` 1.40ms/1000 entries, idle RSS 37.9MB/10k files (all under target). The test was the first real FUSE mount exercised in the codebase and surfaced four functional listing bugs (init runtime-context panic, root self-listing, unstable `readdir` order, `opendir` dir-cache) plus an inode-persistence defect, all fixed with regression tests — see AILOG-2026-05-31-001. The other three items this row originally listed (remove `todo!()/unimplemented!()`, remove debug `println!`, enable `cargo test --workspace` in CI) were **already completed during Fase 1** (verified against `main`: zero such sites in crates; `cargo test --workspace` live at `.github/workflows/engine-ci.yml:66`).
--4. **GTK4 preferences panel** — implement four basic settings groups (Account, Folders, Network, System) in `lnxdrive-gnome/src/main.rs` (currently a `println!("not yet implemented")` stub) wired to the existing D-Bus daemon API.
-+4. **GTK4 preferences panel** — the panel already exists under `lnxdrive-gnome/preferences/` (the root `src/main.rs` stub is just a placeholder). Fase 3 audits it (`.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md`) and fixes the findings. It ships **three** settings groups wired to the daemon — Account, Folders (Sync), Network (Advanced) — plus Conflicts. The fourth group, **System** (auto-start, cache, dehydration), is **deferred to a v0.2 Charter** because it needs new daemon D-Bus API and is post-alpha (see AIDEC-2026-05-31-001). Key fix: realign the panel with the Fase-1 RISK-002 daemon API (`CompleteAuthViaGOA`).
- 5. **Flatpak packaging** — complete `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` with install stages (icons, `*.desktop`, metainfo XML), correct permissions (`--filesystem=home:rw`, `--talk-name=org.freedesktop.secrets`), and target `org.gnome.Platform 47`. Fix `lnxdrive.spdx` (currently describes StrayMark by mistake). Complete the metainfo XML with description, releases section, and screenshot URLs.
+ 4. **GTK4 preferences panel** — the panel already exists under `lnxdrive-gnome/preferences/` (the root `src/main.rs` stub is just a placeholder). Fase 3 audits it (`.straymark/audits/CHARTER-01/phase-3-gtk4-panel-audit.md`) and fixes the findings. It ships **three** settings groups wired to the daemon — Account, Folders (Sync), Network (Advanced) — plus Conflicts. The fourth group, **System** (auto-start, cache, dehydration), is **deferred to a v0.2 Charter** because it needs new daemon D-Bus API and is post-alpha (see AIDEC-2026-05-31-001). Key fix: realign the panel with the Fase-1 RISK-002 daemon API (`CompleteAuthViaGOA`). **Verified end-to-end** in the Nivel-5 testing VM (real GNOME Wayland): all pages load, full D-Bus contract exercised with no failed calls, live `QuotaChanged`, and operator-confirmed visual render of every page (incl. nested selective-sync selection). External pre-merge audit consolidated in `review.md` (1 Medium, fixed). See AILOG-2026-05-31-002.
+-5. **Flatpak packaging** — complete `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` with install stages (icons, `*.desktop`, metainfo XML), correct permissions (`--filesystem=home:rw`, `--talk-name=org.freedesktop.secrets`), and target `org.gnome.Platform 47`. Fix `lnxdrive.spdx` (currently describes StrayMark by mistake). Complete the metainfo XML with description, releases section, and screenshot URLs.
++5. **Flatpak packaging** — complete `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` with install stages (icons, `*.desktop`, metainfo XML), correct permissions (`--filesystem=home:rw`, `--talk-name=org.freedesktop.secrets`), and target `org.gnome.Platform 47`. Fix `lnxdrive.spdx` (currently describes StrayMark by mistake). Complete the metainfo XML with description, releases section, and screenshot URLs. **Done** (Fase 4): manifest rewritten — the inherited skeleton pointed at two non-existent git repos and a stub binary; now builds daemon + CLI (cargo) and the GTK4 panel (meson, host-side Nautilus/Shell/GOA modules excluded) from monorepo `dir` sources. Target moved to `org.gnome.Platform 49` (47 was EOL before the Charter was signed — drift R8, AIDEC-2026-06-04-001); `--socket=session-bus` replaced by scoped bus names per the RISK-002 posture. SPDX now describes LNXDrive under GPL-3.0-or-later (was: StrayMark/MIT). **Verified**: bundle builds and installs cleanly via `org.flatpak.Builder` (3 binaries + desktop/schema/icon/metainfo exported; CLI answers in-sandbox). FUSE-under-sandbox behaviour intentionally left to the R2 VM smoke-test (Fase 6). See AILOG-2026-06-04-001.
  6. **Release infrastructure & public assets** — `.github/workflows/release.yml` (tag → bundle → GitHub Release with SHA256SUMS); `SECURITY.md`; `CHANGELOG.md`; 6 UI screenshots in `docs/screenshots/`; version `0.1.0-alpha.1` consistent across every `Cargo.toml`, Flatpak manifest, and metainfo XML; README install section + competitive comparison vs `jstaf/onedriver` and `abraunegg/onedrive`.
  7. **Tag, release, announce** — signed tag `v0.1.0-alpha.1`, GitHub Pre-release with Flatpak bundle, posts on r/linux, r/gnome, r/onedrive, and StrangeDaysTech Mastodon.
+ 
+@@ -65,8 +65,8 @@ This Charter spans many files across 7 phases. The table below names the load-be
+ | `lnxdrive-engine/specs/002-files-on-demand/tasks.md` | Close the one remaining `[ ]` task (Fase 2) |
+ | The ~4 engine files containing `todo!()/unimplemented!()` (incl. `audit.rs`, `filesystem.rs`) | Implement, remove, or feature-gate; replace ~10 debug `println!` with `tracing::debug!` (Fase 2) |
+ | `lnxdrive-gnome/src/main.rs`, `lnxdrive-gnome/data/ui/preferences.ui` (new), `lnxdrive-gnome/Cargo.toml` | GTK4 prefs panel with 4 settings groups (Fase 3) |
+-| `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` | Complete install stages, permissions, target `org.gnome.Platform 47` (Fase 4) |
+-| `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in` | Full description, releases section, screenshot URLs (Fase 4) |
++| `lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml` | Complete install stages, permissions, target `org.gnome.Platform 49` — original entry said 47, EOL since 2025 (drift R8, AIDEC-2026-06-04-001); scoped bus names replace `--socket=session-bus`; gnome module builds via meson with host-side extensions (Nautilus/Shell/GOA) disabled (Fase 4) |
++| `lnxdrive-gnome/preferences/data/com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in` | Full description, releases section, screenshot URLs — original entry misplaced the file under `lnxdrive-packaging/flatpak/`; it lives in the preferences meson tree (drift R8, AILOG-2026-06-04-001) (Fase 4) |
+ | `lnxdrive.spdx` | Replace contents — currently describes StrayMark; should describe LNXDrive (Fase 4) |
+ | `.github/workflows/release.yml` (new) | Tag → flatpak-builder bundle → GitHub Release + SHA256SUMS (Fase 5) |
+ | `SECURITY.md` (new) | Disclosure policy, SLA, known limitations referencing risk-analysis docs (Fase 5) |
+diff --git a/.straymark/follow-ups-backlog.md b/.straymark/follow-ups-backlog.md
+index 5a57b96..f4c0049 100644
+--- a/.straymark/follow-ups-backlog.md
++++ b/.straymark/follow-ups-backlog.md
+@@ -1,9 +1,9 @@
+ ---
+ last_scan: 2026-06-04
+ schema_version: v1
+-total_open: 0
++total_open: 2
+ total_promoted: 0
+-total_closed_in_session: 2
++total_closed_in_session: 4
+ total_phase_blocked: 0
+ total_suspected_closed: 0
+ buckets:
+@@ -15,6 +15,8 @@ buckets:
+ fully_extracted_ailogs:
+   - AILOG-2026-05-28-001
+   - AILOG-2026-05-28-002
++  - AILOG-2026-06-04-001
++  - AILOG-2026-06-04-002
+ ---
+ 
+ # Follow-ups Backlog
+@@ -58,6 +60,38 @@ Entry shape (v1 — optional fields marked):
+ - **Destination**: CHARTER-01
+ - **Cost**: 0 (resolved at source)
+ - **Notes**: Charter drift already remediated atomically in the source PR — the `## Files to modify` row for RISK-001 (only `health.rs`) was extended to `lnxdrive-daemon/src/main.rs` and cross-crate `lnxdrive-ipc/src/service.rs` (`dbus_health` state field + property). Closed at registry adoption (2026-06-04); no pending work.
++
++### FU-003 — **Vendoring de crates para Flathub**: el manifiesto usa `build-args:
++- **Origin**: AILOG-2026-06-04-001 §Follow-ups
++- **Status**: open
++- **Trigger**: TBD
++- **Destination**: TBD
++- **Cost**: TBD
++- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-06-04.
++
++### FU-004 — **`lnxdrive-packaging/README.md` desactualizado**: promete subdirectorios
++- **Origin**: AILOG-2026-06-04-001 §Follow-ups
++- **Status**: closed
++- **Trigger**: resolved
++- **Destination**: CHARTER-01
++- **Cost**: S
++- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-06-04. Resuelto en Charter-01 Fase 5 (AILOG-2026-06-04-002): README de packaging realineado con la realidad del alpha (Flatpak only, formatos diferidos a v0.2.0-beta).
++
++### FU-005 — **Nombres canónicos de screenshots para Fase 5**: el metainfo referencia
++- **Origin**: AILOG-2026-06-04-001 §Follow-ups
++- **Status**: closed
++- **Trigger**: Fase 5 release assets
++- **Destination**: docs/screenshots/ (PR #49)
++- **Cost**: S
++- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-06-04. Closed 2026-06-17: los 6 PNG con nombres canónicos (preferences-window, onboarding-wizard, conflict-dialog, shell-indicator, status-menu, nautilus-overlays) capturados en VM Nivel-5 (GNOME Wayland, mock daemon) y añadidos a `docs/screenshots/`; coinciden con README raíz y metainfo AppStream.
++
++### FU-006 — **`lnxdrive-engine/config/lnxdrive-autostart.desktop` apunta a
++- **Origin**: AILOG-2026-06-04-002 §Follow-ups
++- **Status**: open
++- **Trigger**: TBD
++- **Destination**: TBD
++- **Cost**: TBD
++- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-06-04.
+ ## Bucket: time-triggered
+ 
+ ## Bucket: charter-triggered
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100644
+index 0000000..5811007
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,59 @@
++# Changelog
++
++All notable changes to LNXDrive are documented in this file.
++
++The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
++and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
++
++## [0.1.0-alpha.1] — date set at tag time (Charter-01 Fase 6)
++
++First public alpha, aimed at Linux power users and GNOME enthusiasts willing
++to report bugs. GNOME-only by design — KDE Plasma, GTK3 (XFCE/MATE) and COSMIC
++front-ends are archived under `experimental/` until after v1.0.0.
++
++### Added
++
++- **Sync engine** (`lnxdrived`, Rust, 12 crates): Microsoft OneDrive via the
++  Graph API with delta synchronization, conflict detection, local file
++  watching (inotify) and a D-Bus control interface
++  (`com.strangedaystech.LNXDrive`).
++- **Files-on-demand**: FUSE filesystem — cloud files are visible locally and
++  hydrate on first access; validated with a real-mount performance test
++  (`getattr` 43.7 µs, `readdir` 1.40 ms/1000 entries, 37.9 MB idle RSS with
++  10k files).
++- **CLI** (`lnxdrive`): auth, sync control, status and config commands.
++- **GNOME integration**: GTK4/libadwaita preferences panel (Account, Folders,
++  Network, Conflicts — wired live to the daemon over D-Bus), GNOME Shell
++  status indicator, Nautilus sync-state overlay icons, GNOME Online Accounts
++  single sign-on.
++- **Flatpak packaging** (`com.strangedaystech.LNXDrive`, GNOME 49 runtime):
++  ships daemon + CLI + preferences panel; published as a bundle on GitHub
++  Releases with SHA256SUMS via the tag-triggered release workflow.
++- `SECURITY.md` with private vulnerability reporting and coordinated
++  disclosure policy.
++
++### Security
++
++- OAuth tokens stored in the system keyring (Secret Service) and never sent
++  raw over D-Bus — the API exposes only opaque session handles (RISK-002,
++  CVSS 9.1, closed).
++- FUSE write-during-hydration race serialized with per-inode locking + `EBUSY`
++  (RISK-003, closed).
++- D-Bus session-bus health monitor with automatic reconnect and interface
++  re-registration (RISK-001, mitigated; full Unix-socket fallback deferred
++  to v0.2).
++- YAML config parser hardened against billion-laughs expansion (ISSUE-002,
++  closed).
++- `cargo audit` + `cargo deny` enforced in CI.
++
++### Known limitations
++
++- The Flatpak bundle does **not** include the Nautilus extension, the GNOME
++  Shell extension or the GOA provider — they load into host processes and
++  cannot live inside the sandbox.
++- FUSE under the Flatpak sandbox requires `--device=all`; behaviour is
++  smoke-tested in VMs before each release.
++- System settings group (auto-start, cache, dehydration policy) deferred to
++  v0.2 (needs new daemon D-Bus API).
++
++[0.1.0-alpha.1]: https://github.com/StrangeDaysTech/lnxdrive/releases/tag/v0.1.0-alpha.1
+diff --git a/README.md b/README.md
+index fbc5db7..7b7bf66 100644
+--- a/README.md
++++ b/README.md
+@@ -10,7 +10,8 @@
+ 
+ <p align="center">
+   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg" alt="License"></a>
+-  <a href="https://github.com/StrangeDaysTech/lnxdrive"><img src="https://img.shields.io/badge/status-early%20development-orange.svg" alt="Status"></a>
++  <a href="https://github.com/StrangeDaysTech/lnxdrive/releases"><img src="https://img.shields.io/badge/status-alpha-orange.svg" alt="Status"></a>
++  <a href="https://github.com/StrangeDaysTech/lnxdrive/releases"><img src="https://img.shields.io/badge/release-v0.1.0--alpha.1-blue.svg" alt="Release"></a>
+   <a href="https://rust-lang.org"><img src="https://img.shields.io/badge/rust-1.75%2B-orange.svg" alt="Rust"></a>
+ </p>
+ 
+@@ -25,7 +26,7 @@ LNXDrive is a cloud storage synchronization client for Linux designed from scrat
+ - **Explainable sync** -- You always know *why* something failed or didn't sync. No more cryptic "sync error" messages.
+ - **Files-on-Demand** -- A robust FUSE-based virtual filesystem with clear file states (online-only, locally available, always-keep). See your cloud files without downloading them.
+ - **Native desktop integration** -- Purpose-built UI for GNOME, KDE Plasma, COSMIC, and GTK3-based desktops (XFCE, MATE). Not a generic tray icon -- real shell extensions, file manager overlays, and system settings panels.
+-- **Multi-provider, multi-account** -- Connect OneDrive, Google Drive, Dropbox, and more. Unlimited account namespaces (`onedrive:work`, `gdrive:personal`).
++- **Multi-provider, multi-account** *(roadmap)* -- The provider port is designed for OneDrive, Google Drive, Dropbox, and more. The alpha ships **Microsoft OneDrive** support.
+ - **Declarative configuration** -- Versionable YAML config, not scattered dotfiles and CLI flags.
+ - **Full observability** -- Structured JSON logs, Prometheus metrics, and a complete audit trail.
+ 
+@@ -46,56 +47,106 @@ Cloud Providers          LNXDrive Engine              Desktop
+ 
+ ---
+ 
++## Screenshots
++
++| | | |
++|:---:|:---:|:---:|
++| ![Preferences window](docs/screenshots/preferences-window.png) | ![Onboarding wizard](docs/screenshots/onboarding-wizard.png) | ![Conflict dialog](docs/screenshots/conflict-dialog.png) |
++| *Preferences: account & quota* | *Onboarding wizard* | *Conflict resolution* |
++| ![Shell indicator](docs/screenshots/shell-indicator.png) | ![Status menu](docs/screenshots/status-menu.png) | ![Nautilus overlays](docs/screenshots/nautilus-overlays.png) |
++| *GNOME Shell indicator* | *Status menu* | *Nautilus sync overlays* |
++
++---
++
+ ## Getting Started
+ 
+-> LNXDrive is in **early development**. The instructions below describe the intended installation flow. Pre-built packages are not yet available.
++> LNXDrive is in **alpha** (`v0.1.0-alpha.1`), aimed at Linux power users and GNOME enthusiasts willing to [report bugs](https://github.com/StrangeDaysTech/lnxdrive/issues). The alpha is **GNOME-only** and supports **Microsoft OneDrive**.
+ 
+ ### Requirements
+ 
+-- Linux with kernel 5.15+ and FUSE 3 support
+-- systemd (user session)
+-- A supported desktop environment (GNOME 45+, KDE Plasma 6, COSMIC, XFCE 4.18+, or MATE 1.26+)
++- Linux with FUSE 3 support and Flatpak ≥ 1.12
++- GNOME (Wayland recommended) — the bundle pulls the `org.gnome.Platform//49` runtime automatically
+ 
+-### Installation
++### Installation (Flatpak)
++
++```bash
++flatpak install --user \
++  https://github.com/StrangeDaysTech/lnxdrive/releases/download/v0.1.0-alpha.1/lnxdrive.flatpak
++```
+ 
+-Pre-built packages will be available for:
++Verify the download against the `SHA256SUMS` file published with each
++[release](https://github.com/StrangeDaysTech/lnxdrive/releases).
+ 
+-| Format | Desktop | Status |
+-|--------|---------|--------|
+-| Flatpak | All | Planned |
+-| AppImage | All | Planned |
+-| `.deb` | Debian/Ubuntu | Planned |
+-| AUR | Arch Linux | Planned |
++Other formats (RPM, DEB, AUR, AppImage, Flathub) are planned for `v0.2.0-beta`.
+ 
+ ### First steps
+ 
+-1. **Install LNXDrive** using your preferred package format
+-2. **Launch the setup wizard** from your application menu or run `lnxdrive setup`
+-3. **Add a cloud account** -- the wizard will guide you through OAuth authentication
+-4. **Choose your sync mode** -- select which folders to sync and whether to use files-on-demand
+-5. **Start syncing** -- LNXDrive runs automatically as a systemd user service
++1. **Launch LNXDrive** from your application menu (or `flatpak run com.strangedaystech.LNXDrive`) — the onboarding wizard opens on first run
++2. **Sign in to OneDrive** — via GNOME Online Accounts or the browser OAuth flow; tokens are stored in the system keyring, never on disk
++3. **Choose what to sync** — pick OneDrive folders (nested selective sync supported)
++4. **Start the daemon**: `flatpak run --command=lnxdrived com.strangedaystech.LNXDrive`
++
++> **Alpha limitations**: the Flatpak bundle does not include the Nautilus
++> overlay extension, the GNOME Shell indicator, or the GOA provider — these
++> load into host processes and can't ship inside the sandbox. They are
++> available when [building from source](#building-from-source). See
++> [CHANGELOG.md](CHANGELOG.md) for the full list.
+ 
+ ### CLI quick start
+ 
+ ```bash
+-# Check daemon status
++alias lnxdrive='flatpak run --command=lnxdrive com.strangedaystech.LNXDrive'
++
++# Check daemon and sync status
+ lnxdrive status
+ 
+-# Add a OneDrive account
+-lnxdrive account add onedrive:work
++# Authenticate with OneDrive
++lnxdrive auth login
+ 
+-# List synced files
+-lnxdrive ls /
++# Mount the files-on-demand filesystem
++lnxdrive mount
+ 
+-# Force sync a specific path
+-lnxdrive sync ~/OneDrive/Documents
++# Keep a folder always available offline
++lnxdrive pin ~/OneDrive/Documents
+ 
+-# View sync activity
+-lnxdrive log --follow
++# Free local space (file stays visible, downloads on next open)
++lnxdrive dehydrate ~/OneDrive/Videos
++
++# Why is this file in its current state?
++lnxdrive explain ~/OneDrive/report.xlsx
+ ```
+ 
+ ---
+ 
++## How does it compare?
++
++Both alternatives are mature, actively maintained projects — credit where due.
++LNXDrive is the **alpha** newcomer betting on deep desktop integration and
++explainability:
++
++| | **LNXDrive** (alpha) | [jstaf/onedriver](https://github.com/jstaf/onedriver) | [abraunegg/onedrive](https://github.com/abraunegg/onedrive) |
++|---|---|---|---|
++| Approach | Background sync **+** FUSE files-on-demand | Pure on-demand FUSE filesystem (no offline sync) | Full bidirectional sync client |
++| Maturity | **Alpha** | Stable | Stable, very featureful |
++| Language | Rust | Go | D |
++| Files-on-demand | ✅ FUSE, with pin/unpin/hydrate states | ✅ FUSE (cache-based) | ❌ (downloads everything selected) |
++| Selective sync | ✅ nested folder picker (GUI) | — (on-demand by nature) | ✅ (config file: `sync_list`) |
++| Native settings GUI | ✅ GTK4/libadwaita panel | Minimal launcher GUI | ❌ CLI (third-party GUIs exist) |
++| File manager integration | ✅ Nautilus sync-state overlays* | ❌ | ❌ |
++| Desktop SSO | ✅ GNOME Online Accounts | ❌ (own OAuth flow) | ❌ (own OAuth flow) |
++| Explainability | ✅ `lnxdrive explain <file>`, audit log | ❌ | Verbose logs |
++| Token storage | System keyring (Secret Service) | System keyring | Config dir file |
++| OneDrive Business / SharePoint | Not yet (alpha) | ✅ | ✅ |
++| Packaging | Flatpak bundle | distro packages (COPR, etc.) | distro packages, Docker |
++
++<sub>*From source on the host; not included in the Flatpak sandbox (alpha).</sub>
++
++If you need OneDrive **Business/SharePoint today**, use one of the
++alternatives. If you want native GNOME integration with files-on-demand and
++explainable sync — that's the gap LNXDrive exists to fill.
++
++---
++
+ ## For Developers
+ 
+ ### Project Structure
+@@ -157,23 +208,14 @@ This project uses [StrayMark](https://github.com/StrangeDaysTech/straymark) to m
+ 
+ ## Roadmap
+ 
+-LNXDrive development is organized in phases:
+-
+-| Phase | Milestone | Status |
+-|-------|-----------|--------|
+-| 0 | Testing infrastructure (containers, CI/CD, mock servers) | In progress |
+-| 1 | Core engine + CLI (sync, delta, rate limiting, systemd service) | Planned |
+-| 2 | Files-on-Demand (FUSE, placeholders, hydration) | Planned |
+-| 3 | GNOME integration (Shell extension, Nautilus overlays, GOA) | Planned |
+-| 4 | Conflict resolution UI and declarative policies | Planned |
+-| 5 | KDE Plasma integration | Planned |
+-| 6 | Multi-provider support (Google Drive, Dropbox) | Planned |
+-| 7 | COSMIC desktop integration | Planned |
+-| 8 | GTK3 integration (XFCE/MATE) | Planned |
+-| 9 | Packaging and distribution | Planned |
+-| 10 | Observability and advanced features | Planned |
+-
+-For the full roadmap with detailed deliverables, see [the roadmap document](lnxdrive-guide/09-Referencia/02-hoja-de-ruta.md).
++| Milestone | Scope | Status |
++|-----------|-------|--------|
++| `v0.1.0-alpha.1` | OneDrive engine (sync, delta, FUSE files-on-demand), CLI, GNOME stack (GTK4 panel, Shell indicator, Nautilus overlays, GOA SSO), Flatpak bundle | **Current** |
++| `v0.2.0-beta` | System settings group (auto-start, cache, dehydration), RPM/DEB/AUR/AppImage, Flathub submission, D-Bus Unix-socket fallback, i18n structure, telemetry opt-in | Planned |
++| `v1.0.0` | KDE Plasma, COSMIC and GTK3 (XFCE/MATE) front-ends, multi-provider (Google Drive, Dropbox), 5+ languages | Planned |
++
++Work is tracked publicly in [GitHub Issues](https://github.com/StrangeDaysTech/lnxdrive/issues)
++and milestones; for detailed deliverables see [the roadmap document](lnxdrive-guide/09-Referencia/02-hoja-de-ruta.md).
+ 
+ ---
+ 
+diff --git a/SECURITY.md b/SECURITY.md
+new file mode 100644
+index 0000000..2f617e0
+--- /dev/null
++++ b/SECURITY.md
+@@ -0,0 +1,51 @@
++# Security Policy
++
++## Supported Versions
++
++LNXDrive is in **alpha**. Only the most recent alpha release receives security
++fixes; there are no backports.
++
++| Version | Supported |
++|---------|-----------|
++| 0.1.0-alpha.x (latest) | ✅ |
++| anything older | ❌ |
++
++## Reporting a Vulnerability
++
++**Please do not open a public issue for security vulnerabilities.**
++
++1. **Preferred**: use GitHub's private vulnerability reporting —
++   [Security → Report a vulnerability](https://github.com/StrangeDaysTech/lnxdrive/security/advisories/new).
++2. Alternatively, email **contact@strangedays.tech** with subject
++   `[SECURITY] lnxdrive: <short summary>`.
++
++Include: affected component (daemon / FUSE / CLI / GNOME panel / packaging),
++reproduction steps, impact assessment, and your environment (distro, GNOME
++version, install method).
++
++### What to expect
++
++- **Acknowledgement** within 7 days.
++- **Coordinated disclosure**: we ask for up to 90 days to ship a fix before
++  public disclosure. Single-maintainer project — complex fixes may need the
++  full window.
++- Credit in the release notes (opt-out if you prefer anonymity).
++
++## Security posture (alpha)
++
++Documented threat analysis lives in the repository's governance tree
++(`.straymark/02-design/risk-analysis/` and `.straymark/08-security/`).
++Highlights relevant to users:
++
++- **OAuth tokens never touch disk in cleartext and never travel raw over
++  D-Bus**: they live in the system keyring (Secret Service); the D-Bus API
++  exposes only opaque session handles.
++- The Flatpak sandbox uses **scoped D-Bus names** (no unrestricted
++  `--socket=session-bus`).
++- The config parser is hardened against YAML expansion attacks
++  (billion-laughs caps).
++- CI runs `cargo audit` and `cargo deny` on every change to the engine.
++
++Known limitations of the alpha (host-side components outside the Flatpak
++sandbox, FUSE device access) are documented in the release notes of each
++pre-release.
+diff --git a/docs/screenshots/README.md b/docs/screenshots/README.md
+new file mode 100644
+index 0000000..ab1b1d8
+--- /dev/null
++++ b/docs/screenshots/README.md
+@@ -0,0 +1,16 @@
++# Screenshots (Charter-01 Fase 5)
++
++Capturas en la VM Nivel-5 (GNOME Wayland real). **Nombres canónicos** — ya
++referenciados por el README raíz y el metainfo de AppStream; no renombrar:
++
++| Archivo | Contenido | Referenciado por |
++|---------|-----------|------------------|
++| `preferences-window.png` | Panel de preferencias (página Account con quota) | README + metainfo (default) |
++| `onboarding-wizard.png` | Wizard de onboarding (conexión de cuenta) | README + metainfo |
++| `conflict-dialog.png` | Diálogo de resolución de conflictos lado a lado | README + metainfo |
++| `shell-indicator.png` | Indicador en GNOME Shell | README |
++| `status-menu.png` | Menú de estado desplegado | README |
++| `nautilus-overlays.png` | Nautilus con overlays de estado de sync | README |
++
++Formato: PNG, idealmente 16:9 o proporción de ventana natural, sin
++información personal (cuenta de prueba).
+diff --git a/docs/screenshots/conflict-dialog.png b/docs/screenshots/conflict-dialog.png
+new file mode 100644
+index 0000000..ec93e8b
+Binary files /dev/null and b/docs/screenshots/conflict-dialog.png differ
+diff --git a/docs/screenshots/nautilus-overlays.png b/docs/screenshots/nautilus-overlays.png
+new file mode 100644
+index 0000000..773a6cf
+Binary files /dev/null and b/docs/screenshots/nautilus-overlays.png differ
+diff --git a/docs/screenshots/onboarding-wizard.png b/docs/screenshots/onboarding-wizard.png
+new file mode 100644
+index 0000000..815fa0e
+Binary files /dev/null and b/docs/screenshots/onboarding-wizard.png differ
+diff --git a/docs/screenshots/preferences-window.png b/docs/screenshots/preferences-window.png
+new file mode 100644
+index 0000000..1f959a8
+Binary files /dev/null and b/docs/screenshots/preferences-window.png differ
+diff --git a/docs/screenshots/shell-indicator.png b/docs/screenshots/shell-indicator.png
+new file mode 100644
+index 0000000..af2e26b
+Binary files /dev/null and b/docs/screenshots/shell-indicator.png differ
+diff --git a/docs/screenshots/status-menu.png b/docs/screenshots/status-menu.png
+new file mode 100644
+index 0000000..3d4c75d
+Binary files /dev/null and b/docs/screenshots/status-menu.png differ
+diff --git a/lnxdrive-engine/Cargo.lock b/lnxdrive-engine/Cargo.lock
+index 37a3745..cefefce 100644
+--- a/lnxdrive-engine/Cargo.lock
++++ b/lnxdrive-engine/Cargo.lock
+@@ -1507,7 +1507,7 @@ checksum = "6373607a59f0be73a39b6fe456b8192fcc3585f602af20751600e974dd455e77"
+ 
+ [[package]]
+ name = "lnxdrive-audit"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ dependencies = [
+  "serde",
+  "serde_json",
+@@ -1517,7 +1517,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "lnxdrive-cache"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ dependencies = [
+  "anyhow",
+  "async-trait",
+@@ -1534,7 +1534,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "lnxdrive-cli"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ dependencies = [
+  "anyhow",
+  "chrono",
+@@ -1557,7 +1557,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "lnxdrive-conflict"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ dependencies = [
+  "lnxdrive-core",
+  "serde",
+@@ -1567,7 +1567,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "lnxdrive-core"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ dependencies = [
+  "anyhow",
+  "async-trait",
+@@ -1583,7 +1583,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "lnxdrive-daemon"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ dependencies = [
+  "anyhow",
+  "async-trait",
+@@ -1605,7 +1605,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "lnxdrive-fuse"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ dependencies = [
+  "anyhow",
+  "chrono",
+@@ -1632,7 +1632,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "lnxdrive-graph"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ dependencies = [
+  "anyhow",
+  "async-trait",
+@@ -1659,7 +1659,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "lnxdrive-ipc"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ dependencies = [
+  "anyhow",
+  "async-trait",
+@@ -1674,7 +1674,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "lnxdrive-sync"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ dependencies = [
+  "anyhow",
+  "async-trait",
+@@ -1691,7 +1691,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "lnxdrive-telemetry"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ dependencies = [
+  "prometheus",
+  "reqwest",
+diff --git a/lnxdrive-engine/Cargo.toml b/lnxdrive-engine/Cargo.toml
+index 435c0d1..909fc23 100644
+--- a/lnxdrive-engine/Cargo.toml
++++ b/lnxdrive-engine/Cargo.toml
+@@ -15,7 +15,7 @@ members = [
+ ]
+ 
+ [workspace.package]
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ edition = "2021"
+ authors = ["Strange Days Tech, S.A.S. <contact@strangedays.tech>"]
+ license = "GPL-3.0-or-later"
+diff --git a/lnxdrive-gnome/Cargo.lock b/lnxdrive-gnome/Cargo.lock
+index 65fec11..80ca897 100644
+--- a/lnxdrive-gnome/Cargo.lock
++++ b/lnxdrive-gnome/Cargo.lock
+@@ -1005,7 +1005,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "lnxdrive-gnome"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ dependencies = [
+  "anyhow",
+  "gio",
+diff --git a/lnxdrive-gnome/Cargo.toml b/lnxdrive-gnome/Cargo.toml
+index 5fabf69..0ad7cff 100644
+--- a/lnxdrive-gnome/Cargo.toml
++++ b/lnxdrive-gnome/Cargo.toml
+@@ -1,6 +1,6 @@
+ [package]
+ name = "lnxdrive-gnome"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ edition = "2021"
+ authors = ["Strange Days Tech, S.A.S. <contact@strangedays.tech>"]
+ license = "GPL-3.0-or-later"
+diff --git a/lnxdrive-gnome/meson.build b/lnxdrive-gnome/meson.build
+index 4ff27eb..c20a64c 100644
+--- a/lnxdrive-gnome/meson.build
++++ b/lnxdrive-gnome/meson.build
+@@ -1,7 +1,7 @@
+ project(
+   'lnxdrive-gnome',
+   'c',
+-  version: '0.1.0',
++  version: '0.1.0-alpha.1',
+   license: 'GPL-3.0-or-later',
+   meson_version: '>= 0.62.0',
+   default_options: [
+diff --git a/lnxdrive-gnome/preferences/Cargo.lock b/lnxdrive-gnome/preferences/Cargo.lock
+index 2a8a07e..8d30643 100644
+--- a/lnxdrive-gnome/preferences/Cargo.lock
++++ b/lnxdrive-gnome/preferences/Cargo.lock
+@@ -1170,7 +1170,7 @@ checksum = "6373607a59f0be73a39b6fe456b8192fcc3585f602af20751600e974dd455e77"
+ 
+ [[package]]
+ name = "lnxdrive-preferences"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ dependencies = [
+  "futures-util",
+  "gettext-rs",
 diff --git a/lnxdrive-gnome/preferences/Cargo.toml b/lnxdrive-gnome/preferences/Cargo.toml
-index 3b9bf7e..a8a4fd3 100644
+index a8a4fd3..6bb5480 100644
 --- a/lnxdrive-gnome/preferences/Cargo.toml
 +++ b/lnxdrive-gnome/preferences/Cargo.toml
-@@ -21,3 +21,10 @@ serde = { version = "1", features = ["derive"] }
- serde_json = "1"
- tokio = { version = "1", features = ["rt"] }
- futures-util = "0.3"
+@@ -1,6 +1,6 @@
+ [package]
+ name = "lnxdrive-preferences"
+-version = "0.1.0"
++version = "0.1.0-alpha.1"
+ edition = "2021"
+ license = "GPL-3.0-or-later"
+ description = "LNXDrive preferences and onboarding application for GNOME"
+diff --git a/lnxdrive-gnome/preferences/data/com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in b/lnxdrive-gnome/preferences/data/com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in
+index 83f541c..9a42e7f 100644
+--- a/lnxdrive-gnome/preferences/data/com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in
++++ b/lnxdrive-gnome/preferences/data/com.strangedaystech.LNXDrive.Preferences.metainfo.xml.in
+@@ -9,9 +9,27 @@
+     <p>
+       LNXDrive Preferences lets you manage your cloud synchronization settings
+       directly from GNOME. Configure your OneDrive accounts, choose which folders
+-      to sync, set bandwidth limits, and control files-on-demand behavior -- all
++      to sync, set bandwidth limits, and control files-on-demand behavior — all
+       from a single, native desktop application.
+     </p>
++    <p>
++      LNXDrive is a OneDrive synchronization client for Linux built around a
++      background daemon with files-on-demand support: your cloud files appear in
++      the file manager and download only when you open them. The preferences
++      panel talks to the daemon over D-Bus and covers the full day-to-day
++      configuration surface:
++    </p>
++    <ul>
++      <li>Account: sign in with Microsoft via GNOME Online Accounts or the browser flow, see quota usage live, and sign out safely</li>
++      <li>Folders: pick which OneDrive folders sync to your computer, including nested selective sync</li>
++      <li>Network: cap upload and download bandwidth so syncing never gets in your way</li>
++      <li>Conflicts: review files changed both locally and in the cloud, and resolve them side by side</li>
++    </ul>
++    <p>
++      OAuth tokens are stored in the system keyring (Secret Service), never on
++      disk in cleartext. This alpha release targets GNOME on Wayland and ships
++      as a Flatpak.
++    </p>
+   </description>
+ 
+   <project_license>GPL-3.0-or-later</project_license>
+@@ -21,12 +39,40 @@
+     <name>Strange Days Tech</name>
+   </developer>
+ 
+-  <url type="homepage">https://github.com/strangedaystech/lnxdrive-gnome</url>
++  <url type="homepage">https://github.com/StrangeDaysTech/lnxdrive</url>
++  <url type="bugtracker">https://github.com/StrangeDaysTech/lnxdrive/issues</url>
++  <url type="vcs-browser">https://github.com/StrangeDaysTech/lnxdrive</url>
+ 
+   <content_rating type="oars-1.1" />
+ 
++  <!-- Screenshot PNGs land in docs/screenshots/ in Charter-01 Fase 5; the
++       file names below are the canonical ones Fase 5 must produce. -->
++  <screenshots>
++    <screenshot type="default">
++      <caption>Preferences window with account and quota overview</caption>
++      <image>https://raw.githubusercontent.com/StrangeDaysTech/lnxdrive/main/docs/screenshots/preferences-window.png</image>
++    </screenshot>
++    <screenshot>
++      <caption>Onboarding wizard: connect your OneDrive account</caption>
++      <image>https://raw.githubusercontent.com/StrangeDaysTech/lnxdrive/main/docs/screenshots/onboarding-wizard.png</image>
++    </screenshot>
++    <screenshot>
++      <caption>Side-by-side conflict resolution dialog</caption>
++      <image>https://raw.githubusercontent.com/StrangeDaysTech/lnxdrive/main/docs/screenshots/conflict-dialog.png</image>
++    </screenshot>
++  </screenshots>
 +
-+[features]
-+# GNOME Online Accounts SSO (FR-019–023). Enabled by default; the GOA button is
-+# only shown when an "lnxdrive_microsoft" account exists, so it degrades to the
-+# manual browser flow when GOA or the provider is absent.
-+default = ["goa"]
-+goa = []
-diff --git a/lnxdrive-gnome/preferences/src/app.rs b/lnxdrive-gnome/preferences/src/app.rs
-index 16b8925..b7b1b66 100644
---- a/lnxdrive-gnome/preferences/src/app.rs
-+++ b/lnxdrive-gnome/preferences/src/app.rs
-@@ -9,7 +9,6 @@ use gtk4::glib;
- use gtk4::prelude::*;
- use gtk4::subclass::prelude::ObjectSubclassIsExt;
- use libadwaita as adw;
--use libadwaita::prelude::*;
+   <releases>
+-    <release version="0.1.0" date="2026-02-05" />
++    <release version="0.1.0-alpha.1" date="2026-06-04" type="development">
++      <description>
++        <p>
++          First public alpha for GNOME early adopters: daemon with
++          files-on-demand (FUSE), CLI, GTK4 preferences panel, GNOME Shell
++          indicator, Nautilus sync-state overlays and GOA single sign-on.
++          Distributed as a Flatpak bundle on GitHub Releases.
++        </p>
++      </description>
++    </release>
+   </releases>
  
- use crate::dbus_client::DbusClient;
- use crate::window::LnxdriveWindow;
-diff --git a/lnxdrive-gnome/preferences/src/conflicts/conflict_dialog.rs b/lnxdrive-gnome/preferences/src/conflicts/conflict_dialog.rs
-index ffceb7d..0e4be3e 100644
---- a/lnxdrive-gnome/preferences/src/conflicts/conflict_dialog.rs
-+++ b/lnxdrive-gnome/preferences/src/conflicts/conflict_dialog.rs
-@@ -219,18 +219,18 @@ impl ConflictDetailDialog {
+   <launchable type="desktop-id">com.strangedaystech.LNXDrive.Preferences.desktop</launchable>
+diff --git a/lnxdrive-packaging/README.md b/lnxdrive-packaging/README.md
+index 672d772..ae7b1a3 100644
+--- a/lnxdrive-packaging/README.md
++++ b/lnxdrive-packaging/README.md
+@@ -2,68 +2,58 @@
  
-         // Local version
-         let local_group = adw::PreferencesGroup::builder()
--            .title(&gettext("Local Version"))
-+            .title(gettext("Local Version"))
-             .build();
-         let local_size_row = adw::ActionRow::builder()
--            .title(&gettext("Size"))
--            .subtitle(&format_bytes(conflict.local_size))
-+            .title(gettext("Size"))
-+            .subtitle(format_bytes(conflict.local_size))
-             .build();
-         let local_modified_row = adw::ActionRow::builder()
--            .title(&gettext("Modified"))
-+            .title(gettext("Modified"))
-             .subtitle(&conflict.local_modified)
-             .build();
-         let local_hash_row = adw::ActionRow::builder()
--            .title(&gettext("Hash"))
-+            .title(gettext("Hash"))
-             .subtitle(&conflict.local_hash)
-             .build();
-         local_group.add(&local_size_row);
-@@ -239,18 +239,18 @@ impl ConflictDetailDialog {
+ Scripts y configuraciones de empaquetamiento para LNXDrive.
  
-         // Remote version
-         let remote_group = adw::PreferencesGroup::builder()
--            .title(&gettext("Remote Version"))
-+            .title(gettext("Remote Version"))
-             .build();
-         let remote_size_row = adw::ActionRow::builder()
--            .title(&gettext("Size"))
--            .subtitle(&format_bytes(conflict.remote_size))
-+            .title(gettext("Size"))
-+            .subtitle(format_bytes(conflict.remote_size))
-             .build();
-         let remote_modified_row = adw::ActionRow::builder()
--            .title(&gettext("Modified"))
-+            .title(gettext("Modified"))
-             .subtitle(&conflict.remote_modified)
-             .build();
-         let remote_hash_row = adw::ActionRow::builder()
--            .title(&gettext("Hash"))
-+            .title(gettext("Hash"))
-             .subtitle(&conflict.remote_hash)
-             .build();
-         remote_group.add(&remote_size_row);
-@@ -263,26 +263,26 @@ impl ConflictDetailDialog {
+-## Descripción
++## Estado actual (v0.1.0-alpha)
  
-         // -- Resolution actions -----------------------------------------------
-         let actions_group = adw::PreferencesGroup::builder()
--            .title(&gettext("Resolution"))
-+            .title(gettext("Resolution"))
-             .build();
+-Este repositorio centraliza todo el empaquetamiento de LNXDrive para diferentes formatos y distribuciones:
++El alpha distribuye **únicamente Flatpak** (decisión de alcance del
++Charter-01). Los demás formatos están diferidos al milestone `v0.2.0-beta`:
  
-         let keep_local_row = adw::ActionRow::builder()
--            .title(&gettext("Keep Local"))
--            .subtitle(&gettext("Upload the local version, overwriting the remote"))
-+            .title(gettext("Keep Local"))
-+            .subtitle(gettext("Upload the local version, overwriting the remote"))
-             .activatable(true)
-             .build();
-         keep_local_row.add_suffix(&gtk4::Image::from_icon_name("go-up-symbolic"));
+-- **Flatpak**: Distribución universal (recomendado)
+-- **RPM**: Fedora, RHEL, openSUSE
+-- **DEB**: Debian, Ubuntu, Linux Mint
+-- **AUR**: Arch Linux
+-- **AppImage**: Ejecutable portable
++| Formato | Estado |
++|---------|--------|
++| **Flatpak** (`flatpak/`) | ✅ Activo — bundle publicado en GitHub Releases |
++| RPM (Fedora, RHEL, openSUSE) | Diferido a `v0.2.0-beta` |
++| DEB (Debian, Ubuntu, Mint) | Diferido a `v0.2.0-beta` |
++| AUR (Arch Linux) | Diferido a `v0.2.0-beta` |
++| AppImage | Diferido a `v0.2.0-beta` |
++| Flathub | Diferido a `v0.2.0-beta` (requiere vendoring de crates) |
  
-         let keep_remote_row = adw::ActionRow::builder()
--            .title(&gettext("Keep Remote"))
--            .subtitle(&gettext("Download the remote version, overwriting the local"))
-+            .title(gettext("Keep Remote"))
-+            .subtitle(gettext("Download the remote version, overwriting the local"))
-             .activatable(true)
-             .build();
-         keep_remote_row.add_suffix(&gtk4::Image::from_icon_name("go-down-symbolic"));
+ ## Estructura
  
-         let keep_both_row = adw::ActionRow::builder()
--            .title(&gettext("Keep Both"))
--            .subtitle(&gettext("Rename the local file and download the remote version"))
-+            .title(gettext("Keep Both"))
-+            .subtitle(gettext("Rename the local file and download the remote version"))
-             .activatable(true)
-             .build();
-         keep_both_row.add_suffix(&gtk4::Image::from_icon_name("edit-copy-symbolic"));
-diff --git a/lnxdrive-gnome/preferences/src/conflicts/conflict_list.rs b/lnxdrive-gnome/preferences/src/conflicts/conflict_list.rs
-index 55c6fc6..684b9d3 100644
---- a/lnxdrive-gnome/preferences/src/conflicts/conflict_list.rs
-+++ b/lnxdrive-gnome/preferences/src/conflicts/conflict_list.rs
-@@ -150,12 +150,12 @@ impl ConflictListPage {
+ ```
+ lnxdrive-packaging/
+-├── flatpak/          # Manifiestos Flatpak
+-├── rpm/              # Especificaciones RPM
+-├── debian/           # Empaquetamiento Debian
+-├── aur/              # PKGBUILD para AUR
+-├── appimage/         # Configuración AppImage
+-└── scripts/          # Scripts de build y release
++├── flatpak/          # Manifiesto Flatpak (com.strangedaystech.LNXDrive.yaml)
++└── scripts/          # Scripts de build y release (placeholder)
+ ```
  
-         // -- Conflicts list group ---------------------------------------------
-         let conflicts_group = adw::PreferencesGroup::builder()
--            .title(&gettext("Unresolved Conflicts"))
-+            .title(gettext("Unresolved Conflicts"))
-             .build();
+-## Uso
++Los subdirectorios `rpm/`, `debian/`, `aur/` y `appimage/` se crearán cuando
++sus formatos se activen en `v0.2.0-beta`.
  
-         // Resolve All button in the header
-         let resolve_all_button = gtk4::Button::builder()
--            .label(&gettext("Resolve All"))
-+            .label(gettext("Resolve All"))
-             .css_classes(["flat"])
-             .build();
+-### Flatpak
++## Build local (Flatpak)
  
-@@ -167,7 +167,7 @@ impl ConflictListPage {
- 
-         // Empty state label
-         let empty_label = gtk4::Label::builder()
--            .label(&gettext("No unresolved conflicts"))
-+            .label(gettext("No unresolved conflicts"))
-             .css_classes(["dim-label"])
-             .margin_top(12)
-             .margin_bottom(12)
-@@ -222,11 +222,11 @@ impl ConflictListPage {
-         self.remove(&group);
- 
-         let new_group = adw::PreferencesGroup::builder()
--            .title(&gettext("Unresolved Conflicts"))
-+            .title(gettext("Unresolved Conflicts"))
-             .build();
- 
-         let resolve_all_button = gtk4::Button::builder()
--            .label(&gettext("Resolve All"))
-+            .label(gettext("Resolve All"))
-             .css_classes(["flat"])
-             .build();
- 
-@@ -238,8 +238,8 @@ impl ConflictListPage {
- 
-         if conflicts.is_empty() {
-             let empty_row = adw::ActionRow::builder()
--                .title(&gettext("No unresolved conflicts"))
--                .subtitle(&gettext("All files are in sync"))
-+                .title(gettext("No unresolved conflicts"))
-+                .subtitle(gettext("All files are in sync"))
-                 .build();
-             empty_row.add_prefix(&gtk4::Image::from_icon_name("emblem-ok-symbolic"));
-             new_group.add(&empty_row);
-@@ -287,8 +287,8 @@ impl ConflictListPage {
- 
-         // Build a simple strategy chooser dialog
-         let dialog = adw::AlertDialog::builder()
--            .heading(&gettext("Resolve All Conflicts"))
--            .body(&gettext("Choose a strategy to apply to all unresolved conflicts."))
-+            .heading(gettext("Resolve All Conflicts"))
-+            .body(gettext("Choose a strategy to apply to all unresolved conflicts."))
-             .build();
- 
-         dialog.add_response("cancel", &gettext("Cancel"));
-diff --git a/lnxdrive-gnome/preferences/src/dbus_client.rs b/lnxdrive-gnome/preferences/src/dbus_client.rs
-index f46ab7e..82dc28a 100644
---- a/lnxdrive-gnome/preferences/src/dbus_client.rs
-+++ b/lnxdrive-gnome/preferences/src/dbus_client.rs
-@@ -84,13 +84,11 @@ pub trait LnxdriveAuth {
-     /// Finish an auth flow with an explicit code + state (manual/CLI/GOA).
-     async fn complete_auth(&self, code: &str, state: &str) -> zbus::Result<bool>;
- 
--    /// Complete auth using pre-obtained tokens (e.g. from GNOME Online Accounts).
--    async fn complete_auth_with_tokens(
--        &self,
--        access_token: &str,
--        refresh_token: &str,
--        expires_at_unix: i64,
--    ) -> zbus::Result<bool>;
-+    /// Complete auth using an existing GNOME Online Accounts account. The daemon
-+    /// fetches the tokens from GOA and persists them in the keyring itself, so
-+    /// tokens never cross the D-Bus surface (RISK-002). `goa_account_path` is the
-+    /// GOA account object path (e.g. `/org/gnome/OnlineAccounts/Accounts/...`).
-+    async fn complete_auth_via_goa(&self, goa_account_path: &str) -> zbus::Result<bool>;
- 
-     /// Log out the current user and revoke tokens.
-     async fn logout(&self) -> zbus::Result<()>;
-@@ -128,6 +126,10 @@ trait LnxdriveSettings {
- 
-     /// Return the remote folder tree as a JSON string.
-     async fn get_remote_folder_tree(&self) -> zbus::Result<String>;
-+
-+    /// Emitted when any configuration key changes (e.g. from the CLI).
-+    #[zbus(signal)]
-+    fn config_changed(&self, key: &str) -> zbus::Result<()>;
- }
- 
- /// com.strangedaystech.LNXDrive.Status — account and quota information
-@@ -136,12 +138,28 @@ trait LnxdriveSettings {
-     default_service = "com.strangedaystech.LNXDrive",
-     default_path = "/com/strangedaystech/LNXDrive"
- )]
--trait LnxdriveStatus {
-+pub trait LnxdriveStatus {
-     /// Return (used_bytes, total_bytes).
-     async fn get_quota(&self) -> zbus::Result<(u64, u64)>;
- 
-     /// Return a dict of account metadata (display_name, email, etc.).
-     async fn get_account_info(&self) -> zbus::Result<HashMap<String, OwnedValue>>;
-+
-+    /// Cloud connection state: "online", "offline", or "reconnecting".
-+    #[zbus(property)]
-+    fn connection_status(&self) -> zbus::Result<String>;
-+
-+    /// Session-bus health: "online", "reconnecting", or "lost".
-+    #[zbus(property)]
-+    fn dbus_health(&self) -> zbus::Result<String>;
-+
-+    /// Emitted when the storage quota changes (e.g. after a sync).
-+    #[zbus(signal)]
-+    fn quota_changed(&self, used: u64, total: u64) -> zbus::Result<()>;
-+
-+    /// Emitted when the cloud connection state changes.
-+    #[zbus(signal)]
-+    fn connection_changed(&self, status: &str) -> zbus::Result<()>;
- }
- 
- /// com.strangedaystech.LNXDrive.Sync — sync control
-@@ -159,6 +177,30 @@ trait LnxdriveSync {
- 
-     /// Resume sync.
-     async fn resume(&self) -> zbus::Result<()>;
-+
-+    /// Current sync state: "idle", "syncing", "paused", or "error".
-+    #[zbus(property)]
-+    fn sync_status(&self) -> zbus::Result<String>;
-+
-+    /// Unix timestamp of the last completed sync (0 = never).
-+    #[zbus(property)]
-+    fn last_sync_time(&self) -> zbus::Result<i64>;
-+
-+    /// Number of pending file operations.
-+    #[zbus(property)]
-+    fn pending_changes(&self) -> zbus::Result<u32>;
-+
-+    /// Emitted when a sync cycle starts.
-+    #[zbus(signal)]
-+    fn sync_started(&self) -> zbus::Result<()>;
-+
-+    /// Emitted when a sync cycle completes.
-+    #[zbus(signal)]
-+    fn sync_completed(&self, files_synced: u32, errors: u32) -> zbus::Result<()>;
-+
-+    /// Emitted for each file during sync.
-+    #[zbus(signal)]
-+    fn sync_progress(&self, file: &str, current: u32, total: u32) -> zbus::Result<()>;
- }
- 
- /// com.strangedaystech.LNXDrive.Conflicts — conflict detection and resolution
-@@ -231,17 +273,12 @@ impl DbusClient {
-         Ok(proxy.complete_auth(code, state).await?)
-     }
- 
--    /// Complete auth with pre-obtained tokens from GNOME Online Accounts.
--    pub async fn complete_auth_with_tokens(
--        &self,
--        access_token: &str,
--        refresh_token: &str,
--        expires_at_unix: i64,
--    ) -> Result<bool, DbusError> {
-+    /// Complete auth via an existing GNOME Online Accounts account. The daemon
-+    /// fetches the tokens from GOA and persists them in the keyring; tokens never
-+    /// cross the D-Bus surface (RISK-002). Pass the GOA account object path.
-+    pub async fn complete_auth_via_goa(&self, goa_account_path: &str) -> Result<bool, DbusError> {
-         let proxy = LnxdriveAuthProxy::new(&self.connection).await?;
--        Ok(proxy
--            .complete_auth_with_tokens(access_token, refresh_token, expires_at_unix)
--            .await?)
-+        Ok(proxy.complete_auth_via_goa(goa_account_path).await?)
-     }
- 
-     /// Log out the current user.
-diff --git a/lnxdrive-gnome/preferences/src/goa_sso.rs b/lnxdrive-gnome/preferences/src/goa_sso.rs
-index 9aa9fc5..2908d41 100644
---- a/lnxdrive-gnome/preferences/src/goa_sso.rs
-+++ b/lnxdrive-gnome/preferences/src/goa_sso.rs
-@@ -13,53 +13,19 @@ const GOA_MANAGER_PATH: &str = "/org/gnome/OnlineAccounts";
- 
- /// Checks whether a GOA account with provider type "lnxdrive_microsoft" exists.
- pub async fn has_lnxdrive_goa_account() -> bool {
--    match find_goa_account_path().await {
--        Ok(Some(_)) => true,
--        _ => false,
--    }
-+    matches!(find_goa_account_path().await, Ok(Some(_)))
- }
- 
--/// Retrieves OAuth2 tokens from the existing GOA account.
-+/// Returns the D-Bus object path of the existing "lnxdrive_microsoft" GOA
-+/// account, if any.
- ///
--/// Returns (access_token, refresh_token, expires_at_unix) on success.
--pub async fn get_goa_tokens() -> Result<(String, String, i64), String> {
--    let path = find_goa_account_path()
--        .await
--        .map_err(|e| format!("D-Bus error: {e}"))?
--        .ok_or_else(|| "No LNXDrive GOA account found".to_string())?;
+-```bash
+-cd flatpak
+-flatpak-builder --user --install builddir com.strangedaystech.LNXDrive.yaml
+-```
 -
--    let conn = Connection::session()
-+/// Post-RISK-002 the client no longer fetches tokens itself: it hands this path
-+/// to the daemon via `Auth.CompleteAuthViaGOA`, and the daemon reads the tokens
-+/// from GOA and stores them in the keyring, so tokens never cross D-Bus.
-+pub async fn lnxdrive_goa_account_path() -> Result<Option<String>, String> {
-+    find_goa_account_path()
-         .await
--        .map_err(|e| format!("Session bus: {e}"))?;
+-### RPM (Fedora)
 -
--    // Call GetAccessToken on the OAuth2Based interface
--    let msg = conn
--        .call_method(
--            Some(GOA_BUS_NAME.into()),
--            &path,
--            Some("org.gnome.OnlineAccounts.OAuth2Based".into()),
--            "GetAccessToken",
--            &(),
--        )
--        .await
--        .map_err(|e| format!("GetAccessToken: {e}"))?;
+-```bash
+-cd rpm
+-rpmbuild -ba lnxdrive.spec
+-```
 -
--    let (access_token, expires_in): (String, i32) = msg
--        .body()
--        .deserialize()
--        .map_err(|e| format!("Deserialize: {e}"))?;
+-### DEB (Debian/Ubuntu)
++Desde la **raíz del monorepo** (las sources del manifiesto son rutas `dir`
++relativas):
+ 
+ ```bash
+-cd debian
+-dpkg-buildpackage -us -uc
++flatpak-builder --user --install --force-clean build-dir \
++  lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml
+ ```
+ 
+-### AUR
++O con el builder de Flathub si `flatpak-builder` no está empaquetado en tu
++distro:
+ 
+ ```bash
+-cd aur
+-makepkg -si
++flatpak install --user flathub org.flatpak.Builder
++flatpak run org.flatpak.Builder --user --install --force-clean build-dir \
++  lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml
+ ```
+ 
+-### AppImage
 -
--    // GOA doesn't expose refresh_token via D-Bus; the GOA daemon manages it.
--    // For daemon-side refresh, we pass a sentinel and rely on GOA-aware refresh.
--    let refresh_token = "__goa_managed__".to_string();
--
--    let now = std::time::SystemTime::now()
--        .duration_since(std::time::UNIX_EPOCH)
--        .unwrap_or_default()
--        .as_secs() as i64;
--    let expires_at = now + expires_in as i64;
--
--    Ok((access_token, refresh_token, expires_at))
-+        .map_err(|e| format!("D-Bus error: {e}"))
- }
+-```bash
+-cd appimage
+-./build-appimage.sh
+-```
++El bundle incluye `lnxdrived` (daemon), `lnxdrive` (CLI) y
++`lnxdrive-preferences` (panel GTK4). Las extensiones de Nautilus/Shell y el
++provider GOA son componentes host-side y quedan fuera del sandbox.
  
- /// Finds the D-Bus object path of the first GOA account with provider
-@@ -70,9 +36,9 @@ async fn find_goa_account_path() -> Result<Option<String>, zbus::Error> {
-     // Use the ObjectManager to enumerate all GOA accounts
-     let msg = conn
-         .call_method(
--            Some(GOA_BUS_NAME.into()),
-+            Some(GOA_BUS_NAME),
-             GOA_MANAGER_PATH,
--            Some("org.freedesktop.DBus.ObjectManager".into()),
-+            Some("org.freedesktop.DBus.ObjectManager"),
-             "GetManagedObjects",
-             &(),
-         )
-diff --git a/lnxdrive-gnome/preferences/src/onboarding/auth_page.rs b/lnxdrive-gnome/preferences/src/onboarding/auth_page.rs
-index e4789a0..d3069cd 100644
---- a/lnxdrive-gnome/preferences/src/onboarding/auth_page.rs
-+++ b/lnxdrive-gnome/preferences/src/onboarding/auth_page.rs
-@@ -99,7 +99,7 @@ impl AuthPage {
+ ## Release
  
-         // Sign-in button
-         let sign_in_button = gtk4::Button::builder()
--            .label(&gettext("Sign In"))
-+            .label(gettext("Sign In"))
-             .halign(gtk4::Align::Center)
-             .css_classes(["suggested-action", "pill"])
-             .build();
-@@ -116,7 +116,7 @@ impl AuthPage {
+-El script `scripts/release.sh` automatiza la creación de todos los paquetes para una nueva versión.
++El workflow `.github/workflows/release.yml` (raíz del monorepo) construye el
++bundle y publica el GitHub Release con `SHA256SUMS` al pushear un tag `v*`.
  
-         // Waiting-state cancel button (hidden initially)
-         let cancel_button = gtk4::Button::builder()
--            .label(&gettext("Cancel"))
-+            .label(gettext("Cancel"))
-             .halign(gtk4::Align::Center)
-             .css_classes(["destructive-action", "pill"])
-             .visible(false)
-@@ -126,15 +126,15 @@ impl AuthPage {
+ ## Licencia
  
-         // Waiting label (hidden initially, placed next to spinner)
-         let waiting_label = gtk4::Label::builder()
--            .label(&gettext("Waiting for authentication..."))
-+            .label(gettext("Waiting for authentication..."))
-             .visible(false)
-             .build();
+diff --git a/lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml b/lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml
+index 7a2e459..8380f82 100644
+--- a/lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml
++++ b/lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml
+@@ -1,46 +1,88 @@
+-# Flatpak manifest for LNXDrive
+-# Build with: flatpak-builder --user --install builddir com.strangedaystech.LNXDrive.yaml
++# Flatpak manifest for LNXDrive (v0.1.0-alpha — Charter-01 Fase 4)
++#
++# Build & install (from the monorepo root):
++#   flatpak run org.flatpak.Builder --user --install --force-clean build-dir \
++#     lnxdrive-packaging/flatpak/com.strangedaystech.LNXDrive.yaml
++#
++# Ships: lnxdrived (daemon), lnxdrive (CLI), lnxdrive-preferences (GTK4 panel),
++# app icons, desktop entry, AppStream metainfo and GSettings schema.
++# NOT shipped (host-side components, cannot live inside the sandbox):
++#   - Nautilus extension (loads into the host Nautilus process)
++#   - GNOME Shell extension (loads into the host gnome-shell process)
++#   - GOA provider (system-level GOA backend)
++#
++# Sources are `dir` type (relative to this manifest) so the bundle always
++# builds from the local monorepo checkout — both for the operator's local
++# verification and for the release workflow (Charter-01 Fase 5).
++#
++# NOTE (Flathub): cargo fetches crates.io during build via
++# `build-args: --share=network`. A Flathub submission would require vendored
++# sources (flatpak-cargo-generator); deferred — GitHub Releases bundle only
++# for the alpha.
  
-         // Status page
-         let status_page = adw::StatusPage::builder()
-             .icon_name("dialog-password-symbolic")
--            .title(&gettext("Sign in to OneDrive"))
--            .description(&gettext(
-+            .title(gettext("Sign in to OneDrive"))
-+            .description(gettext(
-                 "Connect your Microsoft account to start syncing files.",
-             ))
-             .build();
-@@ -143,7 +143,7 @@ impl AuthPage {
-         #[cfg(feature = "goa")]
-         {
-             let goa_button = gtk4::Button::builder()
--                .label(&gettext("Use existing Microsoft account"))
-+                .label(gettext("Use existing Microsoft account"))
-                 .halign(gtk4::Align::Center)
-                 .css_classes(["suggested-action", "pill"])
-                 .visible(false) // hidden until GOA check completes
-@@ -356,12 +356,11 @@ impl AuthPage {
-         let wl = waiting_label.clone();
+ app-id: com.strangedaystech.LNXDrive
+ runtime: org.gnome.Platform
+-runtime-version: '45'
++# GNOME 47 (Charter target) reached EOL in 2025; 49 is the oldest runtime that
++# is both supported in mid-2026 and satisfies the panel's gtk4 v4_14 +
++# libadwaita v1_6 feature gates. See AIDEC-2026-06-04-001.
++runtime-version: '49'
+ sdk: org.gnome.Sdk
+ sdk-extensions:
+   - org.freedesktop.Sdk.Extension.rust-stable
+-command: lnxdrive-gnome
++command: lnxdrive-preferences
  
-         glib::MainContext::default().spawn_local(async move {
--            match goa_sso::get_goa_tokens().await {
--                Ok((access_token, refresh_token, expires_at)) => {
--                    match dbus_client
--                        .complete_auth_with_tokens(&access_token, &refresh_token, expires_at)
--                        .await
--                    {
-+            // Hand the GOA account path to the daemon; it fetches the tokens from
-+            // GOA itself (RISK-002 — tokens never cross D-Bus).
-+            match goa_sso::lnxdrive_goa_account_path().await {
-+                Ok(Some(account_path)) => {
-+                    match dbus_client.complete_auth_via_goa(&account_path).await {
-                         Ok(true) => {
-                             // Fetch account info and push folder page
-                             if let Ok(info) = dbus_client.get_account_info().await {
-@@ -379,24 +378,26 @@ impl AuthPage {
-                         }
-                         Ok(false) => {
-                             page.show_error(&gettext(
--                                "The daemon rejected the GOA tokens. Try signing in manually.",
-+                                "The daemon rejected the GOA account. Try signing in manually.",
-                             ));
-                             page.set_waiting_state(false, &wl);
-                         }
-                         Err(e) => {
--                            page.show_error(&format!(
--                                "{}: {}",
--                                gettext("D-Bus error"),
--                                e
--                            ));
-+                            page.show_error(&format!("{}: {}", gettext("D-Bus error"), e));
-                             page.set_waiting_state(false, &wl);
-                         }
-                     }
-                 }
-+                Ok(None) => {
-+                    page.show_error(&gettext(
-+                        "No GNOME Online Accounts account found for LNXDrive.",
-+                    ));
-+                    page.set_waiting_state(false, &wl);
-+                }
-                 Err(e) => {
-                     page.show_error(&format!(
-                         "{}: {}",
--                        gettext("Could not get GOA tokens"),
-+                        gettext("Could not query GNOME Online Accounts"),
-                         e
-                     ));
-                     page.set_waiting_state(false, &wl);
-diff --git a/lnxdrive-gnome/preferences/src/onboarding/confirm_page.rs b/lnxdrive-gnome/preferences/src/onboarding/confirm_page.rs
-index 57e81b8..5c45c21 100644
---- a/lnxdrive-gnome/preferences/src/onboarding/confirm_page.rs
-+++ b/lnxdrive-gnome/preferences/src/onboarding/confirm_page.rs
-@@ -84,17 +84,19 @@ impl ConfirmPage {
-             .clone()
-             .unwrap_or_else(|| gettext("Not selected"));
- 
-+        // `ActionRow::icon_name` is deprecated since libadwaita 1.3; add the icon
-+        // as a prefix widget instead.
-         let email_row = adw::ActionRow::builder()
--            .title(&gettext("Account"))
-+            .title(gettext("Account"))
-             .subtitle(&account_email)
--            .icon_name("avatar-default-symbolic")
-             .build();
-+        email_row.add_prefix(&gtk4::Image::from_icon_name("avatar-default-symbolic"));
- 
-         let folder_row = adw::ActionRow::builder()
--            .title(&gettext("Sync Folder"))
-+            .title(gettext("Sync Folder"))
-             .subtitle(&sync_folder)
--            .icon_name("folder-symbolic")
-             .build();
-+        folder_row.add_prefix(&gtk4::Image::from_icon_name("folder-symbolic"));
- 
-         let summary_group = adw::PreferencesGroup::new();
-         summary_group.add(&email_row);
-@@ -102,7 +104,7 @@ impl ConfirmPage {
- 
-         // "Start Syncing" button
-         let start_button = gtk4::Button::builder()
--            .label(&gettext("Start Syncing"))
-+            .label(gettext("Start Syncing"))
-             .halign(gtk4::Align::Center)
-             .css_classes(["suggested-action", "pill"])
-             .build();
-@@ -118,8 +120,8 @@ impl ConfirmPage {
-         // Status page with check icon
-         let status_page = adw::StatusPage::builder()
-             .icon_name("emblem-ok-symbolic")
--            .title(&gettext("All Set!"))
--            .description(&gettext(
-+            .title(gettext("All Set!"))
-+            .description(gettext(
-                 "Your OneDrive account is ready. Review the details below and start syncing.",
-             ))
-             .build();
-diff --git a/lnxdrive-gnome/preferences/src/onboarding/folder_page.rs b/lnxdrive-gnome/preferences/src/onboarding/folder_page.rs
-index cf0627a..cbae7ef 100644
---- a/lnxdrive-gnome/preferences/src/onboarding/folder_page.rs
-+++ b/lnxdrive-gnome/preferences/src/onboarding/folder_page.rs
-@@ -79,14 +79,14 @@ impl FolderPage {
-         // Path display row
-         let initial_path = imp.selected_path.borrow().display().to_string();
-         let path_row = adw::ActionRow::builder()
--            .title(&gettext("Sync Folder"))
-+            .title(gettext("Sync Folder"))
-             .subtitle(&initial_path)
-             .build();
- 
-         // "Choose Folder..." button as a suffix
-         let choose_button = gtk4::Button::builder()
-             .icon_name("folder-open-symbolic")
--            .tooltip_text(&gettext("Choose Folder..."))
-+            .tooltip_text(gettext("Choose Folder..."))
-             .valign(gtk4::Align::Center)
-             .css_classes(["flat"])
-             .build();
-@@ -96,8 +96,8 @@ impl FolderPage {
-         imp.path_row.replace(Some(path_row.clone()));
- 
-         let prefs_group = adw::PreferencesGroup::builder()
--            .title(&gettext("Sync Location"))
--            .description(&gettext(
-+            .title(gettext("Sync Location"))
-+            .description(gettext(
-                 "Choose where OneDrive files will be stored on your computer.",
-             ))
-             .build();
-@@ -105,7 +105,7 @@ impl FolderPage {
- 
-         // Action buttons
-         let continue_button = gtk4::Button::builder()
--            .label(&gettext("Continue"))
-+            .label(gettext("Continue"))
-             .halign(gtk4::Align::Center)
-             .css_classes(["suggested-action", "pill"])
-             .build();
-@@ -159,7 +159,7 @@ impl FolderPage {
-     /// Open a folder chooser dialog.
-     fn on_choose_folder(&self) {
-         let dialog = gtk4::FileDialog::builder()
--            .title(&gettext("Choose Sync Folder"))
-+            .title(gettext("Choose Sync Folder"))
-             .modal(true)
-             .build();
- 
-diff --git a/lnxdrive-gnome/preferences/src/onboarding/mod.rs b/lnxdrive-gnome/preferences/src/onboarding/mod.rs
-index 21bd452..3b799bf 100644
---- a/lnxdrive-gnome/preferences/src/onboarding/mod.rs
-+++ b/lnxdrive-gnome/preferences/src/onboarding/mod.rs
-@@ -14,7 +14,6 @@ pub mod folder_page;
- use std::cell::RefCell;
- 
- use gtk4::glib;
--use gtk4::prelude::*;
- use libadwaita as adw;
- use libadwaita::prelude::*;
- 
-diff --git a/lnxdrive-gnome/preferences/src/preferences/account_page.rs b/lnxdrive-gnome/preferences/src/preferences/account_page.rs
-index fc4ba1e..e48639e 100644
---- a/lnxdrive-gnome/preferences/src/preferences/account_page.rs
-+++ b/lnxdrive-gnome/preferences/src/preferences/account_page.rs
-@@ -6,6 +6,7 @@
- 
- use std::cell::RefCell;
- 
-+use futures_util::StreamExt;
- use gettextrs::gettext;
- use gtk4::glib;
- use gtk4::prelude::*;
-@@ -14,7 +15,7 @@ use libadwaita::prelude::*;
- 
- use gtk4::subclass::prelude::ObjectSubclassIsExt;
- 
--use crate::dbus_client::DbusClient;
-+use crate::dbus_client::{DbusClient, LnxdriveStatusProxy};
- 
- // ---------------------------------------------------------------------------
- // AccountPage — adw::PreferencesPage subclass
-@@ -77,28 +78,52 @@ impl AccountPage {
-         page.build_ui();
-         page.load_account_info();
-         page.load_quota();
-+        page.subscribe_quota_changes();
- 
-         page
-     }
- 
-+    /// Keep the quota display live by listening for the daemon's `QuotaChanged`
-+    /// signal, instead of only reading it once at construction.
-+    fn subscribe_quota_changes(&self) {
-+        let client = match self.imp().dbus_client.borrow().clone() {
-+            Some(c) => c,
-+            None => return,
-+        };
+ finish-args:
++  # Wayland first, X11 fallback
++  - --socket=wayland
++  - --socket=fallback-x11
+   - --share=ipc
++  # Sync engine talks to Microsoft Graph
+   - --share=network
+-  - --socket=fallback-x11
+-  - --socket=wayland
+-  - --socket=session-bus
++  # Sync root lives in the user's home (Charter-01 scope item 5)
+   - --filesystem=home
++  # The daemon owns the well-known bus name; the panel and CLI talk to it.
++  # Scoped names instead of --socket=session-bus, in line with the RISK-002
++  # posture of keeping the D-Bus surface minimal.
++  - --own-name=com.strangedaystech.LNXDrive
++  # OAuth tokens at rest in the keyring (RISK-002 mitigation)
+   - --talk-name=org.freedesktop.secrets
++  # GOA single sign-on (CompleteAuthViaGOA)
+   - --talk-name=org.gnome.OnlineAccounts
++  # /dev/fuse for the files-on-demand mount (no finer-grained device class
++  # exists; Charter-01 R2 plans the VM smoke-test of FUSE under the sandbox)
++  - --device=all
 +
-+        let page = self.clone();
-+        glib::MainContext::default().spawn_local(async move {
-+            let conn = client.connection().clone();
-+            if let Ok(proxy) = LnxdriveStatusProxy::new(&conn).await {
-+                if let Ok(mut stream) = proxy.receive_quota_changed().await {
-+                    while let Some(signal) = stream.next().await {
-+                        if let Ok(args) = signal.args() {
-+                            page.update_quota_display(args.used, args.total);
-+                        }
-+                    }
-+                }
-+            }
-+        });
-+    }
-+
-     fn build_ui(&self) {
-         let imp = self.imp();
++build-options:
++  append-path: /usr/lib/sdk/rust-stable/bin
++  build-args:
++    - --share=network
  
-         // -- OneDrive Account group ------------------------------------------
+ modules:
+-  - name: lnxdrive
++  # Core engine: daemon + CLI (Cargo workspace, 12 crates)
++  - name: lnxdrive-engine
+     buildsystem: simple
+-    build-options:
+-      append-path: /usr/lib/sdk/rust-stable/bin
+     build-commands:
+-      - cargo build --release
++      - cargo build --release --locked -p lnxdrive-daemon -p lnxdrive-cli
+       - install -Dm755 target/release/lnxdrived -t /app/bin
+       - install -Dm755 target/release/lnxdrive -t /app/bin
+     sources:
+-      - type: git
+-        url: https://github.com/strangedaystech/lnxdrive.git
+-        tag: v0.1.0
++      - type: dir
++        path: ../../lnxdrive-engine
++        skip:
++          - target
  
-         let account_group = adw::PreferencesGroup::builder()
--            .title(&gettext("OneDrive Account"))
-+            .title(gettext("OneDrive Account"))
-             .build();
++  # GNOME integration: GTK4/libadwaita preferences panel + icons + i18n.
++  # Nautilus/Shell/GOA modules are host-side and stay disabled (see header).
+   - name: lnxdrive-gnome
+-    buildsystem: simple
+-    build-options:
+-      append-path: /usr/lib/sdk/rust-stable/bin
+-    build-commands:
+-      - cargo build --release
+-      - install -Dm755 target/release/lnxdrive-gnome -t /app/bin
++    buildsystem: meson
++    config-opts:
++      - -Denable_nautilus=false
++      - -Denable_shell=false
++      - -Denable_preferences=true
++      - -Denable_goa=false
+     sources:
+-      - type: git
+-        url: https://github.com/strangedaystech/lnxdrive-gnome.git
+-        tag: v0.1.0
++      - type: dir
++        path: ../../lnxdrive-gnome
++        skip:
++          - target
++          - preferences/target
+diff --git a/lnxdrive.spdx b/lnxdrive.spdx
+index 3a7c61c..9e15041 100644
+--- a/lnxdrive.spdx
++++ b/lnxdrive.spdx
+@@ -2,44 +2,20 @@ SPDXVersion: SPDX-2.3
+ DataLicense: CC0-1.0
+ SPDXID: SPDXRef-DOCUMENT
+ DocumentName: lnxdrive
+-DocumentNamespace: https://github.com/StrangeDaysTech/lnxdrive
++DocumentNamespace: https://github.com/StrangeDaysTech/lnxdrive/spdx/lnxdrive-0.1.0
+ Creator: Organization: Strange Days Tech, S.A.S.
+-Created: 2025-01-27T00:00:00Z
++Created: 2026-06-04T00:00:00Z
  
-         let email_row = adw::ActionRow::builder()
--            .title(&gettext("Email"))
--            .subtitle(&gettext("Loading..."))
-+            .title(gettext("Email"))
-+            .subtitle(gettext("Loading..."))
-             .build();
-         imp.email_row.replace(Some(email_row.clone()));
- 
-         let name_row = adw::ActionRow::builder()
--            .title(&gettext("Display Name"))
--            .subtitle(&gettext("Loading..."))
-+            .title(gettext("Display Name"))
-+            .subtitle(gettext("Loading..."))
-             .build();
-         imp.name_row.replace(Some(name_row.clone()));
- 
-@@ -108,7 +133,7 @@ impl AccountPage {
-         // -- Storage group ---------------------------------------------------
- 
-         let storage_group = adw::PreferencesGroup::builder()
--            .title(&gettext("Storage"))
-+            .title(gettext("Storage"))
-             .build();
- 
-         let level_bar = gtk4::LevelBar::builder()
-@@ -123,7 +148,7 @@ impl AccountPage {
-         imp.level_bar.replace(Some(level_bar.clone()));
- 
-         let quota_label = gtk4::Label::builder()
--            .label(&gettext("Loading storage info..."))
-+            .label(gettext("Loading storage info..."))
-             .css_classes(["dim-label", "caption"])
-             .margin_start(12)
-             .margin_end(12)
-@@ -151,11 +176,11 @@ impl AccountPage {
-         // -- Session group ---------------------------------------------------
- 
-         let session_group = adw::PreferencesGroup::builder()
--            .title(&gettext("Session"))
-+            .title(gettext("Session"))
-             .build();
- 
-         let sign_out_button = gtk4::Button::builder()
--            .label(&gettext("Sign Out"))
-+            .label(gettext("Sign Out"))
-             .halign(gtk4::Align::Center)
-             .css_classes(["destructive-action", "pill"])
-             .margin_top(8)
-@@ -279,8 +304,8 @@ impl AccountPage {
-     fn on_sign_out(&self) {
-         // Create a confirmation dialog.
-         let confirm = adw::AlertDialog::builder()
--            .heading(&gettext("Sign Out?"))
--            .body(&gettext(
-+            .heading(gettext("Sign Out?"))
-+            .body(gettext(
-                 "You will be signed out of your OneDrive account. Syncing will stop.",
-             ))
-             .build();
-diff --git a/lnxdrive-gnome/preferences/src/preferences/advanced_page.rs b/lnxdrive-gnome/preferences/src/preferences/advanced_page.rs
-index 0091919..ff84551 100644
---- a/lnxdrive-gnome/preferences/src/preferences/advanced_page.rs
-+++ b/lnxdrive-gnome/preferences/src/preferences/advanced_page.rs
-@@ -91,8 +91,8 @@ impl AdvancedPage {
-         // -- Exclusion Patterns group (FR-015) --------------------------------
- 
-         let patterns_group = adw::PreferencesGroup::builder()
--            .title(&gettext("Exclusion Patterns"))
--            .description(&gettext(
-+            .title(gettext("Exclusion Patterns"))
-+            .description(gettext(
-                 "Files and folders matching these glob patterns will not be synced.",
-             ))
-             .build();
-@@ -119,13 +119,13 @@ impl AdvancedPage {
-             .build();
- 
-         let entry = gtk4::Entry::builder()
--            .placeholder_text(&gettext("e.g. *.tmp, .git/, ~$*"))
-+            .placeholder_text(gettext("e.g. *.tmp, .git/, ~$*"))
-             .hexpand(true)
-             .build();
-         imp.pattern_entry.replace(Some(entry.clone()));
- 
-         let add_button = gtk4::Button::builder()
--            .label(&gettext("Add"))
-+            .label(gettext("Add"))
-             .css_classes(["suggested-action"])
-             .build();
- 
-@@ -154,8 +154,8 @@ impl AdvancedPage {
-         // -- Bandwidth Limits group (FR-017) ----------------------------------
- 
-         let bandwidth_group = adw::PreferencesGroup::builder()
--            .title(&gettext("Bandwidth Limits"))
--            .description(&gettext(
-+            .title(gettext("Bandwidth Limits"))
-+            .description(gettext(
-                 "Limit upload and download speeds. Set to 0 for unlimited.",
-             ))
-             .build();
-@@ -245,7 +245,7 @@ impl AdvancedPage {
- 
-         let delete_button = gtk4::Button::builder()
-             .icon_name("edit-delete-symbolic")
--            .tooltip_text(&gettext("Remove pattern"))
-+            .tooltip_text(gettext("Remove pattern"))
-             .valign(gtk4::Align::Center)
-             .css_classes(["flat", "circular"])
-             .build();
-diff --git a/lnxdrive-gnome/preferences/src/preferences/folder_tree.rs b/lnxdrive-gnome/preferences/src/preferences/folder_tree.rs
-index d51257d..9ffbb31 100644
---- a/lnxdrive-gnome/preferences/src/preferences/folder_tree.rs
-+++ b/lnxdrive-gnome/preferences/src/preferences/folder_tree.rs
-@@ -10,6 +10,7 @@
- 
- use std::cell::RefCell;
- 
-+use gettextrs::gettext;
- use gtk4::gio;
- use gtk4::glib;
- use gtk4::prelude::*;
-@@ -202,8 +203,7 @@ impl FolderTree {
-         }
- 
-         tree.build_ui();
--        tree.load_remote_tree();
--        tree.load_selected_folders();
-+        tree.load_tree_and_selections();
- 
-         tree
-     }
-@@ -357,29 +357,14 @@ impl FolderTree {
-         self.append(&scrolled);
-     }
- 
--    /// Fetch the remote folder tree JSON from the daemon and populate the root store.
--    fn load_remote_tree(&self) {
--        let client = match self.imp().dbus_client.borrow().clone() {
--            Some(c) => c,
--            None => return,
--        };
+ PackageName: lnxdrive
+ SPDXID: SPDXRef-Package
+-PackageVersion: 1.0.0
++PackageVersion: 0.1.0-alpha.1
++PackageSupplier: Organization: Strange Days Tech, S.A.S.
+ PackageDownloadLocation: https://github.com/StrangeDaysTech/lnxdrive
+ PackageHomePage: https://github.com/StrangeDaysTech/lnxdrive
+-PackageLicenseConcluded: MIT
+-PackageLicenseDeclared: MIT
+-PackageCopyrightText: Copyright (c) 2025 Strange Days Tech, S.A.S. and LNXDrive Contributors
+-PackageSummary: Documentation governance framework for AI-assisted software development.
+-PackageDescription: StrayMark provides a documentation governance system that ensures traceability for all significant changes in software projects, whether made by humans or AI agents. Includes templates, validation scripts, and multi-agent support.
 -
--        let tree = self.clone();
--        glib::MainContext::default().spawn_local(async move {
--            match client.get_remote_folder_tree().await {
--                Ok(json) => {
--                    tree.populate_from_json(&json);
--                }
--                Err(e) => {
--                    eprintln!("Could not load remote folder tree: {}", e);
--                }
--            }
--        });
--    }
+-LicenseID: LicenseRef-MIT
+-ExtractedText: <text>
+-MIT License
 -
--    /// Load the currently selected folders from the daemon so we can mark
--    /// them as checked.
--    fn load_selected_folders(&self) {
-+    /// Load the selected folders and the remote tree in one ordered task.
-+    ///
-+    /// Selections are fetched *first* so `populate_from_json` can mark nodes with
-+    /// the correct checked state as it builds them. Doing these as two
-+    /// independent `spawn_local` tasks (as before) raced: selections could be
-+    /// applied to a still-empty tree, or the tree populated before selections
-+    /// arrived, leaving nothing checked.
-+    fn load_tree_and_selections(&self) {
-         let client = match self.imp().dbus_client.borrow().clone() {
-             Some(c) => c,
-             None => return,
-@@ -387,15 +372,21 @@ impl FolderTree {
- 
-         let tree = self.clone();
-         glib::MainContext::default().spawn_local(async move {
-+            // 1. Selections first.
-             match client.get_selected_folders().await {
--                Ok(folders) => {
--                    *tree.imp().selected_folders.borrow_mut() = folders;
--                    // Re-apply selections after the tree has been populated.
--                    tree.apply_selections();
--                }
--                Err(e) => {
--                    eprintln!("Could not load selected folders: {}", e);
--                }
-+                Ok(folders) => *tree.imp().selected_folders.borrow_mut() = folders,
-+                Err(e) => tree.show_error(&format!(
-+                    "{}: {e}",
-+                    gettext("Could not load selected folders")
-+                )),
-+            }
-+            // 2. Then the tree, which reads the selections set above.
-+            match client.get_remote_folder_tree().await {
-+                Ok(json) => tree.populate_from_json(&json),
-+                Err(e) => tree.show_error(&format!(
-+                    "{}: {e}",
-+                    gettext("Could not load the folder list")
-+                )),
-             }
-         });
-     }
-@@ -409,18 +400,29 @@ impl FolderTree {
-             None => return,
-         };
- 
--        root_store.remove_all();
+-Permission is hereby granted, free of charge, to any person obtaining a copy
+-of this software and associated documentation files (the "Software"), to deal
+-in the Software without restriction, including without limitation the rights
+-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+-copies of the Software, and to permit persons to whom the Software is
+-furnished to do so, subject to the following conditions:
 -
--        // The JSON may be a single root object or an array of roots.
-+        // The JSON may be a single root object or an array of roots. A parse
-+        // failure is surfaced as an error rather than silently rendering an
-+        // empty tree (which is indistinguishable from "no folders").
-         let nodes: Vec<FolderNodeJson> = if json.trim_start().starts_with('[') {
--            serde_json::from_str(json).unwrap_or_default()
-+            match serde_json::from_str(json) {
-+                Ok(n) => n,
-+                Err(e) => {
-+                    self.show_error(&format!("{}: {e}", gettext("Invalid folder list")));
-+                    return;
-+                }
-+            }
-         } else {
-             match serde_json::from_str::<FolderNodeJson>(json) {
-                 Ok(root) => root.children,
--                Err(_) => Vec::new(),
-+                Err(e) => {
-+                    self.show_error(&format!("{}: {e}", gettext("Invalid folder list")));
-+                    return;
-+                }
-             }
-         };
- 
-+        root_store.remove_all();
-+
-         let selected = imp.selected_folders.borrow().clone();
-         for node in &nodes {
-             let is_selected = selected.iter().any(|p| p == &node.path);
-@@ -430,23 +432,16 @@ impl FolderTree {
-         }
-     }
- 
--    /// Walk the root store and mark nodes whose path is in the selected list.
--    fn apply_selections(&self) {
--        let imp = self.imp();
--        let store = match imp.root_store.borrow().clone() {
--            Some(s) => s,
--            None => return,
--        };
--        let selected = imp.selected_folders.borrow().clone();
+-The above copyright notice and this permission notice shall be included in all
+-copies or substantial portions of the Software.
 -
--        for i in 0..store.n_items() {
--            if let Some(item) = store.item(i) {
--                if let Some(node) = item.downcast_ref::<FolderNode>() {
--                    let is_selected = selected.iter().any(|p| p == &node.path());
--                    node.set_selected(is_selected);
--                }
--            }
--        }
-+    /// Show a load/parse error inline at the top of the widget, instead of
-+    /// failing silently to stderr (which left the tree looking empty).
-+    fn show_error(&self, message: &str) {
-+        let label = gtk4::Label::builder()
-+            .label(message)
-+            .wrap(true)
-+            .xalign(0.0)
-+            .css_classes(["error"])
-+            .build();
-+        self.prepend(&label);
-     }
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+-SOFTWARE.
+-</text>
+-LicenseName: MIT License
+-LicenseCrossReference: https://opensource.org/licenses/MIT
++PackageLicenseConcluded: GPL-3.0-or-later
++PackageLicenseDeclared: GPL-3.0-or-later
++PackageCopyrightText: Copyright (C) 2025-2026 Strange Days Tech, S.A.S. and LNXDrive Contributors
++PackageSummary: OneDrive synchronization client for Linux with files-on-demand support.
++PackageDescription: LNXDrive is a cloud storage synchronization client for Linux, targeting Microsoft OneDrive via the Microsoft Graph API. It provides a background daemon (lnxdrived) with a D-Bus control interface, files-on-demand through a FUSE filesystem, a command-line client (lnxdrive), and native GNOME desktop integration: a GTK4/libadwaita preferences panel, a GNOME Shell status indicator, a Nautilus extension with sync-state overlay icons, and GNOME Online Accounts single sign-on. OAuth tokens are stored in the system keyring via the Secret Service API. Distributed as a Flatpak (com.strangedaystech.LNXDrive) targeting the org.gnome.Platform runtime.
  
-     /// Called whenever a checkbox is toggled. Propagates the selection to
-diff --git a/lnxdrive-gnome/preferences/src/preferences/sync_page.rs b/lnxdrive-gnome/preferences/src/preferences/sync_page.rs
-index cf70a86..7f3ef36 100644
---- a/lnxdrive-gnome/preferences/src/preferences/sync_page.rs
-+++ b/lnxdrive-gnome/preferences/src/preferences/sync_page.rs
-@@ -8,7 +8,6 @@ use std::cell::RefCell;
- 
- use gettextrs::gettext;
- use gtk4::glib;
--use gtk4::prelude::*;
- use libadwaita as adw;
- use libadwaita::prelude::*;
- 
-@@ -101,13 +100,13 @@ impl SyncPage {
-         // -- Sync Options group ----------------------------------------------
- 
-         let options_group = adw::PreferencesGroup::builder()
--            .title(&gettext("Sync Options"))
-+            .title(gettext("Sync Options"))
-             .build();
- 
-         // Automatic Sync switch (FR-018)
-         let auto_sync_row = adw::SwitchRow::builder()
--            .title(&gettext("Automatic Sync"))
--            .subtitle(&gettext("Sync files automatically when changes are detected"))
-+            .title(gettext("Automatic Sync"))
-+            .subtitle(gettext("Sync files automatically when changes are detected"))
-             .build();
-         imp.auto_sync_row.replace(Some(auto_sync_row.clone()));
- 
-@@ -123,8 +122,8 @@ impl SyncPage {
-         );
- 
-         let conflict_row = adw::ComboRow::builder()
--            .title(&gettext("Conflict Resolution"))
--            .subtitle(&gettext("How to handle file conflicts between local and remote"))
-+            .title(gettext("Conflict Resolution"))
-+            .subtitle(gettext("How to handle file conflicts between local and remote"))
-             .model(&conflict_model)
-             .build();
-         imp.conflict_row.replace(Some(conflict_row.clone()));
-@@ -144,8 +143,8 @@ impl SyncPage {
-         // -- Selective Sync group (FR-014) ------------------------------------
- 
-         let selective_group = adw::PreferencesGroup::builder()
--            .title(&gettext("Selective Sync"))
--            .description(&gettext(
-+            .title(gettext("Selective Sync"))
-+            .description(gettext(
-                 "Choose which remote folders to sync to this computer.",
-             ))
-             .build();
-@@ -197,12 +196,28 @@ impl SyncPage {
-                     page.apply_config_yaml(&yaml);
-                 }
-                 Err(e) => {
--                    eprintln!("Could not load config: {}", e);
-+                    page.show_error(&format!(
-+                        "{}: {e}",
-+                        gettext("Could not load sync settings from the daemon")
-+                    ));
-                 }
-             }
-         });
-     }
- 
-+    /// Surface a load/save failure to the user instead of only logging to stderr,
-+    /// so a dead daemon does not leave the page silently showing default values.
-+    fn show_error(&self, message: &str) {
-+        let group = adw::PreferencesGroup::new();
-+        let row = adw::ActionRow::builder()
-+            .title(gettext("Error"))
-+            .subtitle(message)
-+            .css_classes(["error"])
-+            .build();
-+        group.add(&row);
-+        self.add(&group);
-+    }
-+
-     /// Parse the daemon's YAML config and apply values to the UI widgets.
-     /// We do simple line-based parsing to avoid pulling in a full YAML crate
-     /// beyond serde (the config is flat key-value).
-diff --git a/lnxdrive-gnome/preferences/src/window.rs b/lnxdrive-gnome/preferences/src/window.rs
-index e271110..c558d19 100644
---- a/lnxdrive-gnome/preferences/src/window.rs
-+++ b/lnxdrive-gnome/preferences/src/window.rs
-@@ -100,13 +100,13 @@ impl LnxdriveWindow {
-         // Set up window content behind the dialog.
-         let status = adw::StatusPage::builder()
-             .icon_name("emblem-ok-symbolic")
--            .title(&gettext("LNXDrive"))
--            .description(&gettext("Your OneDrive files are syncing."))
-+            .title(gettext("LNXDrive"))
-+            .description(gettext("Your OneDrive files are syncing."))
-             .build();
- 
-         // Add a button to re-open preferences if the dialog is closed.
-         let open_prefs_button = gtk4::Button::builder()
--            .label(&gettext("Preferences"))
-+            .label(gettext("Preferences"))
-             .halign(gtk4::Align::Center)
-             .css_classes(["pill"])
-             .build();
-@@ -135,7 +135,7 @@ impl LnxdriveWindow {
-     pub fn show_dbus_error(&self, message: &str) {
-         let status = adw::StatusPage::builder()
-             .icon_name("dialog-error-symbolic")
--            .title(&gettext("Cannot Connect to LNXDrive"))
-+            .title(gettext("Cannot Connect to LNXDrive"))
-             .description(message)
-             .build();
- 
+ Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package
 
 ```
 
@@ -2094,7 +2292,7 @@ The file must have this frontmatter (validated against `.straymark/schemas/audit
 audit_role: auditor                       # v1 unified. Legacy v0: "auditor-primary" or "auditor-secondary"
 auditor: <your model id and version>      # e.g., claude-sonnet-4-6, gemini-2.5-pro, copilot-v1.0.40
 charter_id: CHARTER-01-road-to-v0-1-0-alpha-1
-git_range: "origin/main..HEAD"
+git_range: "31482c7..ae5a27d"
 prompt_used: <path to the resolved audit-prompt you received>
 audited_at: <today YYYY-MM-DD>
 findings_total: <N>
@@ -2183,7 +2381,7 @@ Does the implementation meet the closure criterion declared by `CHARTER-01-road-
 - **DO NOT declare Critical or High severity** without having verified that the real driver, flag, role, or deployment of the project triggers the bug. See Step 5. Declaring "critical regression" based on a stubbed component or a disabled flag invalidates the audit through false inflation.
 - **DO NOT report** that a file "does not exist" without having searched with the correct path (including naming-convention variants used by the project).
 - **DO NOT copy the file structure** without verifying content.
-- **DO NOT ignore** the prior-audits folders (typically `audit/` or `.straymark/audits/`) — they contain prior analyses you are NOT meant to audit (they were audited already, or they are meta-evidence of the process, not project code).
+- **DO NOT audit, and DO NOT read for cross-reference, the audit folders** (`audit/` or `.straymark/audits/`). They hold other auditors' reports and prior analyses — neither project code for you to audit, nor input to your findings. In particular, do not open this cycle's sibling `report-*.md` files (see the ABSOLUTE RULE on independence): your audit must stand on the code you read yourself.
 - **DO NOT run** destructive or generative commands. Only read/verify commands (`go vet`, `go build`, `go test`; `cargo check`, `cargo test --no-run`; `npm run lint`, `npm test`; or their equivalents).
 - **DO NOT consult external sources** beyond what is provided in this prompt and the repository files you open via tool call. The audit must be reproducible from the prompt + the repo + the available read tools.
 

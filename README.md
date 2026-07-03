@@ -106,15 +106,15 @@ lnxdrive auth login
 # Mount the files-on-demand filesystem
 lnxdrive mount
 
-# Keep a folder always available offline
-lnxdrive pin ~/OneDrive/Documents
-
-# Free local space (file stays visible, downloads on next open)
-lnxdrive dehydrate ~/OneDrive/Videos
-
 # Why is this file in its current state?
 lnxdrive explain ~/OneDrive/report.xlsx
 ```
+
+> **Not yet functional in this alpha:** `lnxdrive pin` (keep a folder always
+> available offline) and `lnxdrive dehydrate` (free local space on demand) are
+> scaffolded but not yet wired to the files-on-demand engine — they report what
+> they *would* do without changing local state, and land fully wired in
+> `v0.2.0-beta`.
 
 ---
 

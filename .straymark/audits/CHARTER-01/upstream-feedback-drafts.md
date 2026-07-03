@@ -13,6 +13,7 @@
 > | 1 | "declared but not wired" — now N=3 (cross-component regression of a shipped mitigation, found in Fase 3) | Pattern candidate | ✅ filed — [straymark#209](https://github.com/StrangeDaysTech/straymark/issues/209) (advanced from Charter-close cadence: the Fase-3 panel audit produced the N=3 data point) |
 > | 4 | Charter scope declared against assumed (un-read) code → code-reconnaissance gate at creation | Process / methodology gap | ✅ filed — [straymark#210](https://github.com/StrangeDaysTech/straymark/issues/210) |
 > | 3 | External-audit calibration results (dual-model + calibrator-hunts-missed) | External audit results / pattern | 🕓 draft below — file at Charter close |
+> | 5 | audit subsystem assumes one round per Charter → multi-phase rounds collide on flat paths + `report-*.md` glob pollution (found in Fases 4–5 round) | CLI/format friction (ad-hoc) | ✅ filed — [straymark#341](https://github.com/StrangeDaysTech/straymark/issues/341) (sibling of #208; local stopgap: per-round subfolders + `README.md` in this dir) |
 >
 > The cadence committed in #205 is **per Charter close** for telemetry + audit
 > results, so drafts (1) and (3) wait until `straymark charter close

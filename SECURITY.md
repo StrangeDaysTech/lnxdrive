@@ -38,8 +38,10 @@ Documented threat analysis lives in the repository's governance tree
 Highlights relevant to users:
 
 - **OAuth tokens never touch disk in cleartext and never travel raw over
-  D-Bus**: they live in the system keyring (Secret Service); the D-Bus API
-  exposes only opaque session handles.
+  D-Bus**: they live in the system keyring (Secret Service). The D-Bus auth
+  API receives only a non-sensitive GNOME Online Accounts object path and
+  returns success/account state — tokens are fetched and stored in the keyring
+  daemon-side, never crossing D-Bus.
 - The Flatpak sandbox uses **scoped D-Bus names** (no unrestricted
   `--socket=session-bus`).
 - The config parser is hardened against YAML expansion attacks

@@ -66,10 +66,12 @@
     <release version="0.1.0-alpha.1" date="2026-06-04" type="development">
       <description>
         <p>
-          First public alpha for GNOME early adopters: daemon with
-          files-on-demand (FUSE), CLI, GTK4 preferences panel, GNOME Shell
-          indicator, Nautilus sync-state overlays and GOA single sign-on.
-          Distributed as a Flatpak bundle on GitHub Releases.
+          First public alpha for GNOME early adopters: a background daemon with
+          files-on-demand (FUSE), a command-line interface, and a GTK4/libadwaita
+          preferences panel with GNOME Online Accounts sign-in. Distributed as a
+          Flatpak bundle on GitHub Releases. The GNOME Shell indicator and
+          Nautilus sync-state overlays are host-side components, available when
+          building from source.
         </p>
       </description>
     </release>

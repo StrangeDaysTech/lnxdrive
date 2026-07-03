@@ -35,7 +35,8 @@ front-ends are archived under `experimental/` until after v1.0.0.
 ### Security
 
 - OAuth tokens stored in the system keyring (Secret Service) and never sent
-  raw over D-Bus — the API exposes only opaque session handles (RISK-002,
+  raw over D-Bus — the auth API carries only a non-sensitive GNOME Online
+  Accounts object path and returns success/account state (RISK-002,
   CVSS 9.1, closed).
 - FUSE write-during-hydration race serialized with per-inode locking + `EBUSY`
   (RISK-003, closed).
