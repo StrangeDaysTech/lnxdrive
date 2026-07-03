@@ -1,9 +1,9 @@
 ---
 last_scan: 2026-07-03
 schema_version: v1
-total_open: 8
+total_open: 7
 total_promoted: 0
-total_closed_in_session: 4
+total_closed_in_session: 5
 total_phase_blocked: 0
 total_suspected_closed: 0
 buckets:
@@ -88,11 +88,11 @@ Entry shape (v1 — optional fields marked):
 
 ### FU-006 — **`lnxdrive-engine/config/lnxdrive-autostart.desktop` apunta a
 - **Origin**: AILOG-2026-06-04-002 §Follow-ups
-- **Status**: open
-- **Trigger**: TBD
-- **Destination**: TBD
-- **Cost**: TBD
-- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-06-04.
+- **Status**: closed
+- **Trigger**: resolved
+- **Destination**: lnxdrive-engine/config/ (PR #52)
+- **Cost**: XS
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-06-04. Closed 2026-07-02: las tres unidades (`.service` D-Bus, `lnxdrive.service` systemd, `.desktop` autostart) apuntaban a `/usr/bin/lnxdrive-daemon`; el binario real es `lnxdrived` (`[[bin]] name` en lnxdrive-daemon/Cargo.toml; el manifiesto Flatpak instala `target/release/lnxdrived`). Corregido en PR #52.
 
 ### FU-007 — **Wiring de comandos files-on-demand (`pin`/`unpin`/`hydrate`/`dehydrate`) al
 - **Origin**: AILOG-2026-07-03-001 §Follow-ups
@@ -147,6 +147,7 @@ Entry shape (v1 — optional fields marked):
 - **Destination**: TBD
 - **Cost**: TBD
 - **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
+
 ## Bucket: time-triggered
 
 ## Bucket: charter-triggered
