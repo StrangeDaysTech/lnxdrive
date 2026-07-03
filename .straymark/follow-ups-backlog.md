@@ -1,7 +1,7 @@
 ---
-last_scan: 2026-06-04
+last_scan: 2026-07-03
 schema_version: v1
-total_open: 2
+total_open: 8
 total_promoted: 0
 total_closed_in_session: 4
 total_phase_blocked: 0
@@ -17,6 +17,7 @@ fully_extracted_ailogs:
   - AILOG-2026-05-28-002
   - AILOG-2026-06-04-001
   - AILOG-2026-06-04-002
+  - AILOG-2026-07-03-001
 ---
 
 # Follow-ups Backlog
@@ -92,6 +93,60 @@ Entry shape (v1 — optional fields marked):
 - **Destination**: TBD
 - **Cost**: TBD
 - **Notes**: Auto-appended by `straymark followups drift --apply` 2026-06-04.
+
+### FU-007 — **Wiring de comandos files-on-demand (`pin`/`unpin`/`hydrate`/`dehydrate`) al
+- **Origin**: AILOG-2026-07-03-001 §Follow-ups
+- **Source-hash**: cd5882682e75
+- **Status**: open
+- **Trigger**: TBD
+- **Destination**: TBD
+- **Cost**: TBD
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
+
+### FU-008 — **M2 — alinear el app-id del Flatpak (`com.strangedaystech.LNXDrive`) con el
+- **Origin**: AILOG-2026-07-03-001 §Follow-ups
+- **Source-hash**: 16387869678e
+- **Status**: open
+- **Trigger**: TBD
+- **Destination**: TBD
+- **Cost**: TBD
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
+
+### FU-009 — **RD-2 — `lnxdrive-gnome` depende de `lnxdrive-ipc` vía git remoto**
+- **Origin**: AILOG-2026-07-03-001 §Follow-ups
+- **Source-hash**: 9efc95818794
+- **Status**: open
+- **Trigger**: TBD
+- **Destination**: TBD
+- **Cost**: TBD
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
+
+### FU-010 — **RD-3 — actualizar la fecha y el link `[0.1.0-alpha.1]` del `CHANGELOG.md`**
+- **Origin**: AILOG-2026-07-03-001 §Follow-ups
+- **Source-hash**: c5d32fcd008f
+- **Status**: open
+- **Trigger**: TBD
+- **Destination**: TBD
+- **Cost**: TBD
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
+
+### FU-011 — **RD-4 — actualizar `<release … date="2026-06-04">` del metainfo**
+- **Origin**: AILOG-2026-07-03-001 §Follow-ups
+- **Source-hash**: 491716884814
+- **Status**: open
+- **Trigger**: TBD
+- **Destination**: TBD
+- **Cost**: TBD
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
+
+### FU-012 — R1 (new, not in Charter) — copy overstatement en assets de release.
+- **Origin**: AILOG-2026-07-03-001 §R1 (new, not in Charter)
+- **Source-hash**: f7fb2759b72e
+- **Status**: open
+- **Trigger**: TBD
+- **Destination**: TBD
+- **Cost**: TBD
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
 ## Bucket: time-triggered
 
 ## Bucket: charter-triggered

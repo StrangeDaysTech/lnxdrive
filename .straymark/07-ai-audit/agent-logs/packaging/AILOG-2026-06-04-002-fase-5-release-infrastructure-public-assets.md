@@ -97,6 +97,12 @@ pre-Charter con todo "Planned").
    **comandos reales** (status/auth/mount/pin/dehydrate/explain — los
    anteriores `account add`/`ls`/`log` no existen; verificado contra el
    binario del Flatpak instalado), tabla comparativa vs jstaf/onedriver
+   <!-- ERRATUM 2026-07-03 (auditoría Fases 4–5, H1): "comandos reales" es
+        inexacto para `pin`/`dehydrate` — ambos parsean y corren pero son
+        stubs que reportan la acción sin ejecutarla (pin.rs:51-99,
+        hydrate.rs:172-236). El README se corrigió para marcarlos como no
+        funcionales en el alpha; el wiring real (FUSE IPC) es v0.2. Ver
+        review.md §4 P0 y el TDE de wiring. -->
    (v0.15.0, ene-2026, activo) y abraunegg/onedrive (v2.5.10, ene-2026,
    activo) con maturity honesta (alpha vs stable), limitaciones del alpha
    (componentes host-side), roadmap actualizado a milestones reales,
