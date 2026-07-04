@@ -2,6 +2,28 @@
 
 > **Ubicacion:** `04-Componentes/12-auditoria.md`
 > **Relacionado:** [[04-Componentes/07-motor-sincronizacion|Motor de Sincronizacion]], [[01-Vision/02-principios-rectores|Principios Rectores]]
+> **Actualizado:** 2026-07-04 — nueva sección "Ubicación en el código" (ADR-2026-07-04-001)
+
+---
+
+## Ubicación en el código: puerto vs crate
+
+Tres planos distintos que este documento mezclaba sin decirlo; quedan explícitos:
+
+| Plano | Dónde vive | Estado |
+|-------|-----------|--------|
+| **Tipos de dominio** (`AuditEntry`, códigos de razón) | `lnxdrive-core` (`domain/audit.rs`) | Implementado — y se queda ahí (dominio puro) |
+| **Persistencia** | SQLite compartida, tabla `audit_log`, vía `IStateRepository` (`save_audit`/`get_audit_trail`) | Implementado — el crate NO cambia esto |
+| **Motor de auditoría** (query API, explicaciones, retención, `lnxdrive explain`) | Crate `lnxdrive-audit` | **En migración**: hoy la lógica vive en `lnxdrive-core`; la extracción al crate es parte del epic estructural de v0.2.0-beta |
+
+> [!NOTE]
+> **Decisión [ADR-2026-07-04-001](../../.straymark/02-design/decisions/ADR-2026-07-04-001-restaurar-delimitacion-crates.md)**:
+> la implementación original incrustó el motor de auditoría en `lnxdrive-core`,
+> desviándose del plano de crates delimitados. Se restaura de forma incremental:
+> el crate `lnxdrive-audit` delimita *código* (el motor y su API), no
+> *almacenamiento* — la persistencia sigue en la SQLite compartida vía el puerto,
+> exactamente como prescribe este documento. La separación código/almacenamiento
+> no es contradicción: es la arquitectura hexagonal funcionando.
 
 ---
 
@@ -164,3 +186,5 @@ A diferencia de otros clientes que muestran mensajes como "Error: sync failed", 
 - [[04-Componentes/11-conflictos|Resolucion de Conflictos]] - Auditoria de resoluciones
 - [[01-Vision/02-principios-rectores|Principios Rectores]] - Explicabilidad como principio
 - [[04-Componentes/09-rate-limiting|Rate Limiting]] - Metricas de throttling
+- [Telemetría Interna](13-telemetria.md) - "¿Estoy sano?" (la auditoría responde "¿por qué pasó?")
+- [ADR-2026-07-04-001](../../.straymark/02-design/decisions/ADR-2026-07-04-001-restaurar-delimitacion-crates.md) - Delimitación de crates restaurada

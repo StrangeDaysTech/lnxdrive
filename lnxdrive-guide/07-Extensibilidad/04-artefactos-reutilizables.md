@@ -11,6 +11,16 @@
 
 La arquitectura hexagonal no solo beneficia a LNXDrive internamente, sino que permite **extraer componentes como librerias independientes** que pueden ser utiles para otros proyectos de sincronizacion, backup o gestion de archivos.
 
+> [!NOTE]
+> **Actualizado 2026-07-04.** Este catálogo es **aspiracional**: describe los
+> artefactos *extraíbles y publicables* en el horizonte post-1.0, no el estado
+> del workspace. Hoy: `lnxdrive-ratelimit` y `lnxdrive-state` **no existen como
+> crates** (su lógica vive dentro de `lnxdrive-graph` y `lnxdrive-cache`);
+> `lnxdrive-audit` está en migración desde `lnxdrive-core` (epic estructural
+> v0.2, [ADR-2026-07-04-001](../../.straymark/02-design/decisions/ADR-2026-07-04-001-restaurar-delimitacion-crates.md));
+> `lnxdrive-conflict` se puebla en el milestone M6. La lista canónica de crates
+> actuales está en [Estructura de Repositorios](../08-Distribucion/01-estructura-repositorios.md).
+
 ### 14.2 Catalogo de Artefactos Desacoplables
 
 ```
@@ -254,22 +264,16 @@ impl ConflictEngine {
 │  ESTRATEGIA DE PUBLICACION                                          │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  Repositorio mono-repo con workspaces:                              │
+│  Estado OBJETIVO post-1.0 (tras las extracciones del catalogo 14.2; │
+│  la lista canonica ACTUAL vive en 08-Distribucion/01):              │
 │                                                                     │
-│  lnxdrive-engine/                                                            │
-│  ├── Cargo.toml              (workspace root)                       │
-│  ├── crates/                                                        │
-│  │   ├── lnxdrive-fuse/        → publicado como crate independiente   │
-│  │   ├── lnxdrive-audit/       → publicado como crate independiente   │
-│  │   ├── lnxdrive-ratelimit/   → publicado como crate independiente   │
-│  │   ├── lnxdrive-conflict/    → publicado como crate independiente   │
-│  │   ├── lnxdrive-state/       → publicado como crate independiente   │
-│  │   ├── lnxdrive-graph/       → interno (no publicado)               │
-│  │   └── lnxdrive-core/        → interno (no publicado)               │
-│  └── apps/                                                          │
-│      ├── lnxdrive-daemon/      → binario principal                    │
-│      ├── lnxdrive-cli/         → binario CLI                          │
-│      └── lnxdrive-gnome/       → adaptador GNOME                      │
+│  lnxdrive-engine/crates/                                            │
+│  │   ├── lnxdrive-fuse/        → publicado en crates.io             │
+│  │   ├── lnxdrive-audit/       → publicado en crates.io             │
+│  │   ├── lnxdrive-conflict/    → publicado en crates.io             │
+│  │   ├── lnxdrive-ratelimit/   → extraido de graph y publicado      │
+│  │   ├── lnxdrive-state/       → extraido de cache y publicado      │
+│  │   └── (resto de crates)     → internos, no publicados            │
 │                                                                     │
 │  Versionado:                                                        │
 │  • Crates publicos: semver independiente                            │
