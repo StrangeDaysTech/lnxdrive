@@ -1,7 +1,7 @@
 ---
 id: AILOG-2026-07-03-004
 title: "Fix: el ítem Preferences del indicador no abría nada (binario Flatpak fuera del host PATH)"
-status: draft
+status: accepted
 created: 2026-07-03
 agent: claude-opus-4-8-v1.0
 confidence: high
@@ -123,8 +123,10 @@ usaba: invocaba el comando directo, que en el host no existe.
 - [x] `meson install` incluye `launcher.js` en el layout de la extensión.
 - [x] `Gio` sigue importado en `menuItems.js` (6 usos) y eliminado de `prefs.js`
   (0 usos) — sin imports muertos.
-- [ ] Confirmación en runtime por el operador tras recargar la sesión GNOME
+- [x] Confirmación en runtime por el operador tras recargar la sesión GNOME
   (Wayland: logout/login; el Shell solo relee el JS al iniciar sesión).
+  **Verificado en dispositivo real (2026-07-03)**: el operador abrió el menú del
+  indicador → "Preferences" y la ventana del panel se abre correctamente.
 
 ## Follow-ups
 
