@@ -19,6 +19,8 @@ import Gio from 'gi://Gio';
 import St from 'gi://St';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
+import {launchPreferences} from './launcher.js';
+
 /**
  * Format a byte count into a human-readable string (e.g., "4.2 GB").
  *
@@ -221,16 +223,7 @@ export function buildMenu(menu, proxies, gettext) {
             const basename = entry.path.split('/').pop();
             const item = new PopupMenu.PopupMenuItem(basename);
             item.connect('activate', () => {
-                try {
-                    const appInfo = Gio.AppInfo.create_from_commandline(
-                        'lnxdrive-preferences --page conflicts',
-                        'LNXDrive Preferences',
-                        Gio.AppInfoCreateFlags.NONE,
-                    );
-                    appInfo.launch([], null);
-                } catch (e) {
-                    console.error(`[LNXDrive] Failed to launch preferences: ${e.message}`);
-                }
+                launchPreferences('conflicts');
             });
             conflictsSection.addMenuItem(item);
             conflictMenuItems.push(item);
@@ -241,16 +234,7 @@ export function buildMenu(menu, proxies, gettext) {
                 `${_('View all')} (${count - MAX_VISIBLE_CONFLICTS} ${_('more')}\u2026)`,
             );
             moreItem.connect('activate', () => {
-                try {
-                    const appInfo = Gio.AppInfo.create_from_commandline(
-                        'lnxdrive-preferences --page conflicts',
-                        'LNXDrive Preferences',
-                        Gio.AppInfoCreateFlags.NONE,
-                    );
-                    appInfo.launch([], null);
-                } catch (e) {
-                    console.error(`[LNXDrive] Failed to launch preferences: ${e.message}`);
-                }
+                launchPreferences('conflicts');
             });
             conflictsSection.addMenuItem(moreItem);
             conflictMenuItems.push(moreItem);
@@ -536,16 +520,7 @@ export function buildMenu(menu, proxies, gettext) {
     // Preferences - Launch the main preferences application
     const prefsItem = new PopupMenu.PopupMenuItem(_('Preferences'));
     prefsItem.connect('activate', () => {
-        try {
-            const appInfo = Gio.AppInfo.create_from_commandline(
-                'lnxdrive-preferences',
-                'LNXDrive Preferences',
-                Gio.AppInfoCreateFlags.NONE,
-            );
-            appInfo.launch([], null);
-        } catch (e) {
-            console.error(`[LNXDrive] Failed to launch preferences: ${e.message}`);
-        }
+        launchPreferences();
     });
     actionsSection.addMenuItem(prefsItem);
 

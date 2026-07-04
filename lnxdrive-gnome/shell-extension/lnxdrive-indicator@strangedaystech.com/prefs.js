@@ -12,10 +12,11 @@
  */
 
 import Adw from 'gi://Adw';
-import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+
+import {launchPreferences} from './launcher.js';
 
 export default class LnxdrivePreferences extends ExtensionPreferences {
     /**
@@ -50,16 +51,7 @@ export default class LnxdrivePreferences extends ExtensionPreferences {
         });
 
         openButton.connect('clicked', () => {
-            try {
-                const appInfo = Gio.AppInfo.create_from_commandline(
-                    'lnxdrive-preferences',
-                    'LNXDrive Preferences',
-                    Gio.AppInfoCreateFlags.NONE,
-                );
-                appInfo.launch([], null);
-            } catch (e) {
-                console.error(`[LNXDrive] Failed to launch preferences: ${e.message}`);
-            }
+            launchPreferences();
         });
 
         settingsRow.add_suffix(openButton);
