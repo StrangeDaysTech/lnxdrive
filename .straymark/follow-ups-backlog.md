@@ -1,9 +1,9 @@
 ---
 last_scan: 2026-07-03
 schema_version: v1
-total_open: 9
+total_open: 8
 total_promoted: 0
-total_closed_in_session: 5
+total_closed_in_session: 7
 total_phase_blocked: 0
 total_suspected_closed: 0
 buckets:
@@ -19,6 +19,7 @@ fully_extracted_ailogs:
   - AILOG-2026-06-04-002
   - AILOG-2026-07-03-001
   - AILOG-2026-07-03-002
+  - AILOG-2026-07-03-003
 ---
 
 # Follow-ups Backlog
@@ -152,15 +153,24 @@ Entry shape (v1 — optional fields marked):
 ### FU-013 — **La extensión de GNOME Shell no está en el build de Meson ni se instala vía
 - **Origin**: AILOG-2026-07-03-002 §Follow-ups
 - **Source-hash**: 4ee94a61be90
-- **Status**: open
+- **Status**: closed
 - **Trigger**: TBD
 - **Destination**: TBD
 - **Cost**: TBD
-- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
+- **Notes**: Premisa original inexacta — el target de Meson ya existía y funciona (verificado `meson setup -Denable_shell=true` + `meson install`). La deuda real (instalación host-side no documentada) se resolvió con la sección host-side en `lnxdrive-packaging/README.md`. Ver AILOG-2026-07-03-003 / PR de la rama `fix/shell-extension-hostside-and-metadata`.
 
 ### FU-014 — **`metadata.json` declara `settings-schema: com.strangedaystech.LNXDrive.Indicator`
 - **Origin**: AILOG-2026-07-03-002 §Follow-ups
 - **Source-hash**: a23bd62d0851
+- **Status**: closed
+- **Trigger**: TBD
+- **Destination**: TBD
+- **Cost**: TBD
+- **Notes**: `settings-schema` muerto eliminado del `metadata.json` (`prefs.js` no usa `getSettings()`; no se necesita gschema). Ver AILOG-2026-07-03-003.
+
+### FU-015 — **Limitación del validador de StrayMark con AILOGs en subdirectorios por
+- **Origin**: AILOG-2026-07-03-003 §Follow-ups
+- **Source-hash**: ea6eb87d48af
 - **Status**: open
 - **Trigger**: TBD
 - **Destination**: TBD
