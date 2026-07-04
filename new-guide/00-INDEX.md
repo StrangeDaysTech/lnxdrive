@@ -19,6 +19,9 @@ exploraciones paralelas del código.
 | 3 | [03-diagnostico-login.md](03-diagnostico-login.md) | Causa raíz del error de login en la app de preferences (URL OAuth sin `client_id`) |
 | 4 | [04-hoja-de-ruta.md](04-hoja-de-ruta.md) | Roadmap alpha → beta → 1.0 y estado del Charter activo |
 | 5 | [05-resumen-consolidado.md](05-resumen-consolidado.md) | Síntesis ejecutiva de los cuatro informes + próximos pasos |
+| 6 | [06-catalogo-desviaciones.md](06-catalogo-desviaciones.md) | Catálogo de desviaciones guía↔código con veredictos + decisiones del operador D1–D4 (2026-07-04) |
+| 7 | [07-milestones-capacidad.md](07-milestones-capacidad.md) | Replanteo de milestones: capacidades demostrables M0–M6, política de tags, tier E2E-real |
+| 8 | [08-plan-actualizacion-guia.md](08-plan-actualizacion-guia.md) | Plan doc-por-doc (B1–B10) para actualizar el canónico `lnxdrive-guide/` + gobernanza (C1–C5) |
 
 ## Estado en una línea
 
