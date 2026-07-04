@@ -183,9 +183,9 @@ Entry shape (v1 — optional fields marked):
 - **Source-hash**: 4e825cf1a679
 - **Status**: open
 - **Trigger**: CHARTER-02 batch M5
-- **Destination**: milestone M5 (GitHub #9) / lnxdrive-daemon
+- **Destination**: issue #66 (milestone M5) / lnxdrive-daemon
 - **Cost**: M
-- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-04. Gap más crítico para uso prolongado: el daemon carga el token una vez y muere a la ~1h; `refresh_if_needed` definido y jamás invocado.
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-04. Gap más crítico para uso prolongado: el daemon carga el token una vez y muere a la ~1h; `refresh_if_needed` definido y jamás invocado. Issue público #66 creado en el triage M0 (2026-07-04); confirmado independientemente por el verificador del grupo sync.
 
 ### FU-017 — **Unificar las rutas de autenticación divergentes**: el CLI usa
 - **Origin**: AILOG-2026-07-04-001 §Follow-ups

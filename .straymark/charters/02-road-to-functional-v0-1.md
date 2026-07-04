@@ -1,6 +1,7 @@
 ---
 charter_id: CHARTER-02-road-to-functional-v0-1
-status: declared
+status: in-progress
+started_at: 2026-07-04
 effort_estimate: L
 trigger: "Replanteo aprobado el 2026-07-04 (new-guide/06-08, PR #61): CHARTER-01 cerrado por redefinición — su Fase 6 (tag) tenía un gate incorrecto (checklist de features sin criterio de capacidad). Decisión D4 del operador: v0.1.0-alpha.1 se re-gatea como 'M1–M6 demostrables contra OneDrive real'."
 originating_ailogs: [AILOG-2026-07-04-001]
@@ -10,7 +11,7 @@ design_provenance: new
 
 # Charter: Road to functional v0.1
 
-> **Status (mirrored from frontmatter — source of truth is above):** declared. Effort: L (~6–8 semanas calendario).
+> **Status (mirrored from frontmatter — source of truth is above):** in-progress (started 2026-07-04, batch M0). Effort: L (~6–8 semanas calendario).
 >
 > **Origin:** Follow-up of AILOG-2026-07-04-001 (gobernanza del replanteo) — sucesor directo de CHARTER-01, que cerró con Fases 0–5 ejecutadas y la Fase 6 (tag) sin ejecutar por gate incorrecto. Este Charter ejecuta la escalera de capacidades M0–M6 de `new-guide/07-milestones-capacidad.md` y termina cortando el tag `v0.1.0-alpha.1`.
 
