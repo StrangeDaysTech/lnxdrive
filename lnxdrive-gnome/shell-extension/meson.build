@@ -9,6 +9,7 @@ shell_ext_sources = files(
   shell_ext_uuid / 'dbus.js',
   shell_ext_uuid / 'indicator.js',
   shell_ext_uuid / 'menuItems.js',
+  shell_ext_uuid / 'launcher.js',
 )
 
 install_data(
