@@ -76,6 +76,41 @@ y ordenó "gobernanza primero, luego reescritura de la guía canónica".
 5. **C5 — Follow-ups nuevos registrados** (sección §Follow-ups de este AILOG →
    registro vía `straymark followups drift --apply` en el mismo commit).
 
+## Batch Ledger
+
+> CHARTER-02 ejecuta en multi-batch (7 batches = M0…M6). Cada entrada se
+> completa con `straymark charter batch-complete CHARTER-02-road-to-functional-v0-1 <N>`
+> tras el merge del PR del batch. El detalle de cada batch vive en su propio
+> AILOG de ejecución; aquí queda el ledger consolidado.
+
+### Batch 0 — M0 "Sé qué es verdad" (triage risk-analysis)
+
+Triage de re-verificación ejecutado y mergeado (PR #67). 7 issues cerrados con evidencia file:line, 13 asignados a milestones de capacidad/paraguas, 3 a backlog deliberado, 3 degradaciones de prioridad, #21 estrechado, #66 creado (=FU-016). Ningún P0 real sobrevivió. Milestone M0 de GitHub cerrado.
+
+### Batch 1 — M1 "Puedo entrar" (login GOA end-to-end)
+
+(pending)
+
+### Batch 2 — M2 "Veo mis archivos" (delta inicial real)
+
+(pending)
+
+### Batch 3 — M3 "Abro un archivo" (hidratación real)
+
+(pending)
+
+### Batch 4 — M4 "Mis cambios viajan" (bidireccional real)
+
+(pending)
+
+### Batch 5 — M5 "Sobrevive el tiempo" (refresh + 24h)
+
+(pending)
+
+### Batch 6 — M6 "No destruye datos" (conflictos en lnxdrive-conflict)
+
+(pending)
+
 ## Risk
 
 - Sin riesgo de código: cambio 100% de gobernanza/documentación.
