@@ -7,35 +7,31 @@
 
 ## Estructura del Repositorio Mono-repo
 
+> [!NOTE]
+> **Actualizado 2026-07-04.** La **lista canónica** de crates del workspace es la
+> de [Estructura de Repositorios](../08-Distribucion/01-estructura-repositorios.md)
+> (11 crates bajo `lnxdrive-engine/crates/` — no existe `apps/`). Este documento
+> ya no mantiene una lista propia; la versión anterior divergía (incluía
+> `lnxdrive-ratelimit` y `lnxdrive-state` como crates, que hoy viven dentro de
+> `lnxdrive-graph` y `lnxdrive-cache` respectivamente y son solo candidatos de
+> extracción publicable post-1.0).
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  Repositorio mono-repo con workspaces:                              │
+│  Repositorio mono-repo con workspace Cargo:                         │
 │                                                                     │
-│  lnxdrive-engine/                                                          │
+│  lnxdrive-engine/                                                   │
 │  ├── Cargo.toml              (workspace root)                       │
-│  ├── crates/                                                        │
-│  │   ├── lnxdrive-fuse/        → publicado como crate independiente │
-│  │   ├── lnxdrive-audit/       → publicado como crate independiente │
-│  │   ├── lnxdrive-ratelimit/   → publicado como crate independiente │
-│  │   ├── lnxdrive-conflict/    → publicado como crate independiente │
-│  │   ├── lnxdrive-state/       → publicado como crate independiente │
-│  │   ├── lnxdrive-graph/       → interno (no publicado)             │
-│  │   └── lnxdrive-core/        → interno (no publicado)             │
-│  └── apps/                                                          │
-│      ├── lnxdrive-daemon/      → binario principal                  │
-│      ├── lnxdrive-cli/         → binario CLI                        │
-│      └── lnxdrive-gnome/       → adaptador GNOME                    │
+│  └── crates/                 → lista canónica en 08-Distribucion/01 │
 │                                                                     │
 │  Versionado:                                                        │
-│  • Crates publicos: semver independiente                            │
-│  • Crates internos: version del proyecto                            │
-│  • Apps: version unificada del release                              │
+│  • Crates internos: version del proyecto (0.1.0-alpha.1 unificada)  │
+│  • Crates publicados (post-1.0): semver independiente               │
+│  • Binarios/apps: version unificada del release                     │
 │                                                                     │
-│  Publicacion:                                                       │
-│  • crates.io para Rust                                              │
-│  • Documentacion en docs.rs                                         │
-│  • Ejemplos en cada crate                                           │
-│                                                                     │
+│  Publicacion (post-1.0, tras restaurar delimitacion de crates —     │
+│  ADR-2026-07-04-001):                                               │
+│  • crates.io para Rust · docs.rs · ejemplos por crate               │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -112,20 +108,29 @@ impl FileEntry {
 
 ## Nombres de Crates del Proyecto
 
-| Crate | Proposito | Publicacion |
-|-------|-----------|-------------|
-| `lnxdrive-core` | Logica de negocio compartida | Interno |
-| `lnxdrive-fuse` | Filesystem virtual FUSE | crates.io |
-| `lnxdrive-audit` | Sistema de auditoria | crates.io |
-| `lnxdrive-ratelimit` | Rate limiting para APIs | crates.io |
-| `lnxdrive-conflict` | Motor de deteccion de conflictos | crates.io |
-| `lnxdrive-state` | Gestion de estado | crates.io |
-| `lnxdrive-graph` | Cliente Microsoft Graph | Interno |
-| `lnxdrive-daemon` | Binario del daemon | App |
+Lista canónica de los 11 crates del workspace `lnxdrive-engine/` (coincide con
+[Estructura de Repositorios](../08-Distribucion/01-estructura-repositorios.md)):
+
+| Crate | Proposito | Publicacion futura (post-1.0) |
+|-------|-----------|-------------------------------|
+| `lnxdrive-core` | Dominio + puertos + casos de uso (hexagonal) | Interno |
+| `lnxdrive-daemon` | Binario del daemon (`lnxdrived`) | App |
+| `lnxdrive-ipc` | Librería D-Bus para clientes | Interno |
 | `lnxdrive-cli` | Binario CLI | App |
-| `lnxdrive-gnome` | Adaptador GNOME | App |
-| `lnxdrive-kde` | Adaptador KDE | App |
-| `lnxdrive-cosmic` | Adaptador Cosmic | App |
+| `lnxdrive-fuse` | Filesystem virtual FUSE | crates.io |
+| `lnxdrive-sync` | Motor de sincronización (incluye file watching) | Interno |
+| `lnxdrive-graph` | Cliente Microsoft Graph (incluye rate limiting) | Interno |
+| `lnxdrive-cache` | Persistencia SQLite (incluye gestión de estado) | Interno |
+| `lnxdrive-conflict` | Detección/resolución de conflictos (se puebla en M6) | crates.io |
+| `lnxdrive-audit` | Motor de auditoría (en migración desde core, v0.2) | crates.io |
+| `lnxdrive-telemetry` | Auto-observación interna-only (v0.2, ADR-2026-07-04-002) | Interno |
+
+Las UIs de escritorio **no** son crates del engine: `lnxdrive-gnome/` es su
+propio árbol (Meson + Rust), y `experimental/lnxdrive-{gtk3,plasma,cosmic}/`
+reactivan en v1.0.0. `lnxdrive-ratelimit` y `lnxdrive-state` no existen como
+crates: son candidatos de **extracción publicable** post-1.0 desde
+`lnxdrive-graph`/`lnxdrive-cache` (ver
+[Artefactos Reutilizables](../07-Extensibilidad/04-artefactos-reutilizables.md)).
 
 ## Estructura de Directorios del Crate Core
 

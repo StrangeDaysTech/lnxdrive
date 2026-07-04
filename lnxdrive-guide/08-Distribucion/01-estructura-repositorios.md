@@ -68,19 +68,18 @@ github.com/strangedaystech/
 │   │                               # El corazon del proyecto
 │   │
 │   ├── Cargo.toml                  # Workspace root
-│   ├── crates/
+│   ├── crates/                     # ← LISTA CANONICA de crates (11)
 │   │   ├── lnxdrive-core/          # Logica de negocio (hexagonal)
-│   │   ├── lnxdrive-daemon/        # Servicio systemd
+│   │   ├── lnxdrive-daemon/        # Servicio systemd (binario `lnxdrived`)
 │   │   ├── lnxdrive-fuse/          # Adaptador FUSE
 │   │   ├── lnxdrive-cli/           # Interfaz de linea de comandos
 │   │   ├── lnxdrive-ipc/           # Libreria D-Bus para clientes
-│   │   ├── lnxdrive-watch/         # File watching (Part XVI)
-│   │   ├── lnxdrive-sync/          # Motor de sincronizacion
-│   │   ├── lnxdrive-graph/         # Cliente Microsoft Graph
-│   │   ├── lnxdrive-cache/         # Sistema de cache
-│   │   ├── lnxdrive-conflict/      # Resolucion de conflictos
-│   │   ├── lnxdrive-audit/         # Sistema de auditoria
-│   │   └── lnxdrive-telemetry/     # Agente de telemetria (proceso separado)
+│   │   ├── lnxdrive-sync/          # Motor de sincronizacion (incluye file watching)
+│   │   ├── lnxdrive-graph/         # Cliente Microsoft Graph (incluye rate limiting)
+│   │   ├── lnxdrive-cache/         # Persistencia SQLite (incluye gestion de estado)
+│   │   ├── lnxdrive-conflict/      # Deteccion/resolucion de conflictos (se puebla en M6)
+│   │   ├── lnxdrive-audit/         # Motor de auditoria (en migracion desde core, v0.2)
+│   │   └── lnxdrive-telemetry/     # Auto-observacion interna-only (v0.2, ADR-2026-07-04-002)
 │   ├── tests/                      # Tests de integracion
 │   ├── docs/                       # Documentacion tecnica
 │   └── .github/workflows/
