@@ -1,0 +1,120 @@
+# StrayMark Charter telemetry — CHARTER-01, filled at close (2026-07-04).
+# Schema: .straymark/schemas/charter-telemetry.schema.v0.json
+# Principio aplicado: gaps honestos > números inventados. Los conteos no medidos
+# van en 0 con nota; las aproximaciones se marcan como tales.
+
+charter_telemetry:
+  # ---------- Identification ----------
+  charter_id: "CHARTER-01"
+  charter_title: "Road to v0.1.0-alpha.1"
+  closed_at: "2026-07-04"
+
+  # ---------- Origin & activation ----------
+  originating_ailogs:
+    - ailog_id: "AILOG-2026-05-29-001"
+      still_relevant_at_execution: true
+      relevance_notes: "El diagnóstico (engine ~70%, GNOME ~45%, 4 P0 sin mitigar, cero artefactos de release) se sostuvo durante toda la ejecución; el outline de fases se ejecutó 0–5 tal como se declaró. Lo que NO capturó el AILOG: que el gate terminal (tag por checklist de features) era conceptualmente incorrecto — eso emergió en el replanteo del 2026-07-04."
+
+  trigger:
+    declared_kind: "event_trigger"
+    declared_description: "Auditoría del MVP (2026-05-28) + decisión del operador (2026-05-29) de embarcar un alpha enfocado GNOME-only con los P0 como bloqueantes de release."
+    fired_at: "2026-05-29"
+    fire_clarity: "clear"
+    fire_clarity_notes: "Decisión explícita del operador tras auditoría; sin ambigüedad."
+
+  # ---------- Pre-work ----------
+  pre_work:
+    items_declared: 0
+    items_completed_before_planning: 0
+    items_skipped: 0
+    items_discovered_during_planning: 0
+    pre_work_quality: "medium"
+    pre_work_notes: "El formato v4 de este Charter no tenía sección §Pre-trabajo. El pre-work de facto fue la auditoría del 2026-05-28 (AILOG-2026-05-29-001). Calidad media: excelente para código/riesgos, ciega al defecto del gate (ningún criterio de capacidad)."
+
+  # ---------- Planning session ----------
+  planning_session:
+    occurred: true
+    duration_minutes: 0
+    participants: 1
+    decisions_made: 3
+    decisions_deferred: 0
+    notes: "Sesión operador+agente 2026-05-28/29: (1) alcance estrechado a alpha GNOME-only; (2) UIs GTK3/Plasma/COSMIC archivadas a experimental/; (3) P0s bloquean release. Duración no medida (0 = sin dato)."
+
+  # ---------- Effort ----------
+  effort:
+    started_at: "2026-05-29"
+    finished_at: "2026-07-04"
+    estimated_effort: "L (~5–7 semanas)"
+    actual_effort: "L (~5.3 semanas, 6/7 fases ejecutadas)"
+    estimation_drift_factor: 1.0
+    estimation_drift_reason: "En TIEMPO dentro de presupuesto. El drift real es de ALCANCE, no de tiempo: la fase terminal (Fase 6, tag+release+anuncio) no se ejecutó porque su gate resultó incorrecto — ver outcome.scope_change_notes."
+
+  # ---------- Agent quality during execution ----------
+  agent_quality:
+    sessions_count: 0
+    hallucinations_caught: 0
+    hallucination_categories: []
+    decisions_contradicting_prior_adrs: 0
+    contradiction_notes: "sessions_count/hallucinations no medidos sistemáticamente durante el Charter (0 = sin dato, no 'cero eventos'). Trazable: ~15 AILOGs de ejecución en agent-logs/{daemon,gnome,guide,packaging}/."
+    context_loaded_was_sufficient: true
+    additional_context_loaded_manually: 0
+    r_n_plus_one_emergent_count: 4
+    skill_prompts_used: ["straymark-ailog", "straymark-audit-prompt", "straymark-audit-execute", "straymark-audit-review", "straymark-followups"]
+
+  # ---------- External audit ----------
+  external_audit:
+    - auditor: "ronda multi-modelo Fase 1 (heterogénea, ≥2 auditores)"
+      findings_total: 0
+      findings_by_category:
+        hallucination: 0
+        implementation_gap: 0
+        real_debt: 0
+        false_positive: 0
+      audit_quality: "high"
+      audit_notes: "Conteos por hallazgo no preservados en formato telemetría (0 = sin dato). Efecto trazable: backport atómico R4 de las filas RISK-003/RISK-001/ISSUE-002 en ## Files to modify."
+    - auditor: "pre-merge Fase 3 (panel GTK4)"
+      findings_total: 1
+      findings_by_category:
+        hallucination: 0
+        implementation_gap: 1
+        real_debt: 0
+        false_positive: 0
+      audit_quality: "high"
+      audit_notes: "1 Medium, corregido pre-merge. Consolidado en .straymark/audits/CHARTER-01/fase-3/review.md."
+    - auditor: "ronda multi-modelo Fases 4–5 (2026-07-03)"
+      findings_total: 6
+      findings_by_category:
+        hallucination: 0
+        implementation_gap: 2
+        real_debt: 4
+        false_positive: 0
+      audit_quality: "high"
+      audit_notes: "H1 (wiring files-on-demand del CLI = FU-007), M2 (app-id Flatpak = FU-008), RD-2/3/4 (dep git remota = FU-009 cerrado; fechas tag-time = FU-010/011). + R1 emergente (copy overstatement, remediado pre-tag). Ver AILOG-2026-07-03-001."
+
+  # ---------- Outcome & follow-ups ----------
+  outcome:
+    completed_as_planned: false
+    scope_changes: "mayor"
+    scope_change_notes: "F1 (IG): Fase 6 (tag firmado v0.1.0-alpha.1 + pre-release + anuncios) NO ejecutada — el gate del tag era conceptualmente incorrecto: hito definido como checklist de features + SemVer sin ningún criterio de capacidad, lo que permitió llegar a 'Fase 5 done' con el login GUI roto (StartAuth placeholder), sin refresh de token en runtime y sin detección de conflictos. Cierre por REDEFINICIÓN (decisión D4 del operador, 2026-07-04): el alpha se re-gatea como 'M1–M6 demostrables contra OneDrive real' y la ejecución pasa a CHARTER-02. No es fracaso de ejecución sino corrección de criterio; las Fases 0–5 entregaron con calidad auditada. F2: el GitHub project board del scope item 1 se creó y luego se eliminó como redundante (operador único; tracking en StrayMark + Issues). F3: drifts de alcance por fase documentados atómicamente en su momento (R6 superficie RISK-003, R7 main.rs/ipc en RISK-001, R8 Platform 47→49)."
+    new_followups_generated: 15
+    new_charters_created: 1
+    charters_invalidated: 0
+    associated_stage_id: ""
+
+  # ---------- Qualitative ----------
+  qualitative:
+    format_iteration: "v4"
+    friction_points:
+      - "Hito terminal = checklist de features + tag SemVer, sin criterios de aceptación por capacidad — el defecto raíz que dejó el Charter sin cierre natural"
+      - "Toda la pirámide de testing corre contra mock (incl. mock-dbus-daemon.py que fingía el login completo): estructuralmente imposible falsificar 'funciona'"
+      - "Risk backlog público (23 issues, 5 P0) desconectado de los milestones — ningún tag lo tenía como gate"
+      - "Validador StrayMark vs AILOGs en subdirectorios por componente (FU-015, deuda de tooling upstream)"
+    wins:
+      - "4 riesgos P0 de seguridad cerrados con auditoría externa multi-modelo (RISK-001/002/003, ISSUE-002)"
+      - "T101: primer mount FUSE real del codebase — destapó 4 bugs funcionales de listing + 1 defecto de persistencia de inodes, todos corregidos con regresión"
+      - "Patrón de actualización atómica del Charter ante drift funcionó de verdad (R6/R7/R8 backporteados en el mismo PR)"
+      - "Registro de follow-ups adoptado y vivo (15 entradas trazables, 9 cerradas al cierre del Charter)"
+      - "Arquitectura hexagonal validada por la implementación: el replanteo 2026-07-04 no tocó ni un puerto"
+    overall_satisfaction: 3
+    would_repeat_format: true
+    proposed_format_changes: "Añadir criterios de aceptación por CAPACIDAD (guion de verificación ex-ante, 'el operador puede demostrar X contra el servicio real') a cada fase; regla dura: ningún hito de capacidad se cierra contra mock. Aplicado en CHARTER-02 (fases M0–M6). Ver new-guide/07-milestones-capacidad.md."

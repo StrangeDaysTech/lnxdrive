@@ -1,6 +1,7 @@
 ---
 charter_id: CHARTER-01-road-to-v0-1-0-alpha-1
-status: in-progress
+status: closed
+closed_at: 2026-07-04
 started_at: 2026-05-29
 effort_estimate: L
 trigger: "MVP audit on 2026-05-28 found engine ~70% / GNOME UI ~45% ready, four P0 risks unmitigated, zero release artifacts. Operator committed scope to v0.1.0 alpha (GNOME-only, P0 risks block release) on 2026-05-29."
@@ -9,7 +10,7 @@ originating_ailogs: [AILOG-2026-05-29-001]
 
 # Charter: Road to v0.1.0-alpha.1
 
-> **Status (mirrored from frontmatter — source of truth is above):** in-progress (started 2026-05-29). Effort: L (~5–7 calendar weeks).
+> **Status (mirrored from frontmatter — source of truth is above):** closed 2026-07-04 (started 2026-05-29). Effort: L (~5–7 calendar weeks). **Closed by redefinition** — see `## Closing notes (2026-07-04)`.
 >
 > **Origin:** Follow-up of `AILOG-2026-05-29-001` — full diagnosis of the MVP state, the scope-narrowing decisions taken with the operator, and the phase outline that this Charter formalizes.
 
@@ -160,6 +161,28 @@ This Charter executes in **multi-batch mode** (7 phases over 5–7 calendar week
 9. Pre-commit each phase: `straymark charter drift CHARTER-01-road-to-v0-1-0-alpha-1 origin/main..HEAD`. Document drift in the phase AILOG.
 10. Fase 6: signed git tag `v0.1.0-alpha.1`, `release.yml` produces bundle, publish GitHub Pre-release, announcement on r/linux + r/gnome + r/onedrive + Mastodon.
 11. `straymark charter close CHARTER-01-road-to-v0-1-0-alpha-1` with telemetry comparing declared vs actual (effort estimate accuracy, R1–R5 outcomes, emergent risks count).
+
+## Closing notes (2026-07-04)
+
+**Cierre por redefinición, no por consumación.** Las Fases 0–5 se ejecutaron con
+calidad auditada (4 P0 de seguridad cerrados, T101 validado con mount FUSE real,
+panel GTK4 verificado en VM, bundle Flatpak construible, infraestructura de
+release completa). La **Fase 6 (tag firmado + pre-release + anuncios) NO se
+ejecutó**: el replanteo del 2026-07-04 (`new-guide/06-catalogo-desviaciones.md`)
+demostró que el gate del tag era conceptualmente incorrecto — hito definido como
+checklist de features + SemVer, sin ningún criterio de capacidad — lo que permitió
+llegar a "Fase 5 done" con el login GUI roto (`StartAuth` placeholder sin
+parámetros), sin refresh de token en runtime y sin detección de conflictos.
+
+Por decisión del operador (**D4**, 2026-07-04): `v0.1.0-alpha.1` se redefine como
+"**M1–M6 demostrables contra OneDrive real**" y la ejecución continúa en
+**CHARTER-02 (Road to functional v0.1)**, cuyas fases son los milestones por
+capacidad M0–M6 de `new-guide/07-milestones-capacidad.md`. Los ítems tag-time de
+este Charter (FU-010, FU-011; fecha real en CHANGELOG y metainfo) se transfieren
+al cierre de CHARTER-02.
+
+No es un fracaso de ejecución sino una corrección de criterio; así se registra en
+`CHARTER-01.telemetry.yaml` (`completed_as_planned: false`, `scope_changes: mayor`).
 
 ## Charter Closure
 

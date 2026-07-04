@@ -1,7 +1,7 @@
 ---
-last_scan: 2026-07-03
+last_scan: 2026-07-04
 schema_version: v1
-total_open: 6
+total_open: 8
 total_promoted: 0
 total_closed_in_session: 9
 total_phase_blocked: 0
@@ -20,6 +20,7 @@ fully_extracted_ailogs:
   - AILOG-2026-07-03-001
   - AILOG-2026-07-03-002
   - AILOG-2026-07-03-003
+  - AILOG-2026-07-04-001
 ---
 
 # Follow-ups Backlog
@@ -176,6 +177,25 @@ Entry shape (v1 — optional fields marked):
 - **Destination**: TBD
 - **Cost**: TBD
 - **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
+
+### FU-016 — **Cablear el refresh de token en runtime del daemon**: `refresh_if_needed`
+- **Origin**: AILOG-2026-07-04-001 §Follow-ups
+- **Source-hash**: 4e825cf1a679
+- **Status**: open
+- **Trigger**: CHARTER-02 batch M5
+- **Destination**: milestone M5 (GitHub #9) / lnxdrive-daemon
+- **Cost**: M
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-04. Gap más crítico para uso prolongado: el daemon carga el token una vez y muere a la ~1h; `refresh_if_needed` definido y jamás invocado.
+
+### FU-017 — **Unificar las rutas de autenticación divergentes**: el CLI usa
+- **Origin**: AILOG-2026-07-04-001 §Follow-ups
+- **Source-hash**: 5295086025bb
+- **Status**: open
+- **Trigger**: CHARTER-02 batch M1
+- **Destination**: milestone M1 (GitHub #5) / diseño AIDEC-2026-07-04-001
+- **Cost**: M
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-04. Incluye: `StartAuth` placeholder, `AuthenticateUseCase` → `bail!` stub, `redirect_uri` divergente, origen del `app_id`.
+
 ## Bucket: time-triggered
 
 ## Bucket: charter-triggered
