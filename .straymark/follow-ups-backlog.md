@@ -1,9 +1,9 @@
 ---
 last_scan: 2026-07-03
 schema_version: v1
-total_open: 8
+total_open: 6
 total_promoted: 0
-total_closed_in_session: 7
+total_closed_in_session: 9
 total_phase_blocked: 0
 total_suspected_closed: 0
 buckets:
@@ -117,11 +117,11 @@ Entry shape (v1 — optional fields marked):
 ### FU-009 — **RD-2 — `lnxdrive-gnome` depende de `lnxdrive-ipc` vía git remoto**
 - **Origin**: AILOG-2026-07-03-001 §Follow-ups
 - **Source-hash**: 9efc95818794
-- **Status**: open
-- **Trigger**: TBD
-- **Destination**: TBD
-- **Cost**: TBD
-- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
+- **Status**: closed
+- **Trigger**: ready
+- **Destination**: lnxdrive-gnome/Cargo.toml (rama `chore/gnome-ipc-path-dep`)
+- **Cost**: XS
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03. Closed 2026-07-03 (`e8c4a00`): la dep pasó de `git = ".../lnxdrive.git"` (pineada a un commit viejo — `lnxdrive-core 0.1.0` / `serde_yaml`, desalineado del monorepo) a `path = "../lnxdrive-engine/crates/lnxdrive-ipc"`. Verificado con `cargo metadata` (resuelve a source=None / manifest local, grafo limpio).
 
 ### FU-010 — **RD-3 — actualizar la fecha y el link `[0.1.0-alpha.1]` del `CHANGELOG.md`**
 - **Origin**: AILOG-2026-07-03-001 §Follow-ups
@@ -144,11 +144,11 @@ Entry shape (v1 — optional fields marked):
 ### FU-012 — R1 (new, not in Charter) — copy overstatement en assets de release.
 - **Origin**: AILOG-2026-07-03-001 §R1 (new, not in Charter)
 - **Source-hash**: f7fb2759b72e
-- **Status**: open
-- **Trigger**: TBD
-- **Destination**: TBD
-- **Cost**: TBD
-- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03.
+- **Status**: closed
+- **Trigger**: resolved
+- **Destination**: AILOG-2026-07-03-001 §R1
+- **Cost**: —
+- **Notes**: Auto-appended by `straymark followups drift --apply` 2026-07-03. Closed 2026-07-03: ya mitigado en su AILOG de origen — los tres defectos de veracidad se corrigieron a copy fiel antes del tag; el patrón "declared but not wired" queda trackeado upstream (straymark#209). No había trabajo pendiente; entrada de registro cerrada en triage.
 
 ### FU-013 — **La extensión de GNOME Shell no está en el build de Meson ni se instala vía
 - **Origin**: AILOG-2026-07-03-002 §Follow-ups
