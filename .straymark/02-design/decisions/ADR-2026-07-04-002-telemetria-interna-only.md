@@ -1,12 +1,15 @@
 ---
 id: ADR-2026-07-04-002
 title: "Telemetría interna-only: se descarta todo export externo de datos"
-status: draft
+status: accepted
 created: 2026-07-04
 updated: 2026-07-04
 agent: claude-code-v1.0
 confidence: high
 review_required: true
+reviewed_by: Jose Villaseñor Montfort <pepemontfort@gmail.com>
+reviewed_at: 2026-07-04
+review_outcome: approved
 risk_level: medium
 eu_ai_act_risk: not_applicable
 iso_42001_clause: [6, 8]
@@ -21,10 +24,11 @@ supersedes: []
 
 ## Status
 
-draft — **decisión D3 tomada por el operador el 2026-07-04**; este ADR la
-formaliza y requiere su revisión/aprobación.
+accepted — **decisión D3 tomada por el operador el 2026-07-04**; ADR aprobado
+por el operador el 2026-07-04 (ver `## Approval`). Inmutable desde este punto:
+cambios futuros requieren un ADR nuevo con `supersedes`.
 
-**Note**: This document was created by an AI agent and requires human review.
+**Note**: This document was created by an AI agent and was human-reviewed.
 
 ## Context
 
@@ -132,5 +136,12 @@ pierde `send`.
   "ningún dato sale de tu equipo hacia nosotros — no hay mecanismo para ello".
 
 ---
+
+
+## Approval
+
+**Approved**: 2026-07-04 by `Jose Villaseñor Montfort <pepemontfort@gmail.com>`.
+
+Decisión D3 tomada por mí el 2026-07-04: la garantía de privacidad es promesa central del producto.
 
 <!-- Template: StrayMark | https://strangedays.tech -->
