@@ -13,6 +13,11 @@ iso_42001_clause: []            # 4 | 5 | 6 | 7 | 8 | 9 | 10
 lines_changed: 0                # Auto-calculable
 files_modified: []              # Auto-calculable
 observability_scope: none        # none | basic | full — activar cuando la instrumentación OTel sea relevante
+# Clasificación declarada del trabajo (Baton #332, opcional — costo ≈ 0 en autoría).
+# work_verb: design | implement | audit | operate. Mapea a un tier de routing.
+# design_provenance: new | upstream — sólo significativo para implement (upstream degrada a operator).
+# work_verb: implement
+# design_provenance: new
 tags: []
 related: []
 ---
@@ -73,7 +78,10 @@ related: []
 ## Verificación
 
 - [ ] El código compila sin errores
-- [ ] Las pruebas pasan
+- [ ] Las pruebas pasan — declara el comando exacto ejecutado. Una verificación
+  que no puede producir un resultado negativo no es verificación: sumar passes
+  sin revisar fallos es un anti-patrón conocido (#382). Prefiere el exit code
+  del runner o su veredicto final sobre parsing custom.
 - [ ] Se realizó revisión manual
 - [ ] Escaneo de seguridad pasado (si risk_level: high/critical)
 - [ ] Revisión de privacidad completada (si maneja PII)

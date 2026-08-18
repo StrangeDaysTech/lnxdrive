@@ -123,7 +123,7 @@ curl -X PUT "https://${SERVICE_HOST}/api/v1/.../..." \
 
 [R1, R2, ... 风险列表，实现承诺要缓解。每项都附有缓解措施文档。约定：
 如果在执行过程中出现 Charter 中未预见的新风险，则在 AILOG 的 `## Risk`
-下记录为 `R<N+1> (new, not in Charter)` — Gemini 和其他外部审计员
+下记录为 `R<N+1> (new, not in Charter)` — 外部审计员
 进行跨文档验证。
 
 每项缓解措施都应说明：(a) 具体的触发条件或阈值（不要"最终"），
@@ -168,7 +168,7 @@ curl -X PUT "https://${SERVICE_HOST}/api/v1/.../..." \
    演示了此步骤所防止的失败模式）。
 
 2. **合并后漂移检查**：
-   - 运行 `straymark charter drift CHARTER-NN --range origin/main..HEAD`，并验证
+   - 运行 `straymark charter drift CHARTER-NN --range origin/main...HEAD`，并验证
      输出是干净的，或所有漂移都已在 AILOG 中记录。
    - 这捕获了在合并后引入漂移的罕见情况（squash 改写、管理员修订等），
      而 #1 中的原子步骤无法应用。

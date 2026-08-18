@@ -11,7 +11,7 @@
 ### Al Iniciar una Sesión
 
 Cada agente debe identificarse con:
-- Nombre del agente (ej.: `claude-code-v1.0`, `cursor-v1.0`, `gemini-cli-v1.0`, `codex-cli-v1.0`)
+- Nombre del agente (ej.: `claude-code-v1.0`, `cursor-v1.0`, `antigravity-v1.0`, `codex-cli-v1.0`, `qwen-code-v1.0`, `qoder-v1.0`)
 - Versión del agente si está disponible
 
 ### En Cada Documento
@@ -333,7 +333,7 @@ Mi recomendación: [SÍ / NO], porque:
 Si decides auditar:
   Ejecuta /straymark-audit-prompt <CHARTER-ID> y yo escribo el prompt
   unificado de auditoría en .straymark/audits/<CHARTER-ID>/audit-prompt.md.
-  Después abre una o más CLIs auditoras (gemini-cli, claude-cli,
+  Después abre una o más CLIs auditoras (agy, claude-cli,
   copilot-cli, codex-cli) en este repo e invoca
   /straymark-audit-execute <CHARTER-ID> en cada una — recomendación: al
   menos 2 auditores de familias de modelo distintas. Cuando y solo
@@ -378,12 +378,14 @@ Son heurísticas, no reglas rígidas — estás cerca del contexto, afínalas co
 - El checkpoint **no** bloquea ninguna acción posterior. Si el developer lo ignora y corre `charter close`, close procede normalmente — no hay enforcement y no lo habrá (decisión de diseño v0+v1 permanente; ver `Propuesta/straymark-audit-skills.md` §2.2).
 - El checkpoint **no** se cuenta en ninguna métrica de calidad. No hay KPI "% Charters auditados" en `straymark metrics` — por diseño, para evitar incentivos a inflar el conteo.
 - Si el developer acepta la auditoría, el workflow procede vía tres skills en secuencia: `/straymark-audit-prompt` (escribe el prompt unificado en el path canónico) → `/straymark-audit-execute` × N (una por CLI auditora que abra el operador — estas corren en esas CLIs, no en el agente principal) → `/straymark-audit-review` (consolida N reports inline en `.straymark/audits/<id>/review.md` y mergea el YAML en la telemetría). Los operadores nunca copian/pegan prompts ni reports — el intercambio de archivos sucede vía paths canónicos bajo `.straymark/audits/`.
+- **Audita un estado estable (#345).** Genera el prompt solo cuando el estado auditado es estable — la CI del PR en verde, el árbol de trabajo limpio y los commits pusheados. `charter audit --prepare` embebe el git diff al momento de generarlo, así que si la CI en vuelo luego fuerza un fix, el prompt queda obsoleto y los auditores revisan una revisión que ya no existe. Secuencia: **PR → CI verde → `--prepare` → lanzar auditores.** El CLI avisa (no bloquea) si el árbol está sucio o hay commits sin pushear.
+- **Auditorías multi-ronda (#341).** Un Charter auditado en más de una ronda (p. ej. una ronda por fase con mucho código) namespacea cada ronda con `--prepare --round <label>`, escribiendo la tríada bajo `.straymark/audits/<id>/<label>/` para que las rondas no colisionen y el glob `report-*.md` se acote por ronda. Ver [`AUDIT-ROUNDS-PATTERN.md`](AUDIT-ROUNDS-PATTERN.md).
 
 ---
 
 ## 13. Follow-ups Backlog (mantenimiento del registry)
 
-Cuando el proyecto mantiene el registry central de follow-ups (`.straymark/follow-ups-backlog.md` — ver [`FOLLOW-UPS-BACKLOG-PATTERN.md`](FOLLOW-UPS-BACKLOG-PATTERN.md) y `STRAYMARK.md §16`), el agente es su **mantenedor primario**. Tres directivas:
+Cuando el proyecto mantiene el registry central de follow-ups (`.straymark/follow-ups-backlog.md` — ver [`FOLLOW-UPS-BACKLOG-PATTERN.md`](FOLLOW-UPS-BACKLOG-PATTERN.md) y `STRAYMARK.md §16`), el agente es su **mantenedor primario**. Cuatro directivas:
 
 ### Session start
 
@@ -392,6 +394,10 @@ Echa un vistazo a `.straymark/follow-ups-backlog.md` (o ejecuta `straymark follo
 ### Pre-commit
 
 ¿Creaste o modificaste algún AILOG con entradas `## Follow-ups` o `R<N> (new, not in Charter)`? → ejecuta `straymark followups drift --apply` para que la extensión del registry viaje en **el mismo commit** que el AILOG. Las entradas que el texto del AILOG ya marca como resueltas in-Charter se extraen como `suspected-closed` automáticamente — no las elimines; el operador las confirma en el siguiente triage.
+
+### Antes de actuar sobre una entrada (ejecución)
+
+Una entrada del registry es una **hipótesis fechada y decadente, no una instrucción** (AIDEC-2026-07-18-001, de #365): su premisa pudo ser falsa en la captura o haberse vuelto obsoleta desde entonces. **Re-verifica la premisa en la ejecución, no en la captura** — en el momento en que promueves o actúas sobre una entrada ya estás dentro de ese código, así que el chequeo (un `grep`, la lectura de un archivo, una cadena de llamadas trazada) son segundos. Hazlo *antes* de construir sobre la entrada: una premisa plausible-pero-falsa implementada es un Charter desperdiciado. Registra el re-chequeo con `straymark followups verify FU-NNN --verified` (o `followups promote FU-NNN --premise-verified`), que sella `Verified-at`. **No** verifiques en la captura — el backlog es un buffer especulativo cuyo valor es la captura barata; adelantar la verificación haría que la jugada racional fuera "dejar de escribir follow-ups".
 
 ### Post-Charter close
 
@@ -412,4 +418,4 @@ Cuando un proyecto acumula un volumen alto de AILOGs a lo largo de múltiples Ch
 
 ---
 
-*StrayMark fw-4.32.0 | [Strange Days Tech](https://strangedays.tech)*
+*StrayMark fw-4.44.0 | [Strange Days Tech](https://strangedays.tech)*

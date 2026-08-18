@@ -13,6 +13,11 @@ iso_42001_clause: []            # 4 | 5 | 6 | 7 | 8 | 9 | 10
 lines_changed: 0                # 可自动计算
 files_modified: []              # 可自动计算
 observability_scope: none        # none | basic | full — 当 OTel 监测相关时设置
+# 声明的工作分类（Baton #332，可选 — 编写时成本 ≈ 0）。
+# work_verb: design | implement | audit | operate。映射到路由层级。
+# design_provenance: new | upstream —— 仅对 implement 有意义（upstream 降级为 operator）。
+# work_verb: implement
+# design_provenance: new
 tags: []
 related: []
 ---
@@ -72,7 +77,9 @@ related: []
 ## 验证
 
 - [ ] 代码编译无错误
-- [ ] 测试通过
+- [ ] 测试通过 — 声明执行的确切命令。无法产生阴性结果的验证不是验证：
+  只统计通过数而不检查失败输出是已知的反模式 (#382)。
+  优先使用测试运行器的退出码或总结判定，而非自定义解析。
 - [ ] 已执行人工审查
 - [ ] 安全扫描已通过（如 risk_level 为 high/critical）
 - [ ] 隐私审查已完成（如涉及个人身份信息）
