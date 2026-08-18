@@ -81,9 +81,6 @@ pub trait LnxdriveAuth {
     /// Begin OAuth2 flow. Returns (auth_url, state).
     async fn start_auth(&self) -> zbus::Result<(String, String)>;
 
-    /// Finish an auth flow with an explicit code + state (manual/CLI/GOA).
-    async fn complete_auth(&self, code: &str, state: &str) -> zbus::Result<bool>;
-
     /// Complete auth using an existing GNOME Online Accounts account. The daemon
     /// fetches the tokens from GOA and persists them in the keyring itself, so
     /// tokens never cross the D-Bus surface (RISK-002). `goa_account_path` is the
@@ -261,16 +258,13 @@ impl DbusClient {
     }
 
     /// Start the OAuth2 flow. Returns `(auth_url, state)`.
-    /// The caller should open `auth_url` in the default browser.
+    /// The caller should open `auth_url` in the default browser. The daemon
+    /// captures the OAuth redirect on its own loopback server and completes
+    /// the flow; there is no D-Bus method carrying the code (the historical
+    /// `CompleteAuth` was retired in issue #70 — RISK-002).
     pub async fn start_auth(&self) -> Result<(String, String), DbusError> {
         let proxy = LnxdriveAuthProxy::new(&self.connection).await?;
         Ok(proxy.start_auth().await?)
-    }
-
-    /// Complete an auth flow manually (used by CLI or GOA integration).
-    pub async fn complete_auth(&self, code: &str, state: &str) -> Result<bool, DbusError> {
-        let proxy = LnxdriveAuthProxy::new(&self.connection).await?;
-        Ok(proxy.complete_auth(code, state).await?)
     }
 
     /// Complete auth via an existing GNOME Online Accounts account. The daemon

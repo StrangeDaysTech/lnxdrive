@@ -34,6 +34,11 @@ mod imp {
         pub sign_in_button: RefCell<Option<gtk4::Button>>,
         #[cfg(feature = "goa")]
         pub goa_button: RefCell<Option<gtk4::Button>>,
+        /// Shown when no `lnxdrive_microsoft` account exists in GOA yet:
+        /// opens GNOME Online Accounts so the user can create it
+        /// (issue #70 onboarding item).
+        #[cfg(feature = "goa")]
+        pub goa_setup_button: RefCell<Option<gtk4::Button>>,
         pub spinner: RefCell<Option<gtk4::Spinner>>,
         pub cancel_button: RefCell<Option<gtk4::Button>>,
         pub error_banner: RefCell<Option<adw::Banner>>,
@@ -48,6 +53,8 @@ mod imp {
                 sign_in_button: RefCell::new(None),
                 #[cfg(feature = "goa")]
                 goa_button: RefCell::new(None),
+                #[cfg(feature = "goa")]
+                goa_setup_button: RefCell::new(None),
                 spinner: RefCell::new(None),
                 cancel_button: RefCell::new(None),
                 error_banner: RefCell::new(None),
@@ -150,11 +157,36 @@ impl AuthPage {
                 .build();
             imp.goa_button.replace(Some(goa_button.clone()));
 
-            // Check for existing GOA account asynchronously
+            // Offered when NO lnxdrive_microsoft account exists in GOA yet:
+            // opens GNOME Online Accounts so the user can add it (issue #70).
+            let goa_setup_button = gtk4::Button::builder()
+                .label(gettext("Add a Microsoft account in GNOME Online Accounts…"))
+                .halign(gtk4::Align::Center)
+                .css_classes(["pill"])
+                .visible(false) // shown only when the GOA check finds nothing
+                .build();
+            imp.goa_setup_button.replace(Some(goa_setup_button.clone()));
+
+            // Check for an existing GOA account asynchronously. When none
+            // exists, offer the setup button and keep polling so the GOA
+            // sign-in button appears as soon as the account is created in
+            // GNOME Online Accounts (no app restart needed).
             let goa_btn = goa_button.clone();
+            let setup_btn = goa_setup_button.clone();
             glib::MainContext::default().spawn_local(async move {
                 if goa_sso::has_lnxdrive_goa_account().await {
                     goa_btn.set_visible(true);
+                    return;
+                }
+                setup_btn.set_visible(true);
+                // ~5 minutes of gentle polling; cheap local D-Bus query.
+                for _ in 0..100 {
+                    glib::timeout_future(std::time::Duration::from_secs(3)).await;
+                    if goa_sso::has_lnxdrive_goa_account().await {
+                        setup_btn.set_visible(false);
+                        goa_btn.set_visible(true);
+                        return;
+                    }
                 }
             });
 
@@ -163,6 +195,12 @@ impl AuthPage {
             let wl_clone = waiting_label.clone();
             goa_button.connect_clicked(move |_| {
                 page_clone.on_goa_sign_in_clicked(&wl_clone);
+            });
+
+            // Connect GOA setup button click
+            let page_clone = self.clone();
+            goa_setup_button.connect_clicked(move |_| {
+                page_clone.on_goa_setup_clicked();
             });
         }
 
@@ -175,6 +213,10 @@ impl AuthPage {
         #[cfg(feature = "goa")]
         if let Some(ref goa_btn) = *imp.goa_button.borrow() {
             button_box.append(goa_btn);
+        }
+        #[cfg(feature = "goa")]
+        if let Some(ref setup_btn) = *imp.goa_setup_button.borrow() {
+            button_box.append(setup_btn);
         }
         button_box.append(&sign_in_button);
         button_box.append(&spinner);
@@ -332,6 +374,40 @@ impl AuthPage {
                 }
             }
         });
+    }
+
+    /// Called when the user clicks "Add a Microsoft account in GNOME Online
+    /// Accounts…" — opens the Online Accounts panel of GNOME Settings so the
+    /// `lnxdrive_microsoft` account can be created (issue #70). The page's
+    /// polling loop then swaps this button for the GOA sign-in button.
+    #[cfg(feature = "goa")]
+    fn on_goa_setup_clicked(&self) {
+        use gtk4::gio;
+
+        let app_info = gio::AppInfo::create_from_commandline(
+            "gnome-control-center online-accounts",
+            Some("GNOME Online Accounts"),
+            gio::AppInfoCreateFlags::NONE,
+        );
+
+        match app_info {
+            Ok(app) => {
+                if let Err(e) = app.launch(&[] as &[gio::File], None::<&gio::AppLaunchContext>) {
+                    self.show_error(&format!(
+                        "{}: {}",
+                        gettext("Could not open GNOME Online Accounts"),
+                        e
+                    ));
+                }
+            }
+            Err(e) => {
+                self.show_error(&format!(
+                    "{}: {}",
+                    gettext("Could not open GNOME Online Accounts"),
+                    e
+                ));
+            }
+        }
     }
 
     /// Called when the user clicks "Use existing Microsoft account" (GOA SSO).

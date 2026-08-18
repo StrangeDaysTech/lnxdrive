@@ -117,6 +117,12 @@ pub struct DaemonState {
     pub auth_url: Option<String>,
     /// CSRF state token for in-progress auth flow
     pub auth_csrf_state: Option<String>,
+    /// PKCE code verifier for the in-progress browser auth flow.
+    ///
+    /// Retained between `Auth.StartAuth` (which arms the flow via the
+    /// backend) and the backend's loopback completion task, which consumes
+    /// it for the code exchange. Never leaves the process.
+    pub pkce_verifier: Option<String>,
     /// Authentication source: "browser", "goa", or None
     pub auth_source: Option<String>,
 
@@ -161,6 +167,7 @@ impl Default for DaemonState {
             is_authenticated: false,
             auth_url: None,
             auth_csrf_state: None,
+            pkce_verifier: None,
             auth_source: None,
             config_yaml: String::new(),
             selected_folders: Vec::new(),
@@ -803,91 +810,201 @@ pub struct AuthInterface {
     /// Backend that completes authentication without exposing tokens over D-Bus.
     ///
     /// `None` when the interface is constructed for unit tests that do not
-    /// exercise the GOA path. Production code must use [`Self::with_backend`]
-    /// so that `complete_auth_via_goa` can actually fetch tokens and persist
-    /// them in the keyring. See [`crate::auth_backend::AuthBackend`] for the
-    /// expected contract.
+    /// exercise the auth backends. Production code must use
+    /// [`Self::with_backend`] so that `complete_auth_via_goa` /
+    /// `start_auth` can actually fetch tokens and persist them in the
+    /// keyring. See [`crate::auth_backend::AuthBackend`] for the expected
+    /// contract.
     backend: Option<Arc<dyn AuthBackend>>,
+    /// Live D-Bus connection slot, populated by [`DbusService::start`].
+    ///
+    /// Used to emit `AuthStateChanged` from contexts that are not a zbus
+    /// method call (the browser/PKCE loopback completion task). Reads the
+    /// CURRENT connection on every emit, so signals keep working after the
+    /// health monitor re-registers the service on a fresh connection
+    /// (RISK-001 reconnects).
+    connection_slot: ConnectionSlot,
 }
+
+/// Shared slot holding the daemon's currently-live session-bus connection.
+///
+/// Written by [`DbusService::start`] every time the service is (re)built —
+/// including health-monitor reconnects — and read by [`AuthInterface`] when
+/// it needs to emit signals from a background task.
+pub type ConnectionSlot = Arc<tokio::sync::RwLock<Option<zbus::Connection>>>;
 
 impl AuthInterface {
     /// Constructs an `AuthInterface` without a backend.
     ///
-    /// Calls to `complete_auth_via_goa` will return `false` until a backend
-    /// is wired with [`Self::with_backend`]. This constructor exists so the
-    /// existing unit tests that only exercise `start_auth` / `complete_auth`
-    /// / `logout` / `is_authenticated` continue to compile unchanged.
+    /// Calls to `complete_auth_via_goa` will return `false` and `start_auth`
+    /// falls back to the legacy placeholder URL until a backend is wired
+    /// with [`Self::with_backend`]. This constructor exists so unit tests
+    /// that only exercise `start_auth` / `logout` / `is_authenticated`
+    /// continue to compile unchanged.
     pub fn new(state: Arc<Mutex<DaemonState>>) -> Self {
         Self {
             state,
             backend: None,
+            connection_slot: Arc::new(tokio::sync::RwLock::new(None)),
         }
     }
 
     /// Constructs an `AuthInterface` wired to an `AuthBackend`.
     ///
     /// This is the constructor that production code in `lnxdrive-daemon`
-    /// uses. The backend implementation owns the GOA D-Bus client and the
-    /// keyring storage; the interface itself never touches either.
+    /// uses (via [`DbusService::with_auth_backend`]). The backend
+    /// implementation owns the GOA D-Bus client, the OAuth2 PKCE loopback
+    /// capture, and the keyring storage; the interface itself never touches
+    /// any of them.
     pub fn with_backend(
         state: Arc<Mutex<DaemonState>>,
         backend: Arc<dyn AuthBackend>,
+        connection_slot: ConnectionSlot,
     ) -> Self {
         Self {
             state,
             backend: Some(backend),
+            connection_slot,
+        }
+    }
+}
+
+/// Emits `AuthStateChanged` on the daemon's live connection, if any.
+///
+/// Best-effort: when no connection is registered (unit tests, or a window
+/// during bus reconnect) the state change is logged and the signal skipped.
+/// The interface registration is looked up fresh on every call so reconnects
+/// are transparent.
+async fn emit_auth_state_changed(slot: &ConnectionSlot, new_state: &str) {
+    let conn = slot.read().await.clone();
+    let Some(conn) = conn else {
+        debug!(
+            state = new_state,
+            "AuthStateChanged skipped: no live D-Bus connection"
+        );
+        return;
+    };
+
+    // Bind the lookup to a statement so the `object_server()` guard is
+    // dropped before `conn` (async temporary-lifetime rules).
+    let iface = conn
+        .object_server()
+        .interface::<_, AuthInterface>(DBUS_PATH)
+        .await;
+    match iface {
+        Ok(iface_ref) => {
+            if let Err(e) =
+                AuthInterface::auth_state_changed(iface_ref.signal_context(), new_state).await
+            {
+                warn!(state = new_state, error = %e, "Failed to emit AuthStateChanged");
+            } else {
+                info!(state = new_state, "AuthStateChanged emitted");
+            }
+        }
+        Err(e) => {
+            warn!(
+                state = new_state,
+                error = %e,
+                "AuthInterface not registered; cannot emit AuthStateChanged"
+            );
         }
     }
 }
 
 #[zbus::interface(name = "com.strangedaystech.LNXDrive.Auth")]
 impl AuthInterface {
-    /// Generates an OAuth2 authorization URL and CSRF state token
+    /// Starts the browser/PKCE authentication flow.
     ///
-    /// Returns (auth_url, csrf_state). The client should open auth_url
-    /// in a browser and call CompleteAuth with the returned code.
+    /// Returns (auth_url, csrf_state). The client should open auth_url in a
+    /// browser and then wait for the `AuthStateChanged` signal — the
+    /// daemon captures the OAuth2 redirect on its own loopback server,
+    /// exchanges the code for tokens, and persists them in the keyring
+    /// without any secret crossing D-Bus (RISK-002). The historical
+    /// `CompleteAuth(code, state)` method was removed because it carried
+    /// the authorization code over the bus.
     async fn start_auth(&self) -> (String, String) {
-        let mut state = self.state.lock().await;
-        // In a real implementation, the daemon generates the OAuth2 URL.
-        // Here we store placeholders that the daemon loop will populate.
-        let auth_url = state.auth_url.clone().unwrap_or_else(|| {
-            "https://login.microsoftonline.com/common/oauth2/v2.0/authorize".to_string()
-        });
-        let csrf_state = state.auth_csrf_state.clone().unwrap_or_else(|| {
-            "pending".to_string()
-        });
-        info!("Auth.StartAuth called");
-        state.auth_url = Some(auth_url.clone());
-        state.auth_csrf_state = Some(csrf_state.clone());
-        (auth_url, csrf_state)
-    }
-
-    /// Exchanges an authorization code for tokens
-    ///
-    /// # Arguments
-    /// * `code` - The authorization code from the OAuth2 redirect
-    /// * `state` - The CSRF state token to verify
-    ///
-    /// # Returns
-    /// `true` if authentication succeeded, `false` otherwise
-    async fn complete_auth(&self, code: String, state_token: String) -> bool {
-        let mut state = self.state.lock().await;
-        info!(code_len = code.len(), "Auth.CompleteAuth called");
-
-        // Verify CSRF state matches
-        let expected = state.auth_csrf_state.as_deref().unwrap_or("");
-        if state_token != expected {
-            warn!("Auth.CompleteAuth CSRF state mismatch");
-            return false;
+        // Idempotence: a flow already armed returns its URL/state instead
+        // of binding a second loopback server.
+        {
+            let state = self.state.lock().await;
+            if let (Some(url), Some(csrf)) = (&state.auth_url, &state.auth_csrf_state) {
+                info!("Auth.StartAuth called with a flow already in progress");
+                return (url.clone(), csrf.clone());
+            }
         }
 
-        // In a real implementation, the daemon exchanges the code for tokens.
-        // Here we just mark as authenticated.
-        state.is_authenticated = true;
-        state.auth_source = Some("browser".to_string());
-        state.auth_url = None;
-        state.auth_csrf_state = None;
-        true
+        let backend = match &self.backend {
+            Some(b) => Arc::clone(b),
+            None => {
+                // Test/no-backend fallback: legacy placeholder so unit tests
+                // that construct AuthInterface::new keep working. Production
+                // always wires a backend (see DbusService::start).
+                let mut state = self.state.lock().await;
+                let auth_url = state.auth_url.clone().unwrap_or_else(|| {
+                    "https://login.microsoftonline.com/common/oauth2/v2.0/authorize".to_string()
+                });
+                let csrf_state = state.auth_csrf_state.clone().unwrap_or_else(|| {
+                    "pending".to_string()
+                });
+                info!("Auth.StartAuth called (no backend; placeholder URL)");
+                state.auth_url = Some(auth_url.clone());
+                state.auth_csrf_state = Some(csrf_state.clone());
+                return (auth_url, csrf_state);
+            }
+        };
+
+        let start = match backend.start_browser_auth().await {
+            Ok(start) => start,
+            Err(err) => {
+                warn!("Auth.StartAuth failed to arm PKCE flow: {}", err);
+                return (String::new(), String::new());
+            }
+        };
+
+        {
+            let mut state = self.state.lock().await;
+            state.auth_url = Some(start.auth_url.clone());
+            state.auth_csrf_state = Some(start.csrf_state.clone());
+            state.pkce_verifier = Some(start.pkce_verifier.clone());
+        }
+        info!("Auth.StartAuth armed a real PKCE flow");
+
+        // Completion task: the backend awaits the loopback redirect,
+        // validates CSRF, exchanges the code, persists tokens + account,
+        // and this task then updates shared state and emits the signal.
+        let state = Arc::clone(&self.state);
+        let slot = Arc::clone(&self.connection_slot);
+        let csrf_expected = start.csrf_state.clone();
+        let verifier = start.pkce_verifier.clone();
+        tokio::spawn(async move {
+            let result = backend.complete_browser_auth(&csrf_expected, &verifier).await;
+
+            let mut s = state.lock().await;
+            // The flow is over either way; clear the armed markers.
+            s.auth_url = None;
+            s.auth_csrf_state = None;
+            s.pkce_verifier = None;
+
+            match result {
+                Ok(account) => {
+                    s.is_authenticated = true;
+                    s.account_email = Some(account.email.clone());
+                    if let Some(name) = account.display_name.clone() {
+                        s.account_display_name = Some(name);
+                    }
+                    s.auth_source = Some("browser".to_string());
+                    drop(s);
+                    emit_auth_state_changed(&slot, "authenticated").await;
+                }
+                Err(err) => {
+                    warn!("Browser/PKCE authentication failed: {}", err);
+                    drop(s);
+                    emit_auth_state_changed(&slot, "error").await;
+                }
+            }
+        });
+
+        (start.auth_url, start.csrf_state)
     }
 
     /// Completes authentication for a GNOME Online Accounts account.
@@ -939,27 +1056,35 @@ impl AuthInterface {
             }
         };
 
-        let email = match backend.complete_auth_via_goa(&goa_account_path).await {
-            Ok(email) => email,
+        let account = match backend.complete_auth_via_goa(&goa_account_path).await {
+            Ok(account) => account,
             Err(err) => {
                 warn!(
                     "Auth.CompleteAuthViaGOA backend failed: {} (account_path={})",
                     err, goa_account_path
                 );
+                emit_auth_state_changed(&self.connection_slot, "error").await;
                 return false;
             }
         };
 
         let mut state = self.state.lock().await;
         state.is_authenticated = true;
-        state.account_email = Some(email);
+        if let Some(name) = account.display_name.clone() {
+            state.account_display_name = Some(name);
+        }
+        state.account_email = Some(account.email);
         state.auth_source = Some("goa".to_string());
         state.auth_url = None;
         state.auth_csrf_state = None;
+        state.pkce_verifier = None;
+        drop(state);
+
         info!(
             "Auth.CompleteAuthViaGOA succeeded (account_path={})",
             goa_account_path
         );
+        emit_auth_state_changed(&self.connection_slot, "authenticated").await;
         true
     }
 
@@ -979,6 +1104,9 @@ impl AuthInterface {
         state.account_display_name = None;
         state.auth_url = None;
         state.auth_csrf_state = None;
+        state.pkce_verifier = None;
+        drop(state);
+        emit_auth_state_changed(&self.connection_slot, "unauthenticated").await;
     }
 
     /// Emitted when authentication state changes
@@ -1144,6 +1272,9 @@ impl ManagerInterface {
 pub struct DbusService {
     state: Arc<Mutex<DaemonState>>,
     auth_backend: Option<Arc<dyn AuthBackend>>,
+    /// Slot where the live connection is published after each `start()`,
+    /// so [`AuthInterface`] can emit signals from background tasks.
+    connection_slot: ConnectionSlot,
 }
 
 impl DbusService {
@@ -1152,6 +1283,7 @@ impl DbusService {
         Self {
             state,
             auth_backend: None,
+            connection_slot: Arc::new(tokio::sync::RwLock::new(None)),
         }
     }
 
@@ -1160,6 +1292,7 @@ impl DbusService {
         Self {
             state: Arc::new(Mutex::new(DaemonState::default())),
             auth_backend: None,
+            connection_slot: Arc::new(tokio::sync::RwLock::new(None)),
         }
     }
 
@@ -1201,9 +1334,11 @@ impl DbusService {
         let sync_iface = SyncInterface::new(Arc::clone(&self.state));
         let status_iface = StatusInterface::new(Arc::clone(&self.state));
         let auth_iface = match &self.auth_backend {
-            Some(backend) => {
-                AuthInterface::with_backend(Arc::clone(&self.state), Arc::clone(backend))
-            }
+            Some(backend) => AuthInterface::with_backend(
+                Arc::clone(&self.state),
+                Arc::clone(backend),
+                Arc::clone(&self.connection_slot),
+            ),
             None => {
                 warn!(
                     "DbusService starting without an AuthBackend; \
@@ -1228,6 +1363,11 @@ impl DbusService {
             .serve_at(DBUS_PATH, manager_iface)?
             .build()
             .await?;
+
+        // Publish the live connection so AuthInterface can emit signals from
+        // background tasks. Overwritten on every (re)start, so the slot
+        // always holds the current connection after health-monitor reconnects.
+        *self.connection_slot.write().await = Some(connection.clone());
 
         info!(
             name = DBUS_NAME,
@@ -1267,14 +1407,16 @@ impl DbusService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::auth_backend::{AuthBackend, AuthBackendError, AuthBackendResult};
+    use crate::auth_backend::{
+        AuthBackend, AuthBackendError, AuthBackendResult, AuthenticatedAccount, BrowserAuthStart,
+    };
     use async_trait::async_trait;
 
     /// In-process AuthBackend used by the AuthInterface tests below.
     ///
-    /// It returns a configurable result without ever talking to GOA or the
-    /// keyring. Tests build it via the helpers `MockAuthBackend::ok(email)` /
-    /// `MockAuthBackend::err(error)`.
+    /// It returns a configurable result without ever talking to GOA, the
+    /// keyring, or the network. Tests build it via the helpers
+    /// `MockAuthBackend::ok(email)` / `MockAuthBackend::err(error)`.
     struct MockAuthBackend {
         result: AuthBackendResult,
         last_call: tokio::sync::Mutex<Option<String>>,
@@ -1283,7 +1425,10 @@ mod tests {
     impl MockAuthBackend {
         fn ok(email: &str) -> Arc<Self> {
             Arc::new(Self {
-                result: Ok(email.to_string()),
+                result: Ok(AuthenticatedAccount {
+                    email: email.to_string(),
+                    display_name: None,
+                }),
                 last_call: tokio::sync::Mutex::new(None),
             })
         }
@@ -1304,6 +1449,27 @@ mod tests {
     impl AuthBackend for MockAuthBackend {
         async fn complete_auth_via_goa(&self, goa_account_path: &str) -> AuthBackendResult {
             *self.last_call.lock().await = Some(goa_account_path.to_string());
+            self.result.clone()
+        }
+
+        async fn start_browser_auth(&self) -> Result<BrowserAuthStart, AuthBackendError> {
+            *self.last_call.lock().await = Some("start_browser_auth".to_string());
+            Ok(BrowserAuthStart {
+                auth_url: "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?\
+                           client_id=test&code_challenge=test"
+                    .to_string(),
+                csrf_state: "mock-csrf".to_string(),
+                pkce_verifier: "mock-verifier".to_string(),
+            })
+        }
+
+        async fn complete_browser_auth(
+            &self,
+            expected_csrf: &str,
+            pkce_verifier: &str,
+        ) -> AuthBackendResult {
+            *self.last_call.lock().await =
+                Some(format!("complete_browser_auth:{expected_csrf}:{pkce_verifier}"));
             self.result.clone()
         }
     }
@@ -1946,40 +2112,26 @@ mod tests {
         assert!(locked.auth_csrf_state.is_some());
     }
 
-    #[tokio::test]
-    async fn test_auth_complete_auth_success() {
-        let state = Arc::new(Mutex::new(DaemonState {
-            auth_csrf_state: Some("test-state-123".to_string()),
-            ..DaemonState::default()
-        }));
-        let auth = AuthInterface::new(Arc::clone(&state));
-
-        let result = auth
-            .complete_auth("auth-code-abc".to_string(), "test-state-123".to_string())
-            .await;
-        assert!(result);
-
-        let locked = state.lock().await;
-        assert!(locked.is_authenticated);
-        assert!(locked.auth_url.is_none());
-        assert!(locked.auth_csrf_state.is_none());
+    /// Connection slot for interfaces built in tests: always `None`, so
+    /// signal emission is skipped (and logged) instead of touching a bus.
+    fn test_slot() -> ConnectionSlot {
+        Arc::new(tokio::sync::RwLock::new(None))
     }
 
-    #[tokio::test]
-    async fn test_auth_complete_auth_csrf_mismatch() {
-        let state = Arc::new(Mutex::new(DaemonState {
-            auth_csrf_state: Some("expected-state".to_string()),
-            ..DaemonState::default()
-        }));
-        let auth = AuthInterface::new(Arc::clone(&state));
-
-        let result = auth
-            .complete_auth("code".to_string(), "wrong-state".to_string())
-            .await;
-        assert!(!result);
-
-        let locked = state.lock().await;
-        assert!(!locked.is_authenticated);
+    /// Polls until the spawned browser-auth completion task has flipped the
+    /// state (or the deadline passes). Returns the final `is_authenticated`.
+    async fn wait_until_flow_settles(state: &Arc<Mutex<DaemonState>>) -> bool {
+        for _ in 0..200 {
+            let s = state.lock().await;
+            // The completion task clears the armed marker on both success
+            // and failure, so its absence means the task has settled.
+            if s.auth_url.is_none() {
+                return s.is_authenticated;
+            }
+            drop(s);
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+        state.lock().await.is_authenticated
     }
 
     #[tokio::test]
@@ -2001,6 +2153,103 @@ mod tests {
         assert!(locked.auth_source.is_none());
     }
 
+    // -- Browser/PKCE flow tests (issue #70: StartAuth arms a real flow and
+    //    the backend completes it without secrets crossing D-Bus.)
+
+    #[tokio::test]
+    async fn test_auth_start_auth_arms_real_flow_with_backend() {
+        let state = Arc::new(Mutex::new(DaemonState::default()));
+        let backend = MockAuthBackend::ok("user@example.com");
+        let auth = AuthInterface::with_backend(
+            Arc::clone(&state),
+            Arc::clone(&backend) as _,
+            test_slot(),
+        );
+
+        let (url, csrf) = auth.start_auth().await;
+        assert!(url.contains("client_id="), "URL must carry OAuth params: {url}");
+        assert!(url.contains("code_challenge="), "URL must carry PKCE: {url}");
+        assert_eq!(csrf, "mock-csrf");
+
+        let locked = state.lock().await;
+        assert_eq!(locked.auth_url.as_deref(), Some(url.as_str()));
+        assert_eq!(locked.auth_csrf_state.as_deref(), Some("mock-csrf"));
+        assert_eq!(locked.pkce_verifier.as_deref(), Some("mock-verifier"));
+    }
+
+    #[tokio::test]
+    async fn test_auth_start_auth_is_idempotent_while_armed() {
+        // State pre-armed as if a flow were already in progress.
+        let state = Arc::new(Mutex::new(DaemonState {
+            auth_url: Some("https://in-progress.example.com".to_string()),
+            auth_csrf_state: Some("in-progress-csrf".to_string()),
+            ..DaemonState::default()
+        }));
+        let backend = MockAuthBackend::ok("user@example.com");
+        let auth = AuthInterface::with_backend(
+            Arc::clone(&state),
+            Arc::clone(&backend) as _,
+            test_slot(),
+        );
+
+        let (url1, csrf1) = auth.start_auth().await;
+        let (url2, csrf2) = auth.start_auth().await;
+        assert_eq!(url1, "https://in-progress.example.com");
+        assert_eq!(url1, url2);
+        assert_eq!(csrf1, csrf2);
+        assert_eq!(csrf1, "in-progress-csrf");
+        // A flow already armed must NOT re-arm the backend.
+        assert!(backend.last_call().await.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_auth_browser_flow_completes_and_sets_state() {
+        let state = Arc::new(Mutex::new(DaemonState::default()));
+        let backend = MockAuthBackend::ok("user@example.com");
+        let auth = AuthInterface::with_backend(
+            Arc::clone(&state),
+            Arc::clone(&backend) as _,
+            test_slot(),
+        );
+
+        auth.start_auth().await;
+        let authenticated = wait_until_flow_settles(&state).await;
+        assert!(authenticated);
+
+        let locked = state.lock().await;
+        assert_eq!(locked.account_email.as_deref(), Some("user@example.com"));
+        assert_eq!(locked.auth_source.as_deref(), Some("browser"));
+        // Armed markers consumed by the completion task.
+        assert!(locked.auth_url.is_none());
+        assert!(locked.auth_csrf_state.is_none());
+        assert!(locked.pkce_verifier.is_none());
+        // The backend received the CSRF + verifier armed by start_auth.
+        assert_eq!(
+            backend.last_call().await.as_deref(),
+            Some("complete_browser_auth:mock-csrf:mock-verifier")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_auth_browser_flow_failure_leaves_daemon_unauthenticated() {
+        let state = Arc::new(Mutex::new(DaemonState::default()));
+        let backend = MockAuthBackend::err(AuthBackendError::TokenExchangeFailed);
+        let auth = AuthInterface::with_backend(
+            Arc::clone(&state),
+            Arc::clone(&backend) as _,
+            test_slot(),
+        );
+
+        auth.start_auth().await;
+        let authenticated = wait_until_flow_settles(&state).await;
+        assert!(!authenticated);
+
+        let locked = state.lock().await;
+        assert!(locked.account_email.is_none());
+        assert!(locked.auth_url.is_none());
+        assert!(locked.pkce_verifier.is_none());
+    }
+
     // -- CompleteAuthViaGOA tests (replace the deleted CompleteAuthWithTokens
     //    tests after RISK-002 / CVSS 9.1 was mitigated; see
     //    AILOG-2026-05-29-002 for the full rationale.)
@@ -2009,7 +2258,11 @@ mod tests {
     async fn test_auth_complete_via_goa_succeeds_when_backend_returns_email() {
         let state = Arc::new(Mutex::new(DaemonState::default()));
         let backend = MockAuthBackend::ok("user@example.com");
-        let auth = AuthInterface::with_backend(Arc::clone(&state), Arc::clone(&backend) as _);
+        let auth = AuthInterface::with_backend(
+            Arc::clone(&state),
+            Arc::clone(&backend) as _,
+            test_slot(),
+        );
 
         let ok = auth
             .complete_auth_via_goa(
@@ -2032,7 +2285,11 @@ mod tests {
     async fn test_auth_complete_via_goa_rejects_invalid_path_before_calling_backend() {
         let state = Arc::new(Mutex::new(DaemonState::default()));
         let backend = MockAuthBackend::ok("user@example.com");
-        let auth = AuthInterface::with_backend(Arc::clone(&state), Arc::clone(&backend) as _);
+        let auth = AuthInterface::with_backend(
+            Arc::clone(&state),
+            Arc::clone(&backend) as _,
+            test_slot(),
+        );
 
         let ok = auth
             .complete_auth_via_goa("/wrong/prefix/Accounts/1234".to_string())
@@ -2062,7 +2319,11 @@ mod tests {
     async fn test_auth_complete_via_goa_propagates_backend_failure() {
         let state = Arc::new(Mutex::new(DaemonState::default()));
         let backend = MockAuthBackend::err(AuthBackendError::KeyringStoreFailed);
-        let auth = AuthInterface::with_backend(Arc::clone(&state), Arc::clone(&backend) as _);
+        let auth = AuthInterface::with_backend(
+            Arc::clone(&state),
+            Arc::clone(&backend) as _,
+            test_slot(),
+        );
 
         let ok = auth
             .complete_auth_via_goa(
@@ -2075,19 +2336,6 @@ mod tests {
             Some("/org/gnome/OnlineAccounts/Accounts/1234")
         );
         assert!(!state.lock().await.is_authenticated);
-    }
-
-    #[tokio::test]
-    async fn test_auth_complete_auth_sets_browser_source() {
-        let state = Arc::new(Mutex::new(DaemonState {
-            auth_csrf_state: Some("state-123".to_string()),
-            ..DaemonState::default()
-        }));
-        let auth = AuthInterface::new(Arc::clone(&state));
-
-        auth.complete_auth("code".to_string(), "state-123".to_string())
-            .await;
-        assert_eq!(state.lock().await.auth_source.as_deref(), Some("browser"));
     }
 
     #[tokio::test]

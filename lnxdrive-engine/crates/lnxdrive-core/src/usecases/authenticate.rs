@@ -16,14 +16,23 @@ use crate::{
     ports::{AuthFlow, ICloudProvider, IStateRepository, Tokens},
 };
 
-/// Default OAuth redirect URI for the desktop application
-const DEFAULT_REDIRECT_URI: &str = "http://localhost:8400";
+/// Canonical OAuth redirect URI for the desktop application.
+///
+/// Consolidated per FU-017: must match the loopback server that actually
+/// receives the redirect (`lnxdrive-graph::auth::REDIRECT_URI` binds
+/// `127.0.0.1:8400` and serves `/callback`) and the Azure app
+/// registration. The historical `http://localhost:8400` variant diverged
+/// from both.
+const DEFAULT_REDIRECT_URI: &str = "http://127.0.0.1:8400/callback";
 
 /// Default OAuth scopes for OneDrive access
 const DEFAULT_SCOPES: &[&str] = &["Files.ReadWrite.All", "User.Read", "offline_access"];
 
-/// Default Microsoft application (client) ID
-const DEFAULT_APP_ID: &str = "d50ca740-c83f-4d1b-b616-12c519384f0c";
+/// Default Microsoft application (client) ID.
+///
+/// Used when neither the CLI `--app-id` flag nor `auth.app_id` in config
+/// is set (resolution order: flag > config > default — FU-017).
+pub const DEFAULT_APP_ID: &str = "d50ca740-c83f-4d1b-b616-12c519384f0c";
 
 /// Use case for authentication operations
 ///

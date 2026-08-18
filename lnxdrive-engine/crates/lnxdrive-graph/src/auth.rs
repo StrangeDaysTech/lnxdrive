@@ -28,8 +28,14 @@ const AUTH_URL: &str = "https://login.microsoftonline.com/consumers/oauth2/v2.0/
 /// Default Microsoft OAuth2 token endpoint (consumers tenant)
 const TOKEN_URL: &str = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
 
-/// Default redirect URI for the local callback server
-const REDIRECT_URI: &str = "http://127.0.0.1:8400/callback";
+/// Canonical redirect URI for the local callback server.
+///
+/// Single source of truth for the loopback redirect: the callback server
+/// binds `127.0.0.1:8400` and serves `/callback`, and the Azure app
+/// registration must list exactly this URI. Consolidated per FU-017 (the
+/// historical `http://localhost:8400` variant diverged from the server
+/// that actually receives the redirect).
+pub const REDIRECT_URI: &str = "http://127.0.0.1:8400/callback";
 
 /// Keyring service name for storing tokens
 const KEYRING_SERVICE: &str = "lnxdrive";
@@ -278,6 +284,47 @@ impl PKCEFlow {
         info!("Successfully refreshed access token");
         Ok(tokens)
     }
+}
+
+// ============================================================================
+// String-based PKCE wrappers
+// ============================================================================
+
+/// Arms a PKCE flow returning only plain strings.
+///
+/// Lets callers (e.g. the daemon's auth backend) generate a real
+/// authorization URL without depending on the `oauth2` crate: the CSRF
+/// token and PKCE verifier are returned as opaque secrets that must be fed
+/// back to [`exchange_pkce_code`] to complete the flow.
+///
+/// # Returns
+/// `(authorization_url, csrf_state_secret, pkce_verifier_secret)`
+pub fn arm_pkce_flow(config: &OAuth2Config) -> Result<(String, String, String)> {
+    let flow = PKCEFlow::new(config)?;
+    let (auth_url, csrf_token, pkce_verifier) = flow.generate_auth_url();
+    Ok((
+        auth_url,
+        csrf_token.secret().to_string(),
+        pkce_verifier.secret().to_string(),
+    ))
+}
+
+/// Exchanges an authorization code using a verifier secret previously
+/// returned by [`arm_pkce_flow`].
+///
+/// # Panics
+/// `pkce_verifier_secret` must be a verifier produced by [`arm_pkce_flow`]
+/// (base64url, 43-128 chars); the `oauth2` crate rejects malformed
+/// verifiers with an assertion. Callers never pass user-controlled input
+/// here — the verifier is process-local state armed by this same module.
+pub async fn exchange_pkce_code(
+    config: &OAuth2Config,
+    code: String,
+    pkce_verifier_secret: &str,
+) -> Result<Tokens> {
+    let flow = PKCEFlow::new(config)?;
+    let verifier = PkceCodeVerifier::new(pkce_verifier_secret.to_string());
+    flow.exchange_code(code, verifier).await
 }
 
 // ============================================================================

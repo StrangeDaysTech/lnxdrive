@@ -16,7 +16,10 @@ use std::{path::Path, sync::Arc, time::Duration};
 
 use anyhow::{Context, Result};
 use lnxdrive_cache::{pool::DatabasePool, SqliteStateRepository};
-use lnxdrive_core::{config::Config, ports::state_repository::IStateRepository};
+use lnxdrive_core::{
+    config::Config, ports::state_repository::IStateRepository,
+    usecases::authenticate::DEFAULT_APP_ID,
+};
 use lnxdrive_fuse::{mount, unmount, BackgroundSession};
 use lnxdrive_graph::{
     auth::KeyringTokenStorage, client::GraphClient, provider::GraphCloudProvider,
@@ -126,10 +129,24 @@ impl DaemonService {
         // T224: Start D-Bus service (this also acquires the well-known name).
         // RISK-002 mitigation: wire the GOA-backed AuthBackend so
         // `Auth.CompleteAuthViaGOA` can persist tokens in the keyring without
-        // exposing them as D-Bus method arguments.
+        // exposing them as D-Bus method arguments. The backend also owns the
+        // browser/PKCE loopback capture (issue #70) and the account
+        // persistence that lets `wait_for_auth_loop` resume after login.
+        // app_id origin (FU-017): config `auth.app_id` → default.
+        let app_id = self
+            .config
+            .auth
+            .app_id
+            .clone()
+            .unwrap_or_else(|| DEFAULT_APP_ID.to_string());
         let dbus_service = Arc::new(
-            DbusService::new(Arc::clone(&self.daemon_state))
-                .with_auth_backend(Arc::new(GoaAuthBackend::new())),
+            DbusService::new(Arc::clone(&self.daemon_state)).with_auth_backend(Arc::new(
+                GoaAuthBackend::new(
+                    app_id,
+                    Arc::clone(&self.state_repo),
+                    self.config.sync.root.clone(),
+                ),
+            )),
         );
         let initial_connection = match dbus_service.start().await {
             Ok(conn) => {

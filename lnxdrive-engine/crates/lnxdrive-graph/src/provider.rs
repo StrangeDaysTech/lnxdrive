@@ -7,8 +7,9 @@
 //!
 //! - Uses `tokio::sync::Mutex` because `ICloudProvider` methods take `&self`
 //!   while some `GraphClient` methods require `&mut self` (e.g., `set_access_token`).
-//! - Authentication (`authenticate`, `refresh_tokens`) is handled separately
-//!   by `GraphAuthAdapter`; this provider focuses on file operations.
+//! - `authenticate` / `refresh_tokens` compose [`GraphAuthAdapter`] behind
+//!   the port (FU-017): the OAuth machinery lives in the auth module, the
+//!   port implementation lives here.
 //! - `get_metadata` and `delete_item` make direct Graph API calls via the
 //!   underlying `GraphClient::request()` method.
 
@@ -28,6 +29,8 @@ use tokio::{
     sync::Mutex,
 };
 use tracing::debug;
+
+use crate::auth::{GraphAuthAdapter, OAuth2Config};
 
 use crate::{client::GraphClient, delta, upload};
 
@@ -157,20 +160,54 @@ impl GraphCloudProvider {
 
 #[async_trait::async_trait]
 impl ICloudProvider for GraphCloudProvider {
-    /// Authentication is handled separately by `GraphAuthAdapter`.
+    /// Runs the OAuth2 PKCE flow (browser + loopback callback) and updates
+    /// the internal client with the fresh access token.
     ///
-    /// This method is not implemented on `GraphCloudProvider` because the
-    /// OAuth PKCE flow requires browser interaction and a local HTTP callback
-    /// server, which are orchestrated by the auth module.
-    async fn authenticate(&self, _auth_flow: &AuthFlow) -> Result<Tokens> {
-        anyhow::bail!("Use GraphAuthAdapter for authentication")
+    /// Historically this method was a `bail!` stub ("use GraphAuthAdapter"),
+    /// which left `AuthenticateUseCase::login` calling a port that the only
+    /// implementation refused — the FU-017 divergence. The adapter is still
+    /// the underlying machinery; this method composes it behind the port so
+    /// the use case works end-to-end.
+    async fn authenticate(&self, auth_flow: &AuthFlow) -> Result<Tokens> {
+        match auth_flow {
+            AuthFlow::AuthorizationCodePKCE {
+                app_id,
+                redirect_uri,
+                scopes,
+            } => {
+                let config = OAuth2Config::new(app_id)
+                    .with_redirect_uri(redirect_uri)
+                    .with_scopes(scopes.clone());
+                let adapter = GraphAuthAdapter::new(config);
+                let tokens = adapter
+                    .login()
+                    .await
+                    .context("OAuth2 PKCE login failed")?;
+
+                let mut client = self.client.lock().await;
+                client.set_access_token(tokens.access_token.clone());
+                Ok(tokens)
+            }
+        }
     }
 
-    /// Token refresh is handled separately by `GraphAuthAdapter`.
+    /// Refreshes tokens via the OAuth2 refresh_token grant.
     ///
-    /// See [`authenticate`](Self::authenticate) for rationale.
-    async fn refresh_tokens(&self, _refresh_token: &str) -> Result<Tokens> {
-        anyhow::bail!("Use GraphAuthAdapter for token refresh")
+    /// The port signature carries no app_id; the token endpoint still
+    /// requires the client_id, so the default application ID is used
+    /// (consistent with the FU-017 resolution order flag > config >
+    /// default — refresh flows have no flag/config context).
+    async fn refresh_tokens(&self, refresh_token: &str) -> Result<Tokens> {
+        let config = OAuth2Config::new(lnxdrive_core::usecases::authenticate::DEFAULT_APP_ID);
+        let adapter = GraphAuthAdapter::new(config);
+        let tokens = adapter
+            .refresh(refresh_token)
+            .await
+            .context("OAuth2 token refresh failed")?;
+
+        let mut client = self.client.lock().await;
+        client.set_access_token(tokens.access_token.clone());
+        Ok(tokens)
     }
 
     /// Queries for changes since the last delta token
