@@ -189,9 +189,11 @@ cierre formal en el registry lo hace el operador al validar el gate.
 
 ## Additional Notes
 
-- El ETH correspondiente es `ETH-2026-08-17-001` (draft). El PR de este
-  batch no debe mergear sin aprobación humana del ETH (código de
-  autenticación).
+- El ETH correspondiente es `ETH-2026-08-17-001` — **aprobado el
+  2026-08-18** por el operador humano (`approved_by: montfort`), con las
+  tres preguntas abiertas resueltas en el propio documento. El gate del ETH
+  queda levantado; el merge del PR sigue pendiente del gate de capacidad del
+  operador.
 - **Mock divergente** (hallazgo, no blocking): `mock-dbus-daemon.py` aún
   devuelve URL falsa en `StartAuth` y conserva `CompleteAuth`; aceptable
   para tests de UI, no sirve de gate (regla 1 del replanteo). Considerar

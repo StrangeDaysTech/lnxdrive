@@ -18,16 +18,16 @@ related:
   - ETH-2026-05-29-001
   - CHARTER-02-road-to-functional-v0-1
   - RISK-002-security-vulns
-approved_by: null
-approved_date: null
+approved_by: montfort
+approved_date: 2026-08-18
 ---
 
 # ETH: Browser/PKCE login en el daemon — code y tokens fuera del surface D-Bus
 
-> **IMPORTANTE**: Este documento es un DRAFT creado por un agente de IA.
-> Requiere revisión y aprobación humanas antes de mergear el cambio de
-> código correspondiente (ver `AILOG-2026-08-17-002` para la
-> implementación). Extiende `ETH-2026-05-29-001` a la ruta browser/PKCE.
+> **APPROVED** (2026-08-18). Revisado y aprobado por el operador humano
+> (ver `Approval`). Redactado como draft por un agente de IA
+> (`AILOG-2026-08-17-002` documenta la implementación). Las tres preguntas
+> abiertas quedaron resueltas — ver §"Preguntas abiertas — resoluciones".
 
 ## Executive Summary
 
@@ -138,25 +138,58 @@ ser visible para el `goa-daemon` del host, no del sandbox.
 - **DPIA** (Art. 35): no requerida — tratamiento local, usuario único, sin
   categorías especiales ni monitorización a gran escala.
 
-## Open questions for the reviewer
+## Preguntas abiertas — resoluciones (2026-08-18)
 
-1. **Ventana del loopback.** El listener loopback vive hasta 300 s tras
-   `StartAuth` si el usuario abandona el flujo. ¿Es aceptable esa ventana o
-   reducirla (p. ej. 120 s)?
-2. **Cuenta mínima en fallo de Graph (ruta GOA).** Al fallar el enriquecido,
-   persistimos una cuenta con display_name=e-mail y drive id vacío para que
-   el daemon arranque y exponga el error real. ¿Correcto, o preferible no
-   persistir hasta que Graph responda?
-3. **Peer-credentials en D-Bus.** Sigue pendiente de `ETH-2026-05-29-001`
-   (pregunta 3): ¿restringir ya los llamadores de `Auth.*` por app-id/UID,
-   o dejarlo para v0.2?
+Las tres preguntas quedaron resueltas por el revisor humano (montfort) el
+2026-08-18:
+
+### 1. Ventana del loopback
+
+**Resolución: mantener 300 s.** La duración de la ventana no es el control
+de seguridad; lo son el `state` CSRF + PKCE. Para inyectar un callback
+válido, un atacante necesitaría un `code` de Microsoft emitido para nuestro
+`client_id` y ligado a un challenge PKCE cuyo verifier solo posee el daemon:
+no puede fabricarlo (un code de su propio flujo queda ligado a *su*
+verifier y el intercambio con el nuestro falla con `invalid_grant`). Lo
+peor alcanzable es un **DoS local del login** (adelantarse al navegador y
+consumir el único `accept` con un callback forjado), sin robo de
+credenciales. Reducir la ventana perjudica UX (MFA, redes lentas) sin
+ganancia de seguridad medible. Mejora diferible a v0.2: no tumbar el
+listener si un exchange falla (reintentar dentro de la ventana).
+
+### 2. Cuenta mínima en fallo de Graph (ruta GOA)
+
+**Resolución: mantener la cuenta mínima.** El path de sync no usa
+`onedrive_id` para construir peticiones: delta es `/me/drive/root/delta`
+(`delta.rs:45`), upload `/me/drive/root:…`, metadata/borrado
+`/me/drive/items/{id}` — todo relativo a `me/drive`, resuelto por el token.
+El drive id vacío es solo metadato y no rompe nada (el campo es
+`TEXT NOT NULL`; string vacío lo satisface). Persistir deja al daemon salir
+de `WaitingForAuth` e intentar el sync: si el token GOA no trae scopes
+(R1 materializado), el fallo de Graph aparece como error real en
+`journalctl` — la señal que se quiere para observar R1. No persistir deja
+la inconsistencia opuesta (UI "autenticado", daemon esperando en silencio),
+que oculta R1. El `warn!` marca el caso; `onedrive_id` vacío queda
+documentado como "token GOA sin scopes Graph utilizables".
+
+### 3. Peer-credentials en D-Bus
+
+**Resolución: diferir a v0.2.** Alineado con el triage M0: #20 (authn/authz
+D-Bus, P2) y #22 (rate limiting) ya están en el milestone `v0.2.0-beta`.
+En un daemon de sesión, filtrar por UID es un **no-op** (daemon y llamadores
+legítimos comparten UID; el filtro no distingue la app de preferencias de un
+proceso malicioso del mismo usuario). Un chequeo por identidad Flatpak solo
+aporta en el sandbox y no debe meterse con prisa en el alpha. El vector de
+mayor impacto (tokens **y** code por el bus) ya está cerrado por RISK-002 +
+la retirada de `CompleteAuth`. Riesgo residual acotado: un proceso del mismo
+usuario puede forzar login contra una cuenta GOA atacante → como mucho añade
+una entrada de keyring **nueva** de **otra** cuenta, sin tocar la legítima
+(`ETH-2026-05-29-001` §3). Tracking: #20 y #22.
 
 ## Approval
 
-Este ETH es `draft`. Flujo de aprobación:
-
-1. El revisor lee `AILOG-2026-08-17-002` junto a este ETH.
-2. El revisor aprueba (`status: approved`, rellenar `approved_by`,
-   `approved_date`) o pide revisiones.
-3. El PR del batch no se mergea sin este ETH aprobado, según
-   `AGENT-RULES.md` (código de autenticación).
+**APPROVED** — revisado y aprobado por el operador humano (`approved_by:
+montfort`) el 2026-08-18, junto a `AILOG-2026-08-17-002`. El cambio de
+código correspondiente (PR #73) tiene levantado el gate del ETH; el merge
+queda pendiente únicamente del gate de capacidad del operador (guion
+`new-guide/09` §M1 contra OneDrive real, incluye el gate R1).
