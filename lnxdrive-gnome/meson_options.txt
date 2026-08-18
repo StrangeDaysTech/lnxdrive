@@ -4,5 +4,5 @@ option('enable_shell', type: 'boolean', value: true,
        description: 'Install GNOME Shell status indicator extension')
 option('enable_preferences', type: 'boolean', value: true,
        description: 'Build GTK4/libadwaita preferences application')
-option('enable_goa', type: 'boolean', value: false,
+option('enable_goa', type: 'boolean', value: true,
        description: 'Build GNOME Online Accounts provider for Microsoft SSO')

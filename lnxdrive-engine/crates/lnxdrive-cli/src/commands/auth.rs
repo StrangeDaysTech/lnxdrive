@@ -66,10 +66,14 @@ impl AuthCommand {
         let config_path = Config::default_path();
         let config = Config::load_or_default(&config_path);
 
+        // app_id origin (FU-017): --app-id flag > config auth.app_id >
+        // default. The CLI no longer hard-fails without explicit config.
         let app_id = cli_app_id
             .map(|s| s.to_string())
-            .or(config.auth.app_id.clone())
-            .context("No app_id provided. Use --app-id flag or set auth.app_id in config.yaml")?;
+            .or_else(|| config.auth.app_id.clone())
+            .unwrap_or_else(|| {
+                lnxdrive_core::usecases::authenticate::DEFAULT_APP_ID.to_string()
+            });
 
         info!(app_id = %app_id, "Starting OAuth2 login");
 
