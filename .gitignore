@@ -123,6 +123,9 @@ Desktop.ini
 # JetBrains IDEs
 .idea/
 
+# Qoder CLI (local settings only — .qoder/skills/ is tracked by StrayMark)
+.qoder/settings.local.json
+
 # Vim
 *.swp
 *.swo
