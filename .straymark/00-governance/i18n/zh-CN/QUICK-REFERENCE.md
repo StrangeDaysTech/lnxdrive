@@ -63,7 +63,7 @@ Charter **不是**文档类型——它包裹一个跨多个会话的实施块�
 
 | 概念 | 目录 | 代理自主权 |
 |------|------|-----------|
-| `Charter` | `.straymark/charters/`（声明式 `NN-slug.md` + 遥测 `NN-slug.telemetry.yaml`） | 通过 `charter new` 搭建脚手架；操作者拥有 trigger 与生命周期的转换 |
+| `Charter` | `.straymark/charters/`（声明式 `NN-slug.md` + 遥测 `CHARTER-NN.telemetry.yaml`） | 通过 `charter new` 搭建脚手架；操作者拥有 trigger 与生命周期的转换 |
 
 > 参见 `STRAYMARK.md` 第 15 节及 `.straymark/00-governance/SPECKIT-CHARTER-BRIDGE.md`，了解粒度启发式、生命周期与 SpecKit ↔ Charter 桥接。
 
@@ -155,7 +155,7 @@ risk_level: low | medium | high | critical
 │   └── ethical-reviews/         ← ETH, DPIA
 ├── 08-security/                 ← SEC
 ├── 09-ai-models/                ← MCARD
-├── charters/                    ← Charter（NN-slug.md + NN-slug.telemetry.yaml）
+├── charters/                    ← Charter（NN-slug.md + CHARTER-NN.telemetry.yaml）
 ├── follow-ups-backlog.md        ← Follow-ups 注册表（FU-NNN 条目,自 fw-4.21.0 起为一等公民）
 └── templates/                   ← 模板（包括 charter/ 子目录 + follow-ups-backlog.md）
 ```
@@ -231,7 +231,8 @@ risk_level: low | medium | high | critical
 |------|------|
 | Follow-ups backlog（一等公民注册表 + 原生 `followups` CLI） *(fw-4.10.0+,自 fw-4.21.0+ 起为一等公民)* | [FOLLOW-UPS-BACKLOG-PATTERN.md](FOLLOW-UPS-BACKLOG-PATTERN.md) |
 | Polish Charter 作为债务检测("声明了表层但未接线"反模式) *(fw-4.18.0+)* | [POLISH-CHARTER-PATTERN.md](POLISH-CHARTER-PATTERN.md) |
+| 外部审计轮次(多阶段 Charter 的按轮命名) *(fw-4.35.0+)* | [AUDIT-ROUNDS-PATTERN.md](AUDIT-ROUNDS-PATTERN.md) |
 
 ---
 
-*StrayMark fw-4.32.0 | [Strange Days Tech](https://strangedays.tech)*
+*StrayMark fw-4.44.0 | [Strange Days Tech](https://strangedays.tech)*

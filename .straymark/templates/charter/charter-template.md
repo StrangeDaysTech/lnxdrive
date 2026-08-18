@@ -89,6 +89,11 @@ do not classify them as gaps. Ideally cite the Charter or initiative where they 
 Commands executable literal in a clean shell — include explicit setup of dependencies.
 Any failure of these commands indicates real debt.
 
+> **Verification quality**: a check that cannot produce a red result is not
+> a check. Summing pass counts without inspecting failure output is the
+> canonical anti-pattern (#382). Prefer the test runner's own exit code or
+> summary verdict over custom parsing of intermediate output.
+
 ```bash
 # Build & test (adapt to your stack)
 <build-command>
@@ -129,7 +134,7 @@ curl -X PUT "https://${SERVICE_HOST}/api/v1/.../..." \
 [List of risks R1, R2, ... that the implementation commits to mitigate. Each with its
 mitigation documented. Convention: if a NEW risk emerges during execution that was not
 anticipated, document it in the AILOG under `## Risk` as `R<N+1> (new, not in Charter)`
-— Gemini and other external auditors validate these cross-document.
+— external auditors validate these cross-document.
 
 Each mitigation should specify: (a) concrete trigger or threshold (no "eventually"),
 (b) action committed, (c) what happens if the mitigation itself fails, (d) where
@@ -179,7 +184,7 @@ When closing this Charter:
    mode that this step prevents).
 
 2. **Post-merge drift check**:
-   - Run `straymark charter drift CHARTER-NN --range origin/main..HEAD`, and
+   - Run `straymark charter drift CHARTER-NN --range origin/main...HEAD`, and
      validate the output is clean or that all drifts are documented in the AILOG.
    - This catches the rare case where drift is introduced post-merge (squash
      mangling, admin amendments, etc.) and the atomic step in #1 could not apply.

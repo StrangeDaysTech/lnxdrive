@@ -132,7 +132,7 @@ curl -X PUT "https://${SERVICE_HOST}/api/v1/.../..." \
 [Lista de riesgos R1, R2, ... que la implementación se compromete a mitigar. Cada uno
 con su mitigación documentada. Convención: si durante la ejecución emerge un riesgo
 NUEVO no anticipado, documentarlo en el AILOG bajo `## Risk` como
-`R<N+1> (nuevo, no en Charter)` — Gemini y otros auditores externos validan estos
+`R<N+1> (nuevo, no en Charter)` — los auditores externos validan estos
 cross-document.
 
 Cada mitigación debe especificar: (a) trigger o threshold concreto (no "eventualmente"),
@@ -179,7 +179,7 @@ Al cerrar este Charter:
    lectores futuros (PLAN-07 de Sentinel demostró el failure mode que este step previene).
 
 2. **Post-merge drift check**:
-   - Correr `straymark charter drift CHARTER-NN --range origin/main..HEAD`, y validar
+   - Correr `straymark charter drift CHARTER-NN --range origin/main...HEAD`, y validar
      que el output esté limpio o que todos los drifts estén documentados en el AILOG.
    - Esto atrapa el caso raro donde drift se introduce post-merge (squash mangling,
      amendments admin, etc.) y el step atomic en #1 no pudo aplicar.

@@ -11,7 +11,7 @@
 ### 会话开始时
 
 每个代理必须以以下信息进行自我识别：
-- 代理名称（例如：`claude-code-v1.0`、`cursor-v1.0`、`gemini-cli-v1.0`、`codex-cli-v1.0`）
+- 代理名称（例如：`claude-code-v1.0`、`cursor-v1.0`、`antigravity-v1.0`、`codex-cli-v1.0`、`qwen-code-v1.0`、`qoder-v1.0`）
 - 代理版本（如可用）
 
 ### 在每份文档中
@@ -332,7 +332,7 @@ confidence: high | medium | low
 如果决定审计：
   运行 /straymark-audit-prompt <CHARTER-ID>，我会将统一审计 prompt
   写入 .straymark/audits/<CHARTER-ID>/audit-prompt.md。然后在此仓库中
-  打开一个或多个审计员 CLI（gemini-cli、claude-cli、copilot-cli、
+  打开一个或多个审计员 CLI（agy、claude-cli、copilot-cli、
   codex-cli），并在每个中调用 /straymark-audit-execute <CHARTER-ID> —
   建议：至少 2 个不同模型族的审计员。当且仅当你委托的所有审计员
   都已完成时，返回此处并运行 /straymark-audit-review <CHARTER-ID>。
@@ -373,12 +373,14 @@ confidence: high | medium | low
 - 检查点**不**阻塞任何后续操作。如果 developer 忽略它并运行 `charter close`，close 正常进行——没有强制执行，将来也不会有（这是 v0+v1 永久设计决策；见 `Propuesta/straymark-audit-skills.md` §2.2）。
 - 检查点**不**计入任何质量度量。`straymark metrics` 中没有"已审计 Charter 百分比"KPI——按设计，避免产生虚胖审计计数的激励。
 - 如果 developer 接受审计，工作流通过三个 skills 依次推进：`/straymark-audit-prompt`（在规范路径写入统一 prompt）→ `/straymark-audit-execute` × N（每个操作员打开的审计员 CLI 一个 — 这些运行在那些 CLI 中，不在主代理中）→ `/straymark-audit-review`（在 `.straymark/audits/<id>/review.md` 中内联合并 N 个 reports 并将 YAML 合并到遥测）。操作员从不复制/粘贴 prompts 或 reports — 文件交换通过 `.straymark/audits/` 下的规范路径进行。
+- **审计一个稳定状态（#345）。** 仅在受审状态稳定时生成 prompt — PR 的 CI 为绿、工作树干净且 commits 已推送。`charter audit --prepare` 在生成时嵌入 git diff，因此若进行中的 CI 之后强制修复，prompt 会过时，审计员会审查一个不再存在的修订版。顺序：**PR → CI 绿 → `--prepare` → 启动审计员。** 当工作树脏或有未推送 commits 时 CLI 会警告（不阻断）。
+- **多轮审计（#341）。** 跨多轮审计的 Charter（例如每个代码密集阶段一轮）用 `--prepare --round <label>` 为每轮命名，将三件套写入 `.straymark/audits/<id>/<label>/`，使各轮不冲突且 `report-*.md` 通配按轮限定。参见 [`AUDIT-ROUNDS-PATTERN.md`](AUDIT-ROUNDS-PATTERN.md)。
 
 ---
 
 ## 13. Follow-ups Backlog（注册表维护）
 
-当项目维护中央 follow-ups 注册表（`.straymark/follow-ups-backlog.md` —— 见 [`FOLLOW-UPS-BACKLOG-PATTERN.md`](FOLLOW-UPS-BACKLOG-PATTERN.md) 和 `STRAYMARK.md §16`）时,代理是它的**主要维护者**。三条指令:
+当项目维护中央 follow-ups 注册表（`.straymark/follow-ups-backlog.md` —— 见 [`FOLLOW-UPS-BACKLOG-PATTERN.md`](FOLLOW-UPS-BACKLOG-PATTERN.md) 和 `STRAYMARK.md §16`）时,代理是它的**主要维护者**。四条指令:
 
 ### 会话开始
 
@@ -387,6 +389,10 @@ confidence: high | medium | low
 ### Pre-commit
 
 创建或修改了任何带有 `## Follow-ups` 或 `R<N> (new, not in Charter)` 条目的 AILOG 吗? → 运行 `straymark followups drift --apply`,使注册表扩展与 AILOG 搭乘**同一个 commit**。AILOG 文本已标记为在 Charter 内解决的条目会被自动提取为 `suspected-closed` —— 不要删除它们;操作员在下一次 triage 时确认。
+
+### 在对一个条目采取行动之前(执行时)
+
+一个注册表条目是一个**有日期、会衰减的假设,而非一条指令**(AIDEC-2026-07-18-001,来自 #365):它的前提在捕获时可能就为假,或自那以后已经过时。**在执行时重新验证前提,而不是在捕获时** —— 在你提升或对一个条目采取行动的那一刻,你已经身处那段代码之中,所以核查(一次 `grep`、读一个文件、追踪一条调用链)只需数秒。在你于其之上构建*之前*就去做:一个貌似合理却为假的前提一旦被实现,就是一个被浪费的 Charter。用 `straymark followups verify FU-NNN --verified`(或 `followups promote FU-NNN --premise-verified`)记录该次重新核查,它会盖上 `Verified-at` 印记。**不要**在捕获时验证 —— backlog 是一个推测性缓冲区,其价值在于廉价捕获;把验证前置会让理性的做法变成"停止撰写 follow-up"。
 
 ### Charter 关闭后
 
@@ -407,4 +413,4 @@ confidence: high | medium | low
 
 ---
 
-*StrayMark fw-4.32.0 | [Strange Days Tech](https://strangedays.tech)*
+*StrayMark fw-4.44.0 | [Strange Days Tech](https://strangedays.tech)*

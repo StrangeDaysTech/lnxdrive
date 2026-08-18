@@ -63,7 +63,7 @@ Los Charters **no** son tipos de documento — envuelven un bloque de implementa
 
 | Concepto | Carpeta | Autonomía del Agente |
 |----------|---------|---------------------|
-| `Charter` | `.straymark/charters/` (declarativo `NN-slug.md` + telemetría `NN-slug.telemetry.yaml`) | Andamiar vía `charter new`; el operador es dueño del trigger y de las transiciones de ciclo de vida |
+| `Charter` | `.straymark/charters/` (declarativo `NN-slug.md` + telemetría `CHARTER-NN.telemetry.yaml`) | Andamiar vía `charter new`; el operador es dueño del trigger y de las transiciones de ciclo de vida |
 
 > Ver sección 15 de `STRAYMARK.md` y `.straymark/00-governance/SPECKIT-CHARTER-BRIDGE.md` para heurísticas de granularidad, ciclo de vida y el puente SpecKit ↔ Charter.
 
@@ -155,7 +155,7 @@ Marcar `review_required: true` cuando:
 │   └── ethical-reviews/         ← ETH, DPIA
 ├── 08-security/                 ← SEC
 ├── 09-ai-models/                ← MCARD
-├── charters/                    ← Charter (NN-slug.md + NN-slug.telemetry.yaml)
+├── charters/                    ← Charter (NN-slug.md + CHARTER-NN.telemetry.yaml)
 ├── follow-ups-backlog.md        ← Registry de follow-ups (entradas FU-NNN, primera clase desde fw-4.21.0)
 └── templates/                   ← Plantillas (incl. subdir charter/ + follow-ups-backlog.md)
 ```
@@ -231,7 +231,8 @@ Marcar `review_required: true` cuando:
 |--------|-----------|
 | Backlog de follow-ups (registry de primera clase + CLI nativo `followups`) *(fw-4.10.0+, primera clase fw-4.21.0+)* | [FOLLOW-UPS-BACKLOG-PATTERN.md](FOLLOW-UPS-BACKLOG-PATTERN.md) |
 | Polish Charter como detección de deuda (anti-patrón "declaración de superficie sin cableado") *(fw-4.18.0+)* | [POLISH-CHARTER-PATTERN.md](POLISH-CHARTER-PATTERN.md) |
+| Rondas de auditoría externa (namespacing por ronda para Charters multi-fase) *(fw-4.35.0+)* | [AUDIT-ROUNDS-PATTERN.md](AUDIT-ROUNDS-PATTERN.md) |
 
 ---
 
-*StrayMark fw-4.32.0 | [Strange Days Tech](https://strangedays.tech)*
+*StrayMark fw-4.44.0 | [Strange Days Tech](https://strangedays.tech)*

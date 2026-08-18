@@ -16,6 +16,11 @@ iso_42001_clause: []            # 4 | 5 | 6 | 7 | 8 | 9 | 10
 lines_changed: 0                # Auto-calculable
 files_modified: []              # Auto-calculable
 observability_scope: none        # none | basic | full — set when OTel instrumentation is relevant
+# Declared work-classification (Baton #332, optional — cost ≈ 0 at authoring).
+# work_verb: design | implement | audit | operate. Maps to a routing tier.
+# design_provenance: new | upstream — only meaningful for implement (upstream degrades to operator).
+# work_verb: implement
+# design_provenance: new
 tags: []
 related: []
 ---
@@ -75,7 +80,10 @@ related: []
 ## Verification
 
 - [ ] Code compiles without errors
-- [ ] Tests pass
+- [ ] Tests pass — declare the exact command run. A verification that cannot
+  produce a negative result is not verification: summing pass counts without
+  checking failure output is a known anti-pattern (#382). Prefer the test
+  runner's exit code or summary verdict over custom parsing.
 - [ ] Manual review performed
 - [ ] Security scan passed (if risk_level: high/critical)
 - [ ] Privacy review completed (if handling PII)
