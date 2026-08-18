@@ -11,7 +11,7 @@ design_provenance: new
 
 # Charter: Road to functional v0.1
 
-> **Status (mirrored from frontmatter — source of truth is above):** in-progress (started 2026-07-04, batch M0). Effort: L (~6–8 semanas calendario).
+> **Status (mirrored from frontmatter — source of truth is above):** in-progress (started 2026-07-04; batch 0/M0 completo — PR #67; batch 1/M1 abierto 2026-08-17). Effort: L (~6–8 semanas calendario).
 >
 > **Origin:** Follow-up of AILOG-2026-07-04-001 (gobernanza del replanteo) — sucesor directo de CHARTER-01, que cerró con Fases 0–5 ejecutadas y la Fase 6 (tag) sin ejecutar por gate incorrecto. Este Charter ejecuta la escalera de capacidades M0–M6 de `new-guide/07-milestones-capacidad.md` y termina cortando el tag `v0.1.0-alpha.1`.
 
